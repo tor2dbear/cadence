@@ -232,7 +232,40 @@ function refreshTokens(){
   durations.forEach(d=>s.setProperty(`--motion-duration-${d.name}`,d.ms+"ms"));
   easings.forEach(e=>s.setProperty(`--motion-ease-${e.name}`,bezStr(e.bez)));
 }
-function rerenderAll(){ renderDurations();renderEasings();renderIntents();renderBench();refreshTokens();render();critique(); }
+function rerenderAll(){ renderDurations();renderEasings();renderIntents();renderBench();refreshTokens();render();critique();writeURL(); }
+
+// ---------- shareable state (whole system encoded in the URL hash) ----------
+const b64urlEncode = str => btoa(unescape(encodeURIComponent(str))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const b64urlDecode = s => decodeURIComponent(escape(atob(s.replace(/-/g,"+").replace(/_/g,"/"))));
+function encodeState(){
+  const s = {
+    d: durations.map(d=>[d.name,d.ms]),
+    e: easings.map(e=>[e.name,...e.bez]),
+    i: intents.map(it=>[it.name,it.dur,it.ease,it.purpose||""]),
+    p: probes.map(pb=>{ const k=intents.findIndex(x=>x.id===pb.intent); return k<0?0:k; }),
+  };
+  return b64urlEncode(JSON.stringify(s));
+}
+// mutate the model in place from an encoded string; throws on malformed input
+function applyEncoded(raw){
+  const o = JSON.parse(b64urlDecode(raw));
+  if(!o||!Array.isArray(o.d)||!Array.isArray(o.e)||!Array.isArray(o.i)) throw new Error("bad state");
+  const d = o.d.map(x=>({name:String(x[0]),ms:+x[1]||200}));
+  const e = o.e.map(x=>({name:String(x[0]),bez:[+x[1],+x[2],+x[3],+x[4]]}));
+  const it = o.i.map(x=>({id:nid(),name:String(x[0]),dur:String(x[1]),ease:String(x[2]),purpose:String(x[3]||"")}));
+  if(!d.length||!e.length||!it.length) throw new Error("empty scale");
+  durations=d; easings=e; intents=it;
+  // intents that reference a now-missing name fall back to the first slot
+  const dn=new Set(durations.map(x=>x.name)), en=new Set(easings.map(x=>x.name));
+  intents.forEach(x=>{ if(!dn.has(x.dur))x.dur=durations[0].name; if(!en.has(x.ease))x.ease=easings[0].name; });
+  // probes were stored as intent indices; clamp back onto the restored intents
+  const pick=k=>intents[Math.max(0,Math.min(intents.length-1,k))].id;
+  if(Array.isArray(o.p)&&o.p.length===probes.length) probes.forEach((pb,k)=>pb.intent=pick(+o.p[k]||0));
+  else probes.forEach((pb,k)=>pb.intent=pick(k));
+}
+function writeURL(){
+  try{ history.replaceState(null,"",location.pathname+location.search+"#"+encodeState()); }catch(_){}
+}
 
 function updateResolvedLines(){
   document.querySelectorAll(".intent__resolved").forEach((el,k)=>{
@@ -244,8 +277,8 @@ function updateResolvedLines(){
 // ---------- events (delegated) ----------
 document.addEventListener("input", e=>{
   const t=e.target, sc=t.dataset.scope, i=+t.dataset.i;
-  if(sc==="dur"){ durations[i].ms=+t.value; refreshTokens(); renderDurations(); render(); critique(); updateResolvedLines(); }
-  if(sc==="iname"){ intents[i].name=t.value.trim()||intents[i].name; render(); critique(); }
+  if(sc==="dur"){ durations[i].ms=+t.value; refreshTokens(); renderDurations(); render(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="iname"){ intents[i].name=t.value.trim()||intents[i].name; render(); critique(); writeURL(); }
 });
 // rename a scale slot (duration or easing); intents reference by name, so
 // carry every referencing intent over to the new name. `kind` is "dur"|"ease".
@@ -264,9 +297,9 @@ document.addEventListener("change", e=>{
   if(sc==="ease"){ easings[i].bez=PRESETS[t.value].slice(); rerenderAll(); }
   if(sc==="dname"){ renameScale(durations,i,t.value,"dur"); }
   if(sc==="ename"){ renameScale(easings,i,t.value,"ease"); }
-  if(sc==="idur"){ intents[i].dur=t.value; refreshTokens(); render(); critique(); updateResolvedLines(); }
-  if(sc==="iease"){ intents[i].ease=t.value; render(); critique(); updateResolvedLines(); }
-  if(sc==="probe"){ probes[i].intent=t.value; }
+  if(sc==="idur"){ intents[i].dur=t.value; refreshTokens(); render(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="iease"){ intents[i].ease=t.value; render(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="probe"){ probes[i].intent=t.value; writeURL(); }
 });
 document.addEventListener("click", e=>{
   const playT=e.target.closest("[data-play]");
@@ -302,6 +335,17 @@ document.getElementById("copy").addEventListener("click",()=>{
   navigator.clipboard?.writeText(document.getElementById("out").textContent);
   const b=document.getElementById("copy"); b.textContent="Copied ✓"; setTimeout(()=>b.textContent="Copy",1200);
 });
+document.getElementById("share").addEventListener("click",()=>{
+  writeURL();
+  navigator.clipboard?.writeText(location.href);
+  const b=document.getElementById("share"); b.textContent="Link copied ✓"; setTimeout(()=>b.textContent="Copy share link",1400);
+});
+
+// restore a shared system from the URL hash before the first render
+(function initFromURL(){
+  const h=location.hash.replace(/^#/,"");
+  if(h){ try{ applyEncoded(h); }catch(_){ /* malformed link → keep defaults */ } }
+})();
 
 rerenderAll();
 if(!reduce) setTimeout(playAll,500);
