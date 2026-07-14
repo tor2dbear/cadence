@@ -39,6 +39,15 @@ let probes = [
   {type:"acc",label:"accordion",intent:null},
   {type:"reveal",label:"list reveal",intent:null},
 ];
+// token names double as CSS custom-property suffixes, so keep them slug-safe
+const slug = s => (s||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+function uniqueName(base, arr, skipIdx){
+  base = base || "item";
+  let n = base, k = 2;
+  const taken = v => arr.some((x,idx)=>idx!==skipIdx && x.name===v);
+  while(taken(n)) n = base+"-"+(k++);
+  return n;
+}
 const findIntent = id => intents.find(x=>x.id===id) || intents[0];
 const durMs = name => (durations.find(d=>d.name===name)||durations[0]).ms;
 const easeBez = name => (easings.find(e=>e.name===name)||easings[0]).bez;
@@ -56,10 +65,11 @@ function renderDurations(){
   el.innerHTML = durations.map((d,i)=>{
     const mult = i>0 ? "×"+(d.ms/durations[i-1].ms).toFixed(2) : "";
     return `<div class="drow">
-      <span class="drow__name">${d.name}</span>
+      <input class="drow__name" value="${d.name}" data-scope="dname" data-i="${i}" aria-label="duration name" spellcheck="false">
       <span class="drow__track"><input type="range" min="60" max="1000" step="10" value="${d.ms}" data-scope="dur" data-i="${i}" aria-label="${d.name} duration"></span>
       <span class="drow__val">${d.ms}ms</span>
       <span class="drow__mult">${mult}</span>
+      <button class="drow__rm" data-scope="drm" data-i="${i}" title="remove step" aria-label="remove ${d.name}">×</button>
     </div>`;
   }).join("");
 }
@@ -74,7 +84,7 @@ function renderEasings(){
   const el=document.getElementById("easings");
   el.innerHTML = easings.map((e,i)=>`
     <div class="ecard">
-      <div class="ecard__top">${curveSVG(e.bez,"var(--accent)")}<span class="ecard__name">${e.name}</span></div>
+      <div class="ecard__top">${curveSVG(e.bez,"var(--accent)")}<input class="ecard__name" value="${e.name}" data-scope="ename" data-i="${i}" aria-label="easing name" spellcheck="false"><button class="ecard__rm" data-scope="erm" data-i="${i}" title="remove easing" aria-label="remove ${e.name}">×</button></div>
       <select data-scope="ease" data-i="${i}" aria-label="${e.name} curve">
         ${Object.keys(PRESETS).map(k=>`<option ${JSON.stringify(PRESETS[k])===JSON.stringify(e.bez)?"selected":""}>${k}</option>`).join("")}
       </select>
@@ -237,9 +247,23 @@ document.addEventListener("input", e=>{
   if(sc==="dur"){ durations[i].ms=+t.value; refreshTokens(); renderDurations(); render(); critique(); updateResolvedLines(); }
   if(sc==="iname"){ intents[i].name=t.value.trim()||intents[i].name; render(); critique(); }
 });
+// rename a scale slot (duration or easing); intents reference by name, so
+// carry every referencing intent over to the new name. `kind` is "dur"|"ease".
+function renameScale(arr, i, raw, kind){
+  const old = arr[i].name, s = slug(raw);
+  if(!s){ rerenderAll(); return; }        // empty/invalid → keep old name
+  const next = uniqueName(s, arr, i);
+  if(next!==old){
+    arr[i].name = next;
+    intents.forEach(it=>{ if(it[kind]===old) it[kind]=next; });
+  }
+  rerenderAll();
+}
 document.addEventListener("change", e=>{
   const t=e.target, sc=t.dataset.scope, i=+t.dataset.i;
   if(sc==="ease"){ easings[i].bez=PRESETS[t.value].slice(); rerenderAll(); }
+  if(sc==="dname"){ renameScale(durations,i,t.value,"dur"); }
+  if(sc==="ename"){ renameScale(easings,i,t.value,"ease"); }
   if(sc==="idur"){ intents[i].dur=t.value; refreshTokens(); render(); critique(); updateResolvedLines(); }
   if(sc==="iease"){ intents[i].ease=t.value; render(); critique(); updateResolvedLines(); }
   if(sc==="probe"){ probes[i].intent=t.value; }
@@ -250,6 +274,20 @@ document.addEventListener("click", e=>{
   const t=e.target, sc=t.dataset.scope, i=+t.dataset.i;
   if(sc==="irm"){ if(intents.length>1){ const gone=intents[i].id; intents.splice(i,1);
       probes.forEach(p=>{if(p.intent===gone)p.intent=intents[0].id;}); rerenderAll(); } }
+  if(sc==="drm"){ if(durations.length>1){ const g=durations[i].name; durations.splice(i,1);
+      const fb=durations[0].name; intents.forEach(it=>{if(it.dur===g)it.dur=fb;}); rerenderAll(); } }
+  if(sc==="erm"){ if(easings.length>1){ const g=easings[i].name; easings.splice(i,1);
+      const fb=easings[0].name; intents.forEach(it=>{if(it.ease===g)it.ease=fb;}); rerenderAll(); } }
+});
+document.getElementById("addDuration").addEventListener("click",()=>{
+  const last=durations[durations.length-1];
+  const ms=Math.min(1000,Math.max(60, last?Math.round(last.ms*1.5):300));
+  durations.push({name:uniqueName("step",durations),ms});
+  rerenderAll();
+});
+document.getElementById("addEasing").addEventListener("click",()=>{
+  easings.push({name:uniqueName("custom",easings),bez:PRESETS.standard.slice()});
+  rerenderAll();
 });
 document.getElementById("addIntent").addEventListener("click",()=>{
   intents.push({id:nid(),name:"custom",dur:"base",ease:"standard",purpose:"your own"});
