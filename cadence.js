@@ -401,6 +401,14 @@ document.getElementById("share").addEventListener("click",()=>{
   const h=location.hash.replace(/^#/,"");
   if(h){ try{ applyEncoded(h); }catch(_){ /* malformed link → keep defaults */ } }
 })();
+// re-apply when the hash changes on an already-open page (pasting a shared
+// link into the address bar, or back/forward). Our own writes use
+// replaceState, which never fires hashchange — so this can't loop.
+window.addEventListener("hashchange", ()=>{
+  const h=location.hash.replace(/^#/,"");
+  if(!h || h===encodeState()) return;
+  try{ applyEncoded(h); rerenderAll(); }catch(_){}
+});
 
 rerenderAll();
 if(!reduce) setTimeout(playAll,500);
