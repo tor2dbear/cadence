@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Cadence — a motion system designer. Editable duration and easing scales, composable intents, and a swappable component bench. Exports design tokens as CSS or JSON." />
+<title>Cadence — motion system designer</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="top">
+  <h1>cadence</h1>
+  <span class="tag">a motion <em>system</em> designer — scales, intents, and a swappable bench</span>
+  <span class="proto">PROTOTYPE v0.2</span>
+</header>
+
+<div class="wrap">
+  <!-- LAYER 1 -->
+  <section class="col scales">
+    <h2 class="sec">Scales <span class="lyr">· primitives</span></h2>
+    <p class="sub">The general vocabulary. Component-agnostic — everything else references these.</p>
+    <div class="block">
+      <h2 class="sec">Duration ladder</h2>
+      <div class="ladder" id="durations"></div>
+    </div>
+    <div class="block">
+      <h2 class="sec">Easing set</h2>
+      <div class="eset" id="easings"></div>
+    </div>
+  </section>
+
+  <!-- LAYER 2 + BENCH -->
+  <section class="col mid">
+    <h2 class="sec">Intents <span class="lyr">· semantic</span></h2>
+    <p class="sub">Meaning, composed from the scales. This is where art direction lives — add your own.</p>
+    <div id="intents"></div>
+    <button class="addbtn" id="addIntent">+ Add intent</button>
+
+    <h2 class="sec" style="margin-top:24px">Test bench <span class="lyr">· swappable probes</span></h2>
+    <div class="toolbar">
+      <button class="btn" id="playAll">▶ Play all</button>
+      <span class="hint">Each probe is just a lens. Change the token driving it — any component, any intent.</span>
+    </div>
+    <div class="bench" id="bench"></div>
+
+    <div class="adnote">
+      <h2 class="sec">System read <span class="lyr">— the opinion layer</span></h2>
+      <div id="hints"></div>
+    </div>
+  </section>
+
+  <!-- EXPORT -->
+  <aside class="col export">
+    <h2 class="sec">Export</h2>
+    <p class="sub">Two layers: primitives, then semantic tokens that reference them.</p>
+    <div class="tabs">
+      <button class="tab active" data-fmt="css">CSS</button>
+      <button class="tab" data-fmt="json">JSON</button>
+    </div>
+    <pre class="code" id="out"></pre>
+    <button class="copy" id="copy">Copy</button>
+  </aside>
+</div>
+
+<script src="cadence.js"></script>
+</body>
+</html>
