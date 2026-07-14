@@ -56,6 +56,57 @@ checks is the differentiator — tools generate, they don't judge.
 - Optional: import an existing palette of motion (a framework's tokens) and
   visualize/critique it — the "reverse-engineer the art direction" angle.
 
+## Directions explored and ruled out (so we don't re-loop)
+
+Getting to "motion" took several iterations. Recording the dead ends so a future
+session doesn't re-propose them:
+
+- **Color scale / palette tools — rejected.** Atmos.io already nails
+  auto-generate → manual curve editing (Lightness/Chroma/Hue) → export. Red
+  ocean. A sub-idea — a *critique/linter* that judges palettes instead of
+  generating them — was interesting but parked; we chose to leave color
+  entirely.
+- **Fluid type scale / clamp generator — rejected.** Utopia (utopia.fyi) owns
+  that space, and the portfolio's own type ladder is already hand-tuned (e.g.
+  `--text-2xl: 1.3125rem`), so a generic modular-scale tool wouldn't fit.
+- **The meta-lesson driving all of it:** unique ideas come from *personal
+  friction, not a product category.* Every category-level idea ("a palette
+  tool", "a type tool") collapsed into something that already exists. The
+  personal-pain framing — "I can't reach quality with math alone" — is what
+  produced Cadence. Keep pulling on real friction, not categories.
+
+## The actual end goal: a portfolio works-case
+
+Cadence exists to double as a **works-case** on the portfolio
+(github: tor2dbear/portfolio, Hugo). Once the tool is solid, write the entry.
+Works entries live at `content/english/works/<slug>/index.md` with frontmatter
+(title, subtitle, role, tags, `details{year,platform,scope}`, `client`) and
+sections: Challenge / Approach / Solution / Impact / Role. Angle for the writeup:
+design engineering first, but lead with the thesis (math vs art direction), the
+two-layer decision, and the opinion layer.
+
+## Dogfooding / tie-back narrative
+
+The portfolio *already ships a real motion token system* —
+`--motion-duration-fast/base/slow/slower/xslow`,
+`--motion-ease-emphasized: cubic-bezier(0.22, 1, 0.36, 1)`, stagger and distance
+tokens — plus a live motion demo in its ui-library. Two payoffs: (1) it's a
+source of realistic default values for Cadence, and (2) a strong case narrative
+is to **rebuild the portfolio's own motion tokens with Cadence** — "I used my
+tool on my own site." Validation and story in one.
+
+## Prototype design tokens (visual continuity)
+
+Deliberate single dark "instrument panel" theme (a motion lab, like a DAW — not
+a forgotten light mode). Accent teal `#8ad0c6`. Role colors: enter `#8ad0c6`,
+exit `#e08b7f`, move `#e9b872`, emphasized `#b79cf0`. Mono for wordmark and
+labels to signal "engineering", system sans for body. Opinion-layer heuristics
+currently encoded: enter/exit asymmetry, exit-should-accelerate-out, duration
+budget (~550ms "now I'm waiting" line), ladder evenness, easing-set redundancy.
+
+A private live prototype of v0.2 was published as a Claude artifact during the
+bootstrapping session (URL not committed here; ask the owner if needed).
+
 ## How this repo was bootstrapped
 
 Built as a prototype in a Claude session, delivered as a starter package.
