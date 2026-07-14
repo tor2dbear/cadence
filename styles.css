@@ -101,7 +101,7 @@ button.btn{background:var(--accent);color:#04110f;border:0;border-radius:8px;pad
 .rd.warn .ic{color:var(--warn)} .rd.ok .ic{color:var(--accent)}
 
 /* ---- export ---- */
-.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .tab{font-size:11px;font-family:var(--mono);padding:6px 10px;border:1px solid var(--line);border-radius:7px;color:var(--ink-dim);cursor:pointer;background:transparent}
 .tab.active{color:var(--ink);border-color:var(--accent);background:var(--panel-2)}
 pre.code{background:#0e1013;border:1px solid var(--line);border-radius:9px;padding:12px;font-family:var(--mono);font-size:10.5px;line-height:1.65;overflow:auto;color:#cdd3da;white-space:pre;max-height:62vh;margin:0}

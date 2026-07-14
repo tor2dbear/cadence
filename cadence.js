@@ -228,28 +228,67 @@ function critique(){
 
 // ---------- export ----------
 let fmt="css";
+const isIdent = k => /^[a-z_$][\w$]*$/i.test(k);   // safe as a bare object key?
+// CSS keeps syntax-highlight spans (innerHTML); the rest are plain text.
+function buildCSS(){
+  let s=`<span class="cm">/* Cadence — motion system */</span>\n:root{\n`;
+  s+=`  <span class="cm">/* primitives · durations */</span>\n`;
+  durations.forEach(d=>s+=`  <span class="tk">--motion-duration-${d.name}</span>: ${d.ms}ms;\n`);
+  s+=`\n  <span class="cm">/* primitives · easing */</span>\n`;
+  easings.forEach(e=>s+=`  <span class="tk">--motion-ease-${e.name}</span>: ${bezStr(e.bez)};\n`);
+  s+=`\n  <span class="cm">/* semantic · intents → reference primitives */</span>\n`;
+  intents.forEach(it=>{
+    s+=`  <span class="tk2">--motion-${it.name}-duration</span>: <span class="tk">var(--motion-duration-${it.dur})</span>;\n`;
+    s+=`  <span class="tk2">--motion-${it.name}-ease</span>: <span class="tk">var(--motion-ease-${it.ease})</span>;\n`;
+  });
+  return s+`}`;
+}
+function buildJSON(){
+  const obj={primitives:{duration:{},easing:{}},semantic:{}};
+  durations.forEach(d=>obj.primitives.duration[d.name]=d.ms+"ms");
+  easings.forEach(e=>obj.primitives.easing[e.name]=bezStr(e.bez));
+  intents.forEach(it=>obj.semantic[it.name]={duration:`{duration.${it.dur}}`,easing:`{easing.${it.ease}}`,purpose:it.purpose});
+  return JSON.stringify(obj,null,2);
+}
+function buildTailwind(){
+  const q=JSON.stringify;
+  const dur=[...durations.map(d=>`        ${q(d.name)}: ${q(d.ms+"ms")},`),
+             ...intents.map(it=>`        ${q(it.name)}: ${q(durMs(it.dur)+"ms")}, // intent`)];
+  const ease=[...easings.map(e=>`        ${q(e.name)}: ${q(bezStr(e.bez))},`),
+              ...intents.map(it=>`        ${q(it.name)}: ${q(bezStr(easeBez(it.ease)))}, // intent`)];
+  return `// tailwind.config.js — motion tokens from Cadence\n`+
+    `module.exports = {\n  theme: {\n    extend: {\n`+
+    `      transitionDuration: {\n${dur.join("\n")}\n      },\n`+
+    `      transitionTimingFunction: {\n${ease.join("\n")}\n      },\n`+
+    `    },\n  },\n};`;
+}
+function buildStyleDictionary(){
+  const obj={motion:{duration:{},easing:{}}};
+  durations.forEach(d=>obj.motion.duration[d.name]={value:d.ms+"ms",type:"duration"});
+  easings.forEach(e=>obj.motion.easing[e.name]={value:bezStr(e.bez),type:"cubicBezier"});
+  intents.forEach(it=>obj.motion[it.name]={
+    duration:{value:`{motion.duration.${it.dur}}`,type:"duration"},
+    easing:{value:`{motion.easing.${it.ease}}`,type:"cubicBezier"},
+  });
+  return JSON.stringify(obj,null,2);
+}
+function buildTS(){
+  const key=k=>isIdent(k)?k:JSON.stringify(k), q=JSON.stringify;
+  const dur=durations.map(d=>`    ${key(d.name)}: ${q(d.ms+"ms")},`).join("\n");
+  const ease=easings.map(e=>`    ${key(e.name)}: ${q(bezStr(e.bez))},`).join("\n");
+  const sem=intents.map(it=>`    ${key(it.name)}: { duration: ${q(durMs(it.dur)+"ms")}, easing: ${q(bezStr(easeBez(it.ease)))} },`).join("\n");
+  return `// motion.ts — design tokens from Cadence\n`+
+    `export const motion = {\n`+
+    `  duration: {\n${dur}\n  },\n`+
+    `  easing: {\n${ease}\n  },\n`+
+    `  // semantic intents (resolved from primitives)\n`+
+    `  intent: {\n${sem}\n  },\n} as const;`;
+}
 function render(){
   const o=document.getElementById("out");
-  if(fmt==="css"){
-    let s=`<span class="cm">/* Cadence — motion system */</span>\n:root{\n`;
-    s+=`  <span class="cm">/* primitives · durations */</span>\n`;
-    durations.forEach(d=>s+=`  <span class="tk">--motion-duration-${d.name}</span>: ${d.ms}ms;\n`);
-    s+=`\n  <span class="cm">/* primitives · easing */</span>\n`;
-    easings.forEach(e=>s+=`  <span class="tk">--motion-ease-${e.name}</span>: ${bezStr(e.bez)};\n`);
-    s+=`\n  <span class="cm">/* semantic · intents → reference primitives */</span>\n`;
-    intents.forEach(it=>{
-      s+=`  <span class="tk2">--motion-${it.name}-duration</span>: <span class="tk">var(--motion-duration-${it.dur})</span>;\n`;
-      s+=`  <span class="tk2">--motion-${it.name}-ease</span>: <span class="tk">var(--motion-ease-${it.ease})</span>;\n`;
-    });
-    s+=`}`;
-    o.innerHTML=s;
-  } else {
-    const obj={primitives:{duration:{},easing:{}},semantic:{}};
-    durations.forEach(d=>obj.primitives.duration[d.name]=d.ms+"ms");
-    easings.forEach(e=>obj.primitives.easing[e.name]=bezStr(e.bez));
-    intents.forEach(it=>obj.semantic[it.name]={duration:`{duration.${it.dur}}`,easing:`{easing.${it.ease}}`,purpose:it.purpose});
-    o.textContent=JSON.stringify(obj,null,2);
-  }
+  if(fmt==="css"){ o.innerHTML=buildCSS(); return; }
+  const build={json:buildJSON,tailwind:buildTailwind,sd:buildStyleDictionary,ts:buildTS}[fmt]||buildJSON;
+  o.textContent=build();
 }
 
 // ---------- orchestrate ----------

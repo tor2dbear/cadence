@@ -17,7 +17,8 @@ panel critiques the whole system — ladder evenness, redundant easings,
 enter/exit asymmetry, duration budget.
 
 Export the result as CSS custom properties (semantic tokens `var()`-reference
-the primitives, exactly as you'd ship them) or as JSON.
+the primitives, exactly as you'd ship them), or as JSON, a Tailwind config, a
+Style Dictionary token file, or a typed TS object.
 
 ## Run
 
@@ -42,11 +43,13 @@ Prototype (v0.2). Rough edges expected.
 
 Shipped since v0.2: editable scales (add/remove/rename duration steps and
 easings), a draggable bézier editor (author each easing by dragging its control
-points, with headroom for overshoot), and a shareable system — the whole token
-set is encoded in the URL, so a link restores it.
+points, with headroom for overshoot), a shareable system — the whole token set
+is encoded in the URL, so a link restores it — and export to CSS, JSON,
+Tailwind config, Style Dictionary, and a typed TS object.
 
-Roadmap: custom probes ("bring your own component"), more export targets
-(Tailwind, Style Dictionary).
+Roadmap: custom probes ("bring your own component") — an abstract, component-
+agnostic motion view by default, with a UI-component library you can switch in
+to stress-test a token.
 
 ## License
 
