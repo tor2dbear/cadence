@@ -40,7 +40,14 @@ h2.sec .lyr{color:var(--ink-faint);opacity:.7}
 .eset{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .ecard{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:9px}
 .ecard__top{display:flex;align-items:center;gap:7px;margin-bottom:6px}
-.ecard svg{width:34px;height:34px;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;flex:none}
+.ecard__plot{position:relative;width:100%;aspect-ratio:1/1;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;margin:2px 0 7px;touch-action:none;overflow:hidden}
+svg.bz{display:block;width:100%;height:100%}
+.bz-guide{stroke:#333940;stroke-width:1.2;stroke-dasharray:4 4}
+.bz-arm{stroke:var(--ink-faint);stroke-width:1.2;opacity:.55}
+.bz-curve{fill:none;stroke:var(--accent);stroke-width:3.5;vector-effect:non-scaling-stroke}
+.bz-h{fill:var(--accent);stroke:#04110f;stroke-width:1.5;cursor:grab}
+.bz-h:hover{fill:#a6ded5}
+.bz-h.drag{cursor:grabbing}
 .ecard__name{flex:1;min-width:0;font-family:var(--mono);font-size:11px;color:var(--ink-dim);background:transparent;border:0;border-bottom:1px dashed transparent;padding:1px 0}
 .ecard__name:focus{outline:none;border-bottom-color:var(--line);color:var(--ink)}
 .ecard__rm{background:transparent;border:0;color:var(--ink-faint);cursor:pointer;font-size:14px;line-height:1;padding:0 1px;flex:none}

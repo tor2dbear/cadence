@@ -41,11 +41,12 @@ python3 -m http.server 4173
 Prototype (v0.2). Rough edges expected.
 
 Shipped since v0.2: editable scales (add/remove/rename duration steps and
-easings), and a shareable system — the whole token set is encoded in the URL,
-so a link restores it.
+easings), a draggable bézier editor (author each easing by dragging its control
+points, with headroom for overshoot), and a shareable system — the whole token
+set is encoded in the URL, so a link restores it.
 
-Roadmap: draggable bézier editor, custom probes ("bring your own component"),
-more export targets (Tailwind, Style Dictionary).
+Roadmap: custom probes ("bring your own component"), more export targets
+(Tailwind, Style Dictionary).
 
 ## License
 

@@ -74,21 +74,47 @@ function renderDurations(){
   }).join("");
 }
 
-// ---------- render: easing set ----------
-function curveSVG(bez,color){
-  const X=x=>x*100,Y=y=>100-y*100;
-  return `<svg viewBox="0 0 100 100"><line x1="0" y1="100" x2="100" y2="0" stroke="#333940" stroke-width="2" stroke-dasharray="4 4"/>
-    <path d="M0,100 C${X(bez[0])},${Y(bez[1])} ${X(bez[2])},${Y(bez[3])} 100,0" fill="none" stroke="${color}" stroke-width="4"/></svg>`;
+// ---------- render: easing set (each card is a draggable bézier editor) ----------
+const BZPAD = 0.35;                        // vertical headroom so overshoot curves are authorable
+const SX = x => x*100;
+const SY = y => (1-(y+BZPAD)/(1+2*BZPAD))*100;
+function easingSVG(bez){
+  const [x1,y1,x2,y2]=bez;
+  const p0=[SX(0),SY(0)],p3=[SX(1),SY(1)],c1=[SX(x1),SY(y1)],c2=[SX(x2),SY(y2)];
+  return `<svg class="bz" viewBox="0 0 100 100">
+    <line class="bz-guide" x1="${p0[0]}" y1="${p0[1]}" x2="${p3[0]}" y2="${p3[1]}"/>
+    <line class="bz-arm" x1="${p0[0]}" y1="${p0[1]}" x2="${c1[0]}" y2="${c1[1]}"/>
+    <line class="bz-arm" x1="${p3[0]}" y1="${p3[1]}" x2="${c2[0]}" y2="${c2[1]}"/>
+    <path class="bz-curve" d="M${p0[0]},${p0[1]} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p3[0]},${p3[1]}"/>
+    <circle class="bz-h" data-pt="1" cx="${c1[0]}" cy="${c1[1]}" r="7"/>
+    <circle class="bz-h" data-pt="2" cx="${c2[0]}" cy="${c2[1]}" r="7"/>
+  </svg>`;
+}
+// update one plot's SVG in place (keeps elements alive so a drag isn't interrupted)
+function updateEasingPlot(i){
+  const svg=document.querySelector(`.ecard__plot[data-i="${i}"] svg.bz`); if(!svg) return;
+  const [x1,y1,x2,y2]=easings[i].bez;
+  const c1=[SX(x1),SY(y1)],c2=[SX(x2),SY(y2)],p0=[SX(0),SY(0)],p3=[SX(1),SY(1)];
+  const arms=svg.querySelectorAll(".bz-arm");
+  arms[0].setAttribute("x2",c1[0]); arms[0].setAttribute("y2",c1[1]);
+  arms[1].setAttribute("x2",c2[0]); arms[1].setAttribute("y2",c2[1]);
+  svg.querySelector(".bz-curve").setAttribute("d",`M${p0[0]},${p0[1]} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p3[0]},${p3[1]}`);
+  const hs=svg.querySelectorAll(".bz-h");
+  hs[0].setAttribute("cx",c1[0]); hs[0].setAttribute("cy",c1[1]);
+  hs[1].setAttribute("cx",c2[0]); hs[1].setAttribute("cy",c2[1]);
 }
 function renderEasings(){
   const el=document.getElementById("easings");
-  el.innerHTML = easings.map((e,i)=>`
-    <div class="ecard">
-      <div class="ecard__top">${curveSVG(e.bez,"var(--accent)")}<input class="ecard__name" value="${e.name}" data-scope="ename" data-i="${i}" aria-label="easing name" spellcheck="false"><button class="ecard__rm" data-scope="erm" data-i="${i}" title="remove easing" aria-label="remove ${e.name}">×</button></div>
-      <select data-scope="ease" data-i="${i}" aria-label="${e.name} curve">
-        ${Object.keys(PRESETS).map(k=>`<option ${JSON.stringify(PRESETS[k])===JSON.stringify(e.bez)?"selected":""}>${k}</option>`).join("")}
-      </select>
-    </div>`).join("");
+  el.innerHTML = easings.map((e,i)=>{
+    const match=Object.keys(PRESETS).find(k=>JSON.stringify(PRESETS[k])===JSON.stringify(e.bez));
+    const opts=Object.keys(PRESETS).map(k=>`<option ${k===match?"selected":""}>${k}</option>`).join("");
+    const custom=match?"":`<option value="custom" selected>custom</option>`;
+    return `<div class="ecard">
+      <div class="ecard__top"><input class="ecard__name" value="${e.name}" data-scope="ename" data-i="${i}" aria-label="easing name" spellcheck="false"><button class="ecard__rm" data-scope="erm" data-i="${i}" title="remove easing" aria-label="remove ${e.name}">×</button></div>
+      <div class="ecard__plot" data-i="${i}">${easingSVG(e.bez)}</div>
+      <select data-scope="ease" data-i="${i}" aria-label="${e.name} curve">${custom}${opts}</select>
+    </div>`;
+  }).join("");
 }
 
 // ---------- render: intents ----------
@@ -294,7 +320,7 @@ function renameScale(arr, i, raw, kind){
 }
 document.addEventListener("change", e=>{
   const t=e.target, sc=t.dataset.scope, i=+t.dataset.i;
-  if(sc==="ease"){ easings[i].bez=PRESETS[t.value].slice(); rerenderAll(); }
+  if(sc==="ease"){ if(PRESETS[t.value]){ easings[i].bez=PRESETS[t.value].slice(); rerenderAll(); } }
   if(sc==="dname"){ renameScale(durations,i,t.value,"dur"); }
   if(sc==="ename"){ renameScale(easings,i,t.value,"ease"); }
   if(sc==="idur"){ intents[i].dur=t.value; refreshTokens(); render(); critique(); updateResolvedLines(); writeURL(); }
@@ -311,6 +337,35 @@ document.addEventListener("click", e=>{
       const fb=durations[0].name; intents.forEach(it=>{if(it.dur===g)it.dur=fb;}); rerenderAll(); } }
   if(sc==="erm"){ if(easings.length>1){ const g=easings[i].name; easings.splice(i,1);
       const fb=easings[0].name; intents.forEach(it=>{if(it.ease===g)it.ease=fb;}); rerenderAll(); } }
+});
+// ---------- bézier drag editing ----------
+let bzDrag=null, bzRAF=null;
+function bzDownstream(){                    // rAF-coalesced: heavy recompute at most once per frame
+  if(bzRAF) return;
+  bzRAF=requestAnimationFrame(()=>{ bzRAF=null; refreshTokens(); render(); critique(); updateResolvedLines(); writeURL(); });
+}
+document.addEventListener("pointerdown", e=>{
+  const h=e.target.closest && e.target.closest(".bz-h"); if(!h) return;
+  const plot=h.closest(".ecard__plot"); if(!plot) return;
+  bzDrag={ i:+plot.dataset.i, pt:+h.dataset.pt, svg:plot.querySelector("svg.bz") };
+  h.classList.add("drag"); try{ h.setPointerCapture(e.pointerId); }catch(_){}
+  e.preventDefault();
+});
+document.addEventListener("pointermove", e=>{
+  if(!bzDrag) return;
+  const r=bzDrag.svg.getBoundingClientRect();
+  const x=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
+  let y=(1-(e.clientY-r.top)/r.height)*(1+2*BZPAD)-BZPAD;
+  y=Math.min(1+BZPAD,Math.max(-BZPAD,y));
+  const b=easings[bzDrag.i].bez, o=bzDrag.pt===1?0:2;
+  b[o]=+x.toFixed(3); b[o+1]=+y.toFixed(3);
+  updateEasingPlot(bzDrag.i); bzDownstream();
+});
+document.addEventListener("pointerup", ()=>{
+  if(!bzDrag) return;
+  bzDrag=null;
+  document.querySelectorAll(".bz-h.drag").forEach(h=>h.classList.remove("drag"));
+  rerenderAll();                            // normalize the preset dropdown (custom vs matched)
 });
 document.getElementById("addDuration").addEventListener("click",()=>{
   const last=durations[durations.length-1];
