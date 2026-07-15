@@ -29,14 +29,17 @@ const nid = () => "i"+(idc++);
 // global axis so one intent resolves to a different (duration, easing) per mode.
 let modes = [{name:"default"}];
 let activeMode = 0;
-// each intent carries one binding {dur, ease, stagger} per mode. `stagger` (ms)
-// is the per-item delay for sequenced elements (0 = none, animate together).
+// which CSS property an intent animates (Primer/Atlassian treat this as a
+// first-class attribute). "all" is the neutral default.
+const PROPS = ["all","opacity","transform","color","background-color","height","width"];
+// each intent carries one binding {dur, ease, stagger, prop} per mode. `stagger`
+// (ms) is the per-item delay for sequenced elements; `prop` is the target.
 let intents = [
-  {id:nid(),name:"enter",purpose:"things appearing",binds:[{dur:"base",ease:"emphasized",stagger:70}]},
-  {id:nid(),name:"exit",purpose:"things leaving",binds:[{dur:"fast",ease:"accelerate",stagger:0}]},
-  {id:nid(),name:"move",purpose:"in-place change",binds:[{dur:"slow",ease:"standard",stagger:0}]},
-  {id:nid(),name:"emphasized",purpose:"hero moments",binds:[{dur:"slower",ease:"emphasized",stagger:0}]},
-  {id:nid(),name:"hover",purpose:"pointer feedback",binds:[{dur:"fast",ease:"standard",stagger:0}]},
+  {id:nid(),name:"enter",purpose:"things appearing",binds:[{dur:"base",ease:"emphasized",stagger:70,prop:"all"}]},
+  {id:nid(),name:"exit",purpose:"things leaving",binds:[{dur:"fast",ease:"accelerate",stagger:0,prop:"all"}]},
+  {id:nid(),name:"move",purpose:"in-place change",binds:[{dur:"slow",ease:"standard",stagger:0,prop:"all"}]},
+  {id:nid(),name:"emphasized",purpose:"hero moments",binds:[{dur:"slower",ease:"emphasized",stagger:0,prop:"all"}]},
+  {id:nid(),name:"hover",purpose:"pointer feedback",binds:[{dur:"fast",ease:"standard",stagger:0,prop:"all"}]},
 ];
 // the binding for the active mode (clamped so ragged data never throws)
 const bindOf = it => it.binds[Math.min(activeMode, it.binds.length-1)] || it.binds[0];
@@ -69,7 +72,7 @@ const findIntent = id => intents.find(x=>x.id===id) || intents[0];
 const durMs = name => (durations.find(d=>d.name===name)||durations[0]).ms;
 const easeBez = name => (easings.find(e=>e.name===name)||easings[0]).bez;
 const bezStr = a => `cubic-bezier(${a.join(", ")})`;
-const resolve = it => { const b=bindOf(it); return { d: durMs(b.dur)+"ms", e: bezStr(easeBez(b.ease)), s: +b.stagger||0 }; };
+const resolve = it => { const b=bindOf(it); return { d: durMs(b.dur)+"ms", e: bezStr(easeBez(b.ease)), s: +b.stagger||0, prop: b.prop||"all" }; };
 const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
 // default probe intents: enter / exit / move / hover, one abstract orb each
 probes[0].intent = intents[0].id; probes[1].intent = intents[1].id;
@@ -165,8 +168,10 @@ function renderIntents(){
           <select data-scope="iease" data-i="${i}">${easings.map(e=>`<option ${e.name===b.ease?"selected":""}>${e.name}</option>`).join("")}</select></div>
         <div class="field field--stag"><label>Stagger·ms</label>
           <input class="stag" type="number" min="0" max="400" step="5" value="${+b.stagger||0}" data-scope="istag" data-i="${i}" aria-label="stagger in ms"></div>
+        <div class="field"><label>Property</label>
+          <select data-scope="iprop" data-i="${i}">${PROPS.map(pp=>`<option ${pp===(b.prop||"all")?"selected":""}>${pp}</option>`).join("")}</select></div>
       </div>
-      <div class="intent__resolved">→ ${r.d} · ${r.e}${r.s?` · stagger ${r.s}ms`:""}</div>
+      <div class="intent__resolved">→ ${r.d} · ${r.e}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}</div>
     </div>`;
   }).join("");
 }
@@ -290,6 +295,9 @@ function buildCSS(){
     s+=`  <span class="tk2">--motion-${it.name}-duration</span>: <span class="tk">var(--motion-duration-${b.dur})</span>;\n`;
     s+=`  <span class="tk2">--motion-${it.name}-ease</span>: <span class="tk">var(--motion-ease-${b.ease})</span>;\n`;
     if(+b.stagger>0) s+=`  <span class="tk2">--motion-${it.name}-stagger</span>: ${+b.stagger}ms;\n`;
+    // composite transition shorthand: property + duration + easing (+ delay)
+    const delay = +b.stagger>0 ? ` ${+b.stagger}ms` : "";
+    s+=`  <span class="tk2">--motion-${it.name}</span>: ${b.prop||"all"} <span class="tk">var(--motion-${it.name}-duration)</span> <span class="tk">var(--motion-${it.name}-ease)</span>${delay};\n`;
   });
   return s+`}`;
 }
@@ -299,6 +307,7 @@ function buildJSON(){
   durations.forEach(d=>obj.primitives.duration[d.name]=d.ms+"ms");
   easings.forEach(e=>obj.primitives.easing[e.name]=bezStr(e.bez));
   intents.forEach(it=>{ const b=bindOf(it); const v={duration:`{duration.${b.dur}}`,easing:`{easing.${b.ease}}`,purpose:it.purpose};
+    if(b.prop&&b.prop!=="all") v.property=b.prop;
     if(+b.stagger>0) v.stagger=(+b.stagger)+"ms"; obj.semantic[it.name]=v; });
   return JSON.stringify(obj,null,2);
 }
@@ -311,11 +320,14 @@ function buildTailwind(){
   const stag=intents.filter(it=>+bindOf(it).stagger>0)
     .map(it=>`        ${q(it.name)}: ${q((+bindOf(it).stagger)+"ms")}, // per-item stagger`);
   const delayBlock = stag.length ? `      transitionDelay: {\n${stag.join("\n")}\n      },\n` : "";
+  const prop=intents.filter(it=>{ const p=bindOf(it).prop; return p&&p!=="all"; })
+    .map(it=>`        ${q(it.name)}: ${q(bindOf(it).prop)}, // intent`);
+  const propBlock = prop.length ? `      transitionProperty: {\n${prop.join("\n")}\n      },\n` : "";
   return `// tailwind.config.js — motion tokens from Cadence${modeNote()}\n`+
     `module.exports = {\n  theme: {\n    extend: {\n`+
     `      transitionDuration: {\n${dur.join("\n")}\n      },\n`+
     `      transitionTimingFunction: {\n${ease.join("\n")}\n      },\n`+
-    delayBlock+
+    propBlock+delayBlock+
     `    },\n  },\n};`;
 }
 function buildStyleDictionary(){
@@ -325,7 +337,8 @@ function buildStyleDictionary(){
   intents.forEach(it=>{ const b=bindOf(it); const t={
     duration:{value:`{motion.duration.${b.dur}}`,type:"duration"},
     easing:{value:`{motion.easing.${b.ease}}`,type:"cubicBezier"},
-  }; if(+b.stagger>0) t.stagger={value:(+b.stagger)+"ms",type:"duration"}; obj.motion[it.name]=t; });
+  }; if(b.prop&&b.prop!=="all") t.property={value:b.prop,type:"other"};
+    if(+b.stagger>0) t.stagger={value:(+b.stagger)+"ms",type:"duration"}; obj.motion[it.name]=t; });
   return JSON.stringify(obj,null,2);
 }
 function buildTS(){
@@ -333,8 +346,9 @@ function buildTS(){
   const dur=durations.map(d=>`    ${key(d.name)}: ${q(d.ms+"ms")},`).join("\n");
   const ease=easings.map(e=>`    ${key(e.name)}: ${q(bezStr(e.bez))},`).join("\n");
   const sem=intents.map(it=>{ const b=bindOf(it);
+    const prp=(b.prop&&b.prop!=="all")?`, property: ${q(b.prop)}`:"";
     const stag=+b.stagger>0?`, stagger: ${q((+b.stagger)+"ms")}`:"";
-    return `    ${key(it.name)}: { duration: ${q(durMs(b.dur)+"ms")}, easing: ${q(bezStr(easeBez(b.ease)))}${stag} },`; }).join("\n");
+    return `    ${key(it.name)}: { duration: ${q(durMs(b.dur)+"ms")}, easing: ${q(bezStr(easeBez(b.ease)))}${prp}${stag} },`; }).join("\n");
   return `// motion.ts — design tokens from Cadence${modeNote()}\n`+
     `export const motion = {\n`+
     `  duration: {\n${dur}\n  },\n`+
@@ -411,8 +425,8 @@ function encodeState(){
     e: easings.map(e=>[e.name,...e.bez]),
     m: modes.map(x=>x.name),
     am: activeMode,
-    // i: [name, purpose, [[dur,ease,stagger] per mode]]
-    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease,+b.stagger||0])]),
+    // i: [name, purpose, [[dur,ease,stagger,prop] per mode]]
+    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease,+b.stagger||0,b.prop||"all"])]),
     p: probes.map(pb=>{ const k=intents.findIndex(x=>x.id===pb.intent); return [pb.kind, k<0?0:k]; }),
   };
   return b64urlEncode(JSON.stringify(s));
@@ -428,8 +442,8 @@ function applyState(o){
   const it = o.i.map(x=>{
     // new: [name, purpose, [[dur,ease],...]]  ·  legacy: [name, dur, ease, purpose]
     const binds = Array.isArray(x[2])
-      ? x[2].map(b=>({dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0}))
-      : [{dur:String(x[1]),ease:String(x[2]),stagger:0}];
+      ? x[2].map(b=>({dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0,prop:String(b[3]||"all")}))
+      : [{dur:String(x[1]),ease:String(x[2]),stagger:0,prop:"all"}];
     const purpose = Array.isArray(x[2]) ? String(x[1]||"") : String(x[3]||"");
     // pad/trim bindings so every intent has exactly one per mode
     while(binds.length<md.length) binds.push({...binds[binds.length-1]});
@@ -460,7 +474,7 @@ function writeURL(){
 function updateResolvedLines(){
   document.querySelectorAll(".intent__resolved").forEach((el,k)=>{
     if(!intents[k]) return;
-    const r=resolve(intents[k]); el.textContent=`→ ${r.d} · ${r.e}${r.s?` · stagger ${r.s}ms`:""}`;
+    const r=resolve(intents[k]); el.textContent=`→ ${r.d} · ${r.e}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}`;
   });
 }
 
@@ -490,6 +504,7 @@ document.addEventListener("change", e=>{
   if(sc==="ename"){ renameScale(easings,i,t.value,"ease"); }
   if(sc==="idur"){ bindOf(intents[i]).dur=t.value; refreshTokens(); render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iease"){ bindOf(intents[i]).ease=t.value; render(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="iprop"){ bindOf(intents[i]).prop=t.value; render(); updateResolvedLines(); writeURL(); }
   if(sc==="probe"){ probes[i].intent=t.value; writeURL(); }
   if(sc==="pkind"){ probes[i].kind=t.value; renderBench(); writeURL(); }
   if(sc==="mname"){ const s=(t.value.trim())||modes[i].name; modes[i].name=uniqueName(s,modes,i); rerenderAll(); }
@@ -551,7 +566,7 @@ document.getElementById("addEasing").addEventListener("click",()=>{
 });
 document.getElementById("addIntent").addEventListener("click",()=>{
   const dur=durations[0].name, ease=easings[0].name;
-  intents.push({id:nid(),name:"custom",purpose:"your own",binds:modes.map(()=>({dur,ease,stagger:0}))});
+  intents.push({id:nid(),name:"custom",purpose:"your own",binds:modes.map(()=>({dur,ease,stagger:0,prop:"all"}))});
   rerenderAll();
 });
 document.getElementById("playAll").addEventListener("click",playAll);

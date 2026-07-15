@@ -55,12 +55,14 @@ motion-mode axis: add modes (e.g. productive/expressive, min/mid/max) and each
 intent carries a separate (duration, easing) binding per mode, switched globally
 — so one system can hold coordinated variants without duplicating easings. Each
 intent also carries a stagger token (the per-item delay for sequenced elements)
-that drives the list-reveal probe and gets its own system-read check.
+that drives the list-reveal probe and gets its own system-read check, and a
+property axis — each intent names the CSS property it animates, so the CSS
+export can emit a ready-to-use composite `transition` shorthand (property +
+duration + easing + delay), the way Primer's `transition.*` tokens do.
 
 Roadmap: bring-your-own component into the bench; import an existing motion
 palette (a framework's tokens) and run the system-read over it — the
-"reverse-engineer the art direction" angle. One more model extension surfaced by
-the design-system survey: an optional property axis on intents.
+"reverse-engineer the art direction" angle.
 
 ## License
 
