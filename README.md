@@ -55,8 +55,9 @@ motion-mode axis: add modes (e.g. productive/expressive, min/mid/max) and each
 intent carries a separate (duration, easing) binding per mode, switched globally
 — so one system can hold coordinated variants without duplicating easings. Each
 intent also carries a stagger token (the per-item delay for sequenced elements)
-that drives the list-reveal probe and gets its own system-read check, and a
-property axis — each intent names the CSS property it animates, so the CSS
+that drives the list-reveal probe, a "cascade" bench lens that plots the stagger
+as a timeline (each item a bar at k×stagger, width = duration, with a sweeping
+playhead), its own system-read check, and a property axis — each intent names the CSS property it animates, so the CSS
 export can emit a ready-to-use composite `transition` shorthand (property +
 duration + easing + delay), the way Primer's `transition.*` tokens do.
 

@@ -52,13 +52,15 @@ const bindOf = it => it.binds[Math.min(activeMode, it.binds.length-1)] || it.bin
 // component-agnostic default; the rest are a swappable UI-component library.
 const KINDS = [
   {k:"orb",label:"orb · abstract"},
+  {k:"cascade",label:"cascade · timeline"},
   {k:"drawer",label:"drawer"},
   {k:"button",label:"button"},
   {k:"acc",label:"accordion"},
   {k:"reveal",label:"list reveal"},
 ];
+const CASC_N = 6;   // items shown in the stagger timeline
 let probes = [
-  {kind:"orb",intent:null},
+  {kind:"cascade",intent:null},   // opens on the stagger timeline (pointed at enter)
   {kind:"orb",intent:null},
   {kind:"orb",intent:null},
   {kind:"orb",intent:null},
@@ -191,6 +193,16 @@ function renderBench(){
     const color = colorOf(ii<0?0:ii);
     let stage="";
     if(p.kind==="orb") stage=`<div class="orb"></div><span class="orb-base"></span>`;
+    if(p.kind==="cascade"){
+      const rr=resolve(findIntent(p.intent)), dms=parseInt(rr.d)||200, st=rr.s|0;
+      const total=Math.max(1,(CASC_N-1)*st+dms);
+      let lanes="";
+      for(let k=0;k<CASC_N;k++){
+        const left=(k*st)/total*100, w=Math.max(5,dms/total*100);
+        lanes+=`<div class="casc__lane"><div class="casc__bar" style="left:${left.toFixed(2)}%;width:${w.toFixed(2)}%"><i class="casc__fill"></i></div></div>`;
+      }
+      stage=`<div class="casc"><div class="casc__lanes">${lanes}<div class="casc__head"></div></div></div>`;
+    }
     if(p.kind==="drawer") stage=`<div class="scrim"></div><div class="drawer"><span class="l"></span><span class="l"></span><span class="l"></span></div>`;
     if(p.kind==="button") stage=`<div class="btnpad">Hover me</div>`;
     if(p.kind==="acc") stage=`<div class="acc"><div class="acc__hd">Details <span class="chev">⌄</span></div><div class="acc__body"><p>Height and chevron ride the same token, so the change feels like one gesture.</p></div></div>`;
@@ -214,6 +226,18 @@ function anim(el,props,r,delay=0){
 function play(i){
   const p=probes[i], r=resolve(findIntent(p.intent));
   const root=document.querySelector(`.probe[data-i="${i}"]`);
+  if(p.kind==="cascade"){
+    // timeline lens: each lane fills at its staggered start; a playhead sweeps time
+    const dms=parseInt(r.d)||200, st=r.s|0, total=Math.max(1,(CASC_N-1)*st+dms);
+    const fills=[...root.querySelectorAll(".casc__fill")], head=root.querySelector(".casc__head");
+    fills.forEach(f=>{ f.style.transition="none"; f.style.transform="scaleX(0)"; });
+    if(head){ head.style.transition="none"; head.style.left="0%"; head.style.opacity="1"; }
+    void root.offsetWidth;
+    fills.forEach((f,k)=>{ f.style.transition=`transform ${r.d} ${r.e} ${k*st}ms`; });
+    if(head) head.style.transition=`left ${total}ms linear`;
+    requestAnimationFrame(()=>{ fills.forEach(f=>f.style.transform="scaleX(1)"); if(head) head.style.left="100%"; });
+    setTimeout(()=>{ if(head){ head.style.transition="opacity 250ms"; head.style.opacity="0"; } }, total+80);
+  }
   if(p.kind==="orb"){
     // abstract lens: travel + fade + scale, purely showing the token's character
     const o=root.querySelector(".orb");
@@ -494,7 +518,7 @@ document.addEventListener("input", e=>{
   const t=e.target, sc=t.dataset.scope, i=+t.dataset.i;
   if(sc==="dur"){ durations[i].ms=+t.value; refreshTokens(); renderDurations(); render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iname"){ intents[i].name=t.value.trim()||intents[i].name; render(); critique(); writeURL(); }
-  if(sc==="istag"){ bindOf(intents[i]).stagger=Math.max(0,Math.min(400,+t.value||0)); render(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="istag"){ bindOf(intents[i]).stagger=Math.max(0,Math.min(400,+t.value||0)); render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
 });
 // rename a scale slot (duration or easing); intents reference by name, so
 // carry every referencing intent over to the new name. `kind` is "dur"|"ease".
@@ -513,7 +537,7 @@ document.addEventListener("change", e=>{
   if(sc==="ease"){ if(PRESETS[t.value]){ easings[i].bez=PRESETS[t.value].slice(); rerenderAll(); } }
   if(sc==="dname"){ renameScale(durations,i,t.value,"dur"); }
   if(sc==="ename"){ renameScale(easings,i,t.value,"ease"); }
-  if(sc==="idur"){ bindOf(intents[i]).dur=t.value; refreshTokens(); render(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="idur"){ bindOf(intents[i]).dur=t.value; refreshTokens(); render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iease"){ bindOf(intents[i]).ease=t.value; render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iprop"){ bindOf(intents[i]).prop=t.value; render(); updateResolvedLines(); writeURL(); }
   if(sc==="probe"){ probes[i].intent=t.value; renderBench(); writeURL(); }
