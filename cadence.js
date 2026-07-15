@@ -89,7 +89,7 @@ function renderDurations(){
       <span class="drow__track"><input type="range" min="60" max="1000" step="10" value="${d.ms}" data-scope="dur" data-i="${i}" aria-label="${d.name} duration"></span>
       <span class="drow__val">${d.ms}ms</span>
       <span class="drow__mult">${mult}</span>
-      <button class="drow__rm" data-scope="drm" data-i="${i}" title="remove step" aria-label="remove ${d.name}">×</button>
+      ${durations.length>1?`<button class="drow__rm" data-scope="drm" data-i="${i}" title="remove step" aria-label="remove ${d.name}">×</button>`:""}
     </div>`;
   }).join("");
 }
@@ -130,7 +130,7 @@ function renderEasings(){
     const opts=Object.keys(PRESETS).map(k=>`<option ${k===match?"selected":""}>${k}</option>`).join("");
     const custom=match?"":`<option value="custom" selected>custom</option>`;
     return `<div class="ecard">
-      <div class="ecard__top"><input class="ecard__name" value="${e.name}" data-scope="ename" data-i="${i}" aria-label="easing name" spellcheck="false"><button class="ecard__rm" data-scope="erm" data-i="${i}" title="remove easing" aria-label="remove ${e.name}">×</button></div>
+      <div class="ecard__top"><input class="ecard__name" value="${e.name}" data-scope="ename" data-i="${i}" aria-label="easing name" spellcheck="false">${easings.length>1?`<button class="ecard__rm" data-scope="erm" data-i="${i}" title="remove easing" aria-label="remove ${e.name}">×</button>`:""}</div>
       <div class="ecard__plot" data-i="${i}">${easingSVG(e.bez)}</div>
       <select data-scope="ease" data-i="${i}" aria-label="${e.name} curve">${custom}${opts}</select>
     </div>`;
@@ -159,7 +159,7 @@ function renderIntents(){
       <div class="intent__top">
         <input class="intent__name" value="${it.name}" data-scope="iname" data-i="${i}" aria-label="intent name">
         <span class="intent__purpose">${it.purpose||""}</span>
-        <button class="intent__rm" data-scope="irm" data-i="${i}" title="remove" aria-label="remove intent">×</button>
+        ${intents.length>1?`<button class="intent__rm" data-scope="irm" data-i="${i}" title="remove" aria-label="remove intent">×</button>`:""}
       </div>
       <div class="intent__ref">
         <div class="field"><label>Duration</label>
@@ -479,6 +479,10 @@ function updateResolvedLines(){
 }
 
 // ---------- events (delegated) ----------
+// Enter commits an edit (name/stagger inputs) by blurring — no waiting for focus loss
+document.addEventListener("keydown", e=>{
+  if(e.key==="Enter" && e.target.tagName==="INPUT" && e.target.dataset.scope){ e.preventDefault(); e.target.blur(); }
+});
 document.addEventListener("input", e=>{
   const t=e.target, sc=t.dataset.scope, i=+t.dataset.i;
   if(sc==="dur"){ durations[i].ms=+t.value; refreshTokens(); renderDurations(); render(); critique(); updateResolvedLines(); writeURL(); }
