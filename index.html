@@ -11,9 +11,16 @@
 <header class="top">
   <h1>cadence</h1>
   <span class="tag">a motion <em>system</em> designer — scales, intents, and a swappable bench</span>
-  <select class="loadsys" id="loadSystem" aria-label="Load a design system's motion palette"></select>
-  <span class="proto">PROTOTYPE v0.3</span>
+  <div class="header-actions">
+    <select class="loadsys" id="loadSystem" aria-label="Load a design system's motion palette"></select>
+    <span class="proto">PROTOTYPE v0.3</span>
+  </div>
 </header>
+
+<div class="intro" id="intro">
+  <span class="intro__txt">Two token layers — tune <strong>primitives</strong> (durations &amp; easings) on the left, compose <strong>intents</strong> in the middle, ship from <strong>export</strong> on the right. New here? <strong>Load a system&nbsp;↑</strong> to explore a real one.</span>
+  <button class="intro__x" id="introClose" title="Dismiss" aria-label="Dismiss intro">×</button>
+</div>
 
 <div class="wrap">
   <!-- LAYER 1 -->

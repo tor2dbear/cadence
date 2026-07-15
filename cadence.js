@@ -32,6 +32,10 @@ let activeMode = 0;
 // which CSS property an intent animates (Primer/Atlassian treat this as a
 // first-class attribute). "all" is the neutral default.
 const PROPS = ["all","opacity","transform","color","background-color","height","width"];
+// a stable colour per intent (by position) so the bench reads by role, not one
+// flat teal. Defaults land on enter=teal, exit=red, move=amber, emphasized=violet.
+const INTENT_COLORS = ["#8ad0c6","#e08b7f","#e9b872","#b79cf0","#7ab8f0","#d69ce0","#9ad17f"];
+const colorOf = i => INTENT_COLORS[((i%INTENT_COLORS.length)+INTENT_COLORS.length)%INTENT_COLORS.length];
 // each intent carries one binding {dur, ease, stagger, prop} per mode. `stagger`
 // (ms) is the per-item delay for sequenced elements; `prop` is the target.
 let intents = [
@@ -157,6 +161,7 @@ function renderIntents(){
     const b=bindOf(it), r=resolve(it);
     return `<div class="intent" data-id="${it.id}">
       <div class="intent__top">
+        <span class="intent__dot" style="background:${colorOf(i)}" aria-hidden="true"></span>
         <input class="intent__name" value="${it.name}" data-scope="iname" data-i="${i}" aria-label="intent name">
         <span class="intent__purpose">${it.purpose||""}</span>
         ${intents.length>1?`<button class="intent__rm" data-scope="irm" data-i="${i}" title="remove" aria-label="remove intent">×</button>`:""}
@@ -182,13 +187,15 @@ function renderBench(){
   el.innerHTML = probes.map((p,i)=>{
     const opts = intents.map(it=>`<option value="${it.id}" ${it.id===p.intent?"selected":""}>${it.name}</option>`).join("");
     const kinds = KINDS.map(kd=>`<option value="${kd.k}" ${kd.k===p.kind?"selected":""}>${kd.label}</option>`).join("");
+    const ii = intents.findIndex(x=>x.id===p.intent);   // colour the probe by its intent
+    const color = colorOf(ii<0?0:ii);
     let stage="";
     if(p.kind==="orb") stage=`<div class="orb"></div><span class="orb-base"></span>`;
     if(p.kind==="drawer") stage=`<div class="scrim"></div><div class="drawer"><span class="l"></span><span class="l"></span><span class="l"></span></div>`;
     if(p.kind==="button") stage=`<div class="btnpad">Hover me</div>`;
     if(p.kind==="acc") stage=`<div class="acc"><div class="acc__hd">Details <span class="chev">⌄</span></div><div class="acc__body"><p>Height and chevron ride the same token, so the change feels like one gesture.</p></div></div>`;
     if(p.kind==="reveal") stage=`<div class="reveal"><span class="card"></span><span class="card"></span><span class="card"></span></div>`;
-    return `<div class="probe" data-i="${i}">
+    return `<div class="probe" data-i="${i}" style="--accent:${color}">
       <div class="probe__hd">
         <select class="probe__kind" data-scope="pkind" data-i="${i}" aria-label="lens">${kinds}</select>
         <select class="probe__sel" data-scope="probe" data-i="${i}" aria-label="intent">${opts}</select>
@@ -509,7 +516,7 @@ document.addEventListener("change", e=>{
   if(sc==="idur"){ bindOf(intents[i]).dur=t.value; refreshTokens(); render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iease"){ bindOf(intents[i]).ease=t.value; render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iprop"){ bindOf(intents[i]).prop=t.value; render(); updateResolvedLines(); writeURL(); }
-  if(sc==="probe"){ probes[i].intent=t.value; writeURL(); }
+  if(sc==="probe"){ probes[i].intent=t.value; renderBench(); writeURL(); }
   if(sc==="pkind"){ probes[i].kind=t.value; renderBench(); writeURL(); }
   if(sc==="mname"){ const s=(t.value.trim())||modes[i].name; modes[i].name=uniqueName(s,modes,i); rerenderAll(); }
 });
@@ -600,6 +607,14 @@ document.getElementById("share").addEventListener("click",()=>{
     if(!t) return;
     try{ applyState(structuredClone(t)); rerenderAll(); }catch(_){}
   });
+})();
+
+// dismissible orientation strip (remembered across visits)
+(function initIntro(){
+  const el=document.getElementById("intro"); if(!el) return;
+  try{ if(localStorage.getItem("cadence-intro")==="off") el.hidden=true; }catch(_){}
+  const x=document.getElementById("introClose");
+  if(x) x.addEventListener("click",()=>{ el.hidden=true; try{ localStorage.setItem("cadence-intro","off"); }catch(_){} });
 })();
 
 // restore a shared system from the URL hash before the first render
