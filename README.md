@@ -39,7 +39,7 @@ python3 -m http.server 4173
 
 ## Status
 
-Prototype (v0.2). Rough edges expected.
+Prototype (v0.3). Rough edges expected.
 
 Shipped since v0.2: editable scales (add/remove/rename duration steps and
 easings), a draggable bézier editor (author each easing by dragging its control
@@ -47,11 +47,17 @@ points, with headroom for overshoot), a shareable system — the whole token set
 is encoded in the URL, so a link restores it — export to CSS, JSON, Tailwind
 config, Style Dictionary, and a typed TS object, and a lens-based bench: each
 probe defaults to an abstract "orb" that shows pure motion, and can switch to a
-UI component (drawer, button, accordion, list reveal) to stress-test a token.
+UI component (drawer, button, accordion, list reveal) to stress-test a token,
+and a "Load a system" picker that seeds the whole model from a real design
+system's motion palette (Material 3, Carbon, Fluent, Ant, Tailwind, Atlassian,
+Polaris, Primer, Spectrum) for comparison or as a starting point.
 
 Roadmap: bring-your-own component into the bench; import an existing motion
 palette (a framework's tokens) and run the system-read over it — the
-"reverse-engineer the art direction" angle.
+"reverse-engineer the art direction" angle. Model extensions surfaced by the
+design-system survey: a mode/intensity axis (Carbon productive/expressive,
+Fluent min/mid/max), a delay/stagger primitive, and an optional property axis on
+intents.
 
 ## License
 

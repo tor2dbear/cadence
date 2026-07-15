@@ -317,6 +317,51 @@ function refreshTokens(){
 }
 function rerenderAll(){ renderDurations();renderEasings();renderIntents();renderBench();refreshTokens();render();critique();writeURL(); }
 
+// ---------- starter templates: motion palettes from established design systems ----------
+// state shape matches encodeState: d[[name,ms]] · e[[name,x1,y1,x2,y2]] · i[[name,dur,ease,purpose]] · p[[kind,intentIdx]]
+const TEMPLATES = {
+  "Cadence starter": {d:[["fast",150],["base",200],["slow",300],["slower",500],["xslow",800]],
+    e:[["standard",0.2,0,0.2,1],["decelerate",0,0,0.2,1],["accelerate",0.4,0,1,1],["emphasized",0.22,1,0.36,1]],
+    i:[["enter","base","emphasized","things appearing"],["exit","fast","accelerate","things leaving"],["move","slow","standard","in-place change"],["emphasized","slower","emphasized","hero moments"],["hover","fast","standard","pointer feedback"]],
+    p:[["orb",0],["orb",1],["orb",2],["orb",4]]},
+  "Material 3 · Google": {d:[["short2",100],["short4",200],["medium2",300],["medium4",400],["long2",500],["xlong2",800]],
+    e:[["linear",0,0,1,1],["standard",0.2,0,0,1],["standard-accel",0.3,0,1,1],["standard-decel",0,0,0,1],["emph-accel",0.3,0,0.8,0.15],["emph-decel",0.05,0.7,0.1,1]],
+    i:[["enter","medium4","emph-decel","element arriving"],["exit","short4","emph-accel","element leaving"],["move","medium2","standard","in-place change"],["emphasized","long2","emph-decel","hero moment"],["hover","short2","standard","pointer feedback"]],
+    p:[["orb",0],["orb",1],["orb",2],["orb",3]]},
+  "IBM Carbon": {d:[["fast-01",70],["fast-02",110],["moderate-01",150],["moderate-02",240],["slow-01",400],["slow-02",700]],
+    e:[["std-productive",0.2,0,0.38,0.9],["entrance-productive",0,0,0.38,0.9],["exit-productive",0.2,0,1,0.9],["std-expressive",0.4,0.14,0.3,1],["entrance-expressive",0,0,0.3,1],["exit-expressive",0.4,0.14,1,1]],
+    i:[["enter","moderate-01","entrance-productive","productive entrance"],["exit","moderate-01","exit-productive","productive exit"],["move","moderate-02","std-productive","on-screen change"],["emphasized","slow-01","entrance-expressive","expressive entrance"],["hover","fast-01","std-productive","pointer feedback"]],
+    p:[["orb",0],["orb",1],["orb",2],["orb",3]]},
+  "Fluent 2 · Microsoft": {d:[["ultra-fast",50],["faster",100],["fast",150],["normal",200],["gentle",250],["slow",300],["slower",400],["ultra-slow",500]],
+    e:[["linear",0,0,1,1],["easy-ease",0.33,0,0.67,1],["accelerate-mid",1,0,1,1],["decelerate-mid",0,0,0,1],["accelerate-max",0.9,0.1,1,0.2],["decelerate-max",0.1,0.9,0.2,1]],
+    i:[["enter","normal","decelerate-mid","element arriving"],["exit","fast","accelerate-mid","element leaving"],["move","normal","easy-ease","in-place change"],["emphasized","slow","decelerate-max","large travel enter"],["hover","faster","easy-ease","pointer feedback"]],
+    p:[["orb",0],["orb",1],["orb",2],["orb",3]]},
+  "Ant Design": {d:[["fast",100],["mid",200],["slow",300]],
+    e:[["ease-in-out",0.645,0.045,0.355,1],["ease-out",0.215,0.61,0.355,1],["out-circ",0.08,0.82,0.17,1],["in-out-circ",0.78,0.14,0.15,0.86],["out-quint",0.23,1,0.32,1],["in-quint",0.755,0.05,0.855,0.06],["out-back",0.12,0.4,0.29,1.46]],
+    i:[["zoom-in","mid","out-circ","zoom appear"],["zoom-out","mid","in-out-circ","zoom leave"],["slide-in","slow","out-quint","slide appear"],["move","mid","ease-in-out","in-place change"],["hover","fast","ease-out","pointer feedback"]],
+    p:[["orb",0],["orb",1],["orb",2],["orb",3]]},
+  "Tailwind CSS": {d:[["d75",75],["d100",100],["d150",150],["d200",200],["d300",300],["d500",500],["d700",700],["d1000",1000]],
+    e:[["linear",0,0,1,1],["ease-in",0.4,0,1,1],["ease-out",0,0,0.2,1],["ease-in-out",0.4,0,0.2,1]],
+    i:[["enter","d200","ease-out","element arriving"],["exit","d150","ease-in","element leaving"],["move","d300","ease-in-out","in-place change"],["default","d150","ease-in-out","default transition"],["hover","d150","ease-in-out","pointer feedback"]],
+    p:[["orb",0],["orb",1],["orb",2],["orb",3]]},
+  "Atlassian": {d:[["small",100],["medium",350],["large",700]],
+    e:[["out-bold",0,0.4,0,1],["in-out-bold",0.4,0,0,1],["in-practical",0.6,0,0.8,0.6],["out-practical",0.4,1,0.6,1]],
+    i:[["enter","medium","out-bold","element entering"],["exit","small","in-practical","element exiting"],["move","medium","in-out-bold","scaling / repositioning"],["emphasized","large","out-bold","large entrance"],["hover","small","out-practical","subtle hover / fade"]],
+    p:[["orb",0],["orb",1],["orb",2],["orb",3]]},
+  "Polaris · Shopify": {d:[["d100",100],["d150",150],["d200",200],["d300",300],["d400",400],["d500",500]],
+    e:[["linear",0,0,1,1],["ease",0.25,0.1,0.25,1],["ease-in",0.42,0,1,1],["ease-out",0.19,0.91,0.38,1],["ease-in-out",0.42,0,0.58,1]],
+    i:[["enter","d200","ease-out","element arriving"],["exit","d150","ease-in","element leaving"],["move","d200","ease-in-out","in-place change"],["emphasized","d300","ease-out","emphasis"],["hover","d100","ease","pointer feedback"]],
+    p:[["orb",0],["orb",1],["orb",2],["orb",3]]},
+  "GitHub Primer": {d:[["micro",100],["short",200],["medium",300],["long",500]],
+    e:[["linear",0,0,1,1],["ease",0.25,0.1,0.25,1],["ease-in",0.7,0.1,0.75,0.9],["ease-out",0.3,0.8,0.6,1],["ease-in-out",0.6,0,0.2,1]],
+    i:[["hover","micro","ease","pointer feedback"],["state-change","short","ease-in-out","on-screen change"],["enter","medium","ease-out","element arriving"],["exit","short","ease-in","element leaving"]],
+    p:[["orb",0],["orb",1],["orb",2],["orb",3]]},
+  "Adobe Spectrum": {d:[["d130",130],["d190",190],["d250",250],["d300",300],["d400",400],["d500",500]],
+    e:[["linear",0,0,1,1],["ease-in-out",0.45,0,0.4,1],["ease-in",0.5,0,1,1],["ease-out",0,0,0.4,1]],
+    i:[["enter","d250","ease-out","element arriving"],["exit","d190","ease-in","element leaving"],["move","d250","ease-in-out","in-place change"],["emphasized","d400","ease-out","emphasis"],["hover","d130","ease-out","pointer feedback"]],
+    p:[["orb",0],["orb",1],["orb",2],["orb",3]]},
+};
+
 // ---------- shareable state (whole system encoded in the URL hash) ----------
 const b64urlEncode = str => btoa(unescape(encodeURIComponent(str))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 const b64urlDecode = s => decodeURIComponent(escape(atob(s.replace(/-/g,"+").replace(/_/g,"/"))));
@@ -329,9 +374,9 @@ function encodeState(){
   };
   return b64urlEncode(JSON.stringify(s));
 }
-// mutate the model in place from an encoded string; throws on malformed input
-function applyEncoded(raw){
-  const o = JSON.parse(b64urlDecode(raw));
+function applyEncoded(raw){ applyState(JSON.parse(b64urlDecode(raw))); }
+// mutate the model in place from a parsed state object; throws on malformed input
+function applyState(o){
   if(!o||!Array.isArray(o.d)||!Array.isArray(o.e)||!Array.isArray(o.i)) throw new Error("bad state");
   const d = o.d.map(x=>({name:String(x[0]),ms:+x[1]||200}));
   const e = o.e.map(x=>({name:String(x[0]),bez:[+x[1],+x[2],+x[3],+x[4]]}));
@@ -459,6 +504,20 @@ document.getElementById("share").addEventListener("click",()=>{
   navigator.clipboard?.writeText(location.href);
   const b=document.getElementById("share"); b.textContent="Link copied ✓"; setTimeout(()=>b.textContent="Copy share link",1400);
 });
+
+// load-a-system picker: populate from TEMPLATES, apply on choose
+(function initLoader(){
+  const sel=document.getElementById("loadSystem");
+  if(!sel) return;
+  sel.innerHTML=`<option value="">Load a system…</option>`+
+    Object.keys(TEMPLATES).map(k=>`<option value="${k}">${k}</option>`).join("");
+  sel.addEventListener("change",()=>{
+    const t=TEMPLATES[sel.value];
+    sel.value="";                          // reset so re-picking the same one re-fires
+    if(!t) return;
+    try{ applyState(structuredClone(t)); rerenderAll(); }catch(_){}
+  });
+})();
 
 // restore a shared system from the URL hash before the first render
 (function initFromURL(){
