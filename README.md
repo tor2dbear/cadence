@@ -50,14 +50,16 @@ probe defaults to an abstract "orb" that shows pure motion, and can switch to a
 UI component (drawer, button, accordion, list reveal) to stress-test a token,
 and a "Load a system" picker that seeds the whole model from a real design
 system's motion palette (Material 3, Carbon, Fluent, Ant, Tailwind, Atlassian,
-Polaris, Primer, Spectrum) for comparison or as a starting point.
+Polaris, Primer, Spectrum) for comparison or as a starting point, and a
+motion-mode axis: add modes (e.g. productive/expressive, min/mid/max) and each
+intent carries a separate (duration, easing) binding per mode, switched globally
+— so one system can hold coordinated variants without duplicating easings.
 
 Roadmap: bring-your-own component into the bench; import an existing motion
 palette (a framework's tokens) and run the system-read over it — the
-"reverse-engineer the art direction" angle. Model extensions surfaced by the
-design-system survey: a mode/intensity axis (Carbon productive/expressive,
-Fluent min/mid/max), a delay/stagger primitive, and an optional property axis on
-intents.
+"reverse-engineer the art direction" angle. Further model extensions surfaced by
+the design-system survey: a delay/stagger primitive, and an optional property
+axis on intents.
 
 ## License
 

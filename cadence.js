@@ -25,13 +25,20 @@ let easings = [
 ];
 let idc = 0;
 const nid = () => "i"+(idc++);
+// motion "modes" (e.g. Carbon productive/expressive, Fluent min/mid/max): a
+// global axis so one intent resolves to a different (duration, easing) per mode.
+let modes = [{name:"default"}];
+let activeMode = 0;
+// each intent carries one binding {dur, ease} per mode, parallel to `modes`.
 let intents = [
-  {id:nid(),name:"enter",dur:"base",ease:"emphasized",purpose:"things appearing"},
-  {id:nid(),name:"exit",dur:"fast",ease:"accelerate",purpose:"things leaving"},
-  {id:nid(),name:"move",dur:"slow",ease:"standard",purpose:"in-place change"},
-  {id:nid(),name:"emphasized",dur:"slower",ease:"emphasized",purpose:"hero moments"},
-  {id:nid(),name:"hover",dur:"fast",ease:"standard",purpose:"pointer feedback"},
+  {id:nid(),name:"enter",purpose:"things appearing",binds:[{dur:"base",ease:"emphasized"}]},
+  {id:nid(),name:"exit",purpose:"things leaving",binds:[{dur:"fast",ease:"accelerate"}]},
+  {id:nid(),name:"move",purpose:"in-place change",binds:[{dur:"slow",ease:"standard"}]},
+  {id:nid(),name:"emphasized",purpose:"hero moments",binds:[{dur:"slower",ease:"emphasized"}]},
+  {id:nid(),name:"hover",purpose:"pointer feedback",binds:[{dur:"fast",ease:"standard"}]},
 ];
+// the binding for the active mode (clamped so ragged data never throws)
+const bindOf = it => it.binds[Math.min(activeMode, it.binds.length-1)] || it.binds[0];
 // probes reference an intent by id
 // each probe is a lens (kind) pointed at one intent. "orb" is the abstract,
 // component-agnostic default; the rest are a swappable UI-component library.
@@ -61,7 +68,7 @@ const findIntent = id => intents.find(x=>x.id===id) || intents[0];
 const durMs = name => (durations.find(d=>d.name===name)||durations[0]).ms;
 const easeBez = name => (easings.find(e=>e.name===name)||easings[0]).bez;
 const bezStr = a => `cubic-bezier(${a.join(", ")})`;
-const resolve = intent => ({ d: durMs(intent.dur)+"ms", e: bezStr(easeBez(intent.ease)) });
+const resolve = it => { const b=bindOf(it); return { d: durMs(b.dur)+"ms", e: bezStr(easeBez(b.ease)) }; };
 const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
 // default probe intents: enter / exit / move / hover, one abstract orb each
 probes[0].intent = intents[0].id; probes[1].intent = intents[1].id;
@@ -126,11 +133,24 @@ function renderEasings(){
   }).join("");
 }
 
+// ---------- render: modes (the global variant axis) ----------
+function renderModes(){
+  const el=document.getElementById("modes");
+  if(!el) return;
+  el.innerHTML = modes.map((m,i)=>{
+    if(i===activeMode) return `<span class="mode active">
+        <input class="mode__name" value="${m.name}" data-scope="mname" data-i="${i}" aria-label="mode name" spellcheck="false">
+        ${modes.length>1?`<button class="mode__rm" data-scope="mrm" data-i="${i}" title="remove mode" aria-label="remove mode">×</button>`:""}
+      </span>`;
+    return `<button class="mode" data-scope="mset" data-i="${i}">${m.name}</button>`;
+  }).join("") + `<button class="mode mode--add" data-scope="madd" title="add a mode (copies the current one)">+ mode</button>`;
+}
+
 // ---------- render: intents ----------
 function renderIntents(){
   const el=document.getElementById("intents");
   el.innerHTML = intents.map((it,i)=>{
-    const r=resolve(it);
+    const b=bindOf(it), r=resolve(it);
     return `<div class="intent" data-id="${it.id}">
       <div class="intent__top">
         <input class="intent__name" value="${it.name}" data-scope="iname" data-i="${i}" aria-label="intent name">
@@ -139,9 +159,9 @@ function renderIntents(){
       </div>
       <div class="intent__ref">
         <div class="field"><label>Duration</label>
-          <select data-scope="idur" data-i="${i}">${durations.map(d=>`<option ${d.name===it.dur?"selected":""}>${d.name}</option>`).join("")}</select></div>
+          <select data-scope="idur" data-i="${i}">${durations.map(d=>`<option ${d.name===b.dur?"selected":""}>${d.name}</option>`).join("")}</select></div>
         <div class="field"><label>Easing</label>
-          <select data-scope="iease" data-i="${i}">${easings.map(e=>`<option ${e.name===it.ease?"selected":""}>${e.name}</option>`).join("")}</select></div>
+          <select data-scope="iease" data-i="${i}">${easings.map(e=>`<option ${e.name===b.ease?"selected":""}>${e.name}</option>`).join("")}</select></div>
       </div>
       <div class="intent__resolved">→ ${r.d} · ${r.e}</div>
     </div>`;
@@ -233,20 +253,22 @@ function critique(){
   // 3. enter/exit asymmetry
   const en=intents.find(x=>/enter|open|in$/i.test(x.name)), ex=intents.find(x=>/exit|close|out$/i.test(x.name));
   if(en&&ex){
-    const de=durMs(en.dur),dx=durMs(ex.dur);
+    const de=durMs(bindOf(en).dur),dx=durMs(bindOf(ex).dur);
     if(Math.abs(de-dx)<40) out.push(["warn","≠",`“${en.name}” and “${ex.name}” resolve to near-equal durations (${de}/${dx}ms). Real motion is asymmetric — exits should be quicker so leaving feels decisive.`]);
     else if(dx<de) out.push(["ok","✓",`“${ex.name}” (${dx}ms) is quicker than “${en.name}” (${de}ms) — leaving feels decisive.`]);
     else out.push(["warn","!",`“${ex.name}” (${dx}ms) is slower than “${en.name}” (${de}ms). The user already chose to dismiss; a slow exit drags.`]);
   }
   // 4. long-duration budget
-  const longIntent = intents.find(x=>durMs(x.dur)>550);
-  if(longIntent) out.push(["warn","!",`“${longIntent.name}” resolves to ${durMs(longIntent.dur)}ms. Past ~550ms motion starts to feel like waiting — reserve the top of the ladder for large travel only.`]);
+  const longIntent = intents.find(x=>durMs(bindOf(x).dur)>550);
+  if(longIntent) out.push(["warn","!",`“${longIntent.name}” resolves to ${durMs(bindOf(longIntent).dur)}ms. Past ~550ms motion starts to feel like waiting — reserve the top of the ladder for large travel only.`]);
   document.getElementById("hints").innerHTML = out.map(h=>`<div class="rd ${h[0]}"><span class="ic">${h[1]}</span><span>${h[2]}</span></div>`).join("");
 }
 
 // ---------- export ----------
 let fmt="css";
 const isIdent = k => /^[a-z_$][\w$]*$/i.test(k);   // safe as a bare object key?
+// with >1 mode, exports reflect the active mode (noted in a comment/field).
+const modeNote = () => modes.length>1 ? ` · mode: ${modes[activeMode].name}` : "";
 // CSS keeps syntax-highlight spans (innerHTML); the rest are plain text.
 function buildCSS(){
   let s=`<span class="cm">/* Cadence — motion system */</span>\n:root{\n`;
@@ -254,27 +276,28 @@ function buildCSS(){
   durations.forEach(d=>s+=`  <span class="tk">--motion-duration-${d.name}</span>: ${d.ms}ms;\n`);
   s+=`\n  <span class="cm">/* primitives · easing */</span>\n`;
   easings.forEach(e=>s+=`  <span class="tk">--motion-ease-${e.name}</span>: ${bezStr(e.bez)};\n`);
-  s+=`\n  <span class="cm">/* semantic · intents → reference primitives */</span>\n`;
-  intents.forEach(it=>{
-    s+=`  <span class="tk2">--motion-${it.name}-duration</span>: <span class="tk">var(--motion-duration-${it.dur})</span>;\n`;
-    s+=`  <span class="tk2">--motion-${it.name}-ease</span>: <span class="tk">var(--motion-ease-${it.ease})</span>;\n`;
+  s+=`\n  <span class="cm">/* semantic · intents → reference primitives${modeNote()} */</span>\n`;
+  intents.forEach(it=>{ const b=bindOf(it);
+    s+=`  <span class="tk2">--motion-${it.name}-duration</span>: <span class="tk">var(--motion-duration-${b.dur})</span>;\n`;
+    s+=`  <span class="tk2">--motion-${it.name}-ease</span>: <span class="tk">var(--motion-ease-${b.ease})</span>;\n`;
   });
   return s+`}`;
 }
 function buildJSON(){
   const obj={primitives:{duration:{},easing:{}},semantic:{}};
+  if(modes.length>1) obj.mode=modes[activeMode].name;
   durations.forEach(d=>obj.primitives.duration[d.name]=d.ms+"ms");
   easings.forEach(e=>obj.primitives.easing[e.name]=bezStr(e.bez));
-  intents.forEach(it=>obj.semantic[it.name]={duration:`{duration.${it.dur}}`,easing:`{easing.${it.ease}}`,purpose:it.purpose});
+  intents.forEach(it=>{ const b=bindOf(it); obj.semantic[it.name]={duration:`{duration.${b.dur}}`,easing:`{easing.${b.ease}}`,purpose:it.purpose}; });
   return JSON.stringify(obj,null,2);
 }
 function buildTailwind(){
   const q=JSON.stringify;
   const dur=[...durations.map(d=>`        ${q(d.name)}: ${q(d.ms+"ms")},`),
-             ...intents.map(it=>`        ${q(it.name)}: ${q(durMs(it.dur)+"ms")}, // intent`)];
+             ...intents.map(it=>`        ${q(it.name)}: ${q(durMs(bindOf(it).dur)+"ms")}, // intent`)];
   const ease=[...easings.map(e=>`        ${q(e.name)}: ${q(bezStr(e.bez))},`),
-              ...intents.map(it=>`        ${q(it.name)}: ${q(bezStr(easeBez(it.ease)))}, // intent`)];
-  return `// tailwind.config.js — motion tokens from Cadence\n`+
+              ...intents.map(it=>`        ${q(it.name)}: ${q(bezStr(easeBez(bindOf(it).ease)))}, // intent`)];
+  return `// tailwind.config.js — motion tokens from Cadence${modeNote()}\n`+
     `module.exports = {\n  theme: {\n    extend: {\n`+
     `      transitionDuration: {\n${dur.join("\n")}\n      },\n`+
     `      transitionTimingFunction: {\n${ease.join("\n")}\n      },\n`+
@@ -284,18 +307,18 @@ function buildStyleDictionary(){
   const obj={motion:{duration:{},easing:{}}};
   durations.forEach(d=>obj.motion.duration[d.name]={value:d.ms+"ms",type:"duration"});
   easings.forEach(e=>obj.motion.easing[e.name]={value:bezStr(e.bez),type:"cubicBezier"});
-  intents.forEach(it=>obj.motion[it.name]={
-    duration:{value:`{motion.duration.${it.dur}}`,type:"duration"},
-    easing:{value:`{motion.easing.${it.ease}}`,type:"cubicBezier"},
-  });
+  intents.forEach(it=>{ const b=bindOf(it); obj.motion[it.name]={
+    duration:{value:`{motion.duration.${b.dur}}`,type:"duration"},
+    easing:{value:`{motion.easing.${b.ease}}`,type:"cubicBezier"},
+  }; });
   return JSON.stringify(obj,null,2);
 }
 function buildTS(){
   const key=k=>isIdent(k)?k:JSON.stringify(k), q=JSON.stringify;
   const dur=durations.map(d=>`    ${key(d.name)}: ${q(d.ms+"ms")},`).join("\n");
   const ease=easings.map(e=>`    ${key(e.name)}: ${q(bezStr(e.bez))},`).join("\n");
-  const sem=intents.map(it=>`    ${key(it.name)}: { duration: ${q(durMs(it.dur)+"ms")}, easing: ${q(bezStr(easeBez(it.ease)))} },`).join("\n");
-  return `// motion.ts — design tokens from Cadence\n`+
+  const sem=intents.map(it=>{ const b=bindOf(it); return `    ${key(it.name)}: { duration: ${q(durMs(b.dur)+"ms")}, easing: ${q(bezStr(easeBez(b.ease)))} },`; }).join("\n");
+  return `// motion.ts — design tokens from Cadence${modeNote()}\n`+
     `export const motion = {\n`+
     `  duration: {\n${dur}\n  },\n`+
     `  easing: {\n${ease}\n  },\n`+
@@ -315,7 +338,7 @@ function refreshTokens(){
   durations.forEach(d=>s.setProperty(`--motion-duration-${d.name}`,d.ms+"ms"));
   easings.forEach(e=>s.setProperty(`--motion-ease-${e.name}`,bezStr(e.bez)));
 }
-function rerenderAll(){ renderDurations();renderEasings();renderIntents();renderBench();refreshTokens();render();critique();writeURL(); }
+function rerenderAll(){ renderModes();renderDurations();renderEasings();renderIntents();renderBench();refreshTokens();render();critique();writeURL(); }
 
 // ---------- starter templates: motion palettes from established design systems ----------
 // state shape matches encodeState: d[[name,ms]] · e[[name,x1,y1,x2,y2]] · i[[name,dur,ease,purpose]] · p[[kind,intentIdx]]
@@ -369,7 +392,10 @@ function encodeState(){
   const s = {
     d: durations.map(d=>[d.name,d.ms]),
     e: easings.map(e=>[e.name,...e.bez]),
-    i: intents.map(it=>[it.name,it.dur,it.ease,it.purpose||""]),
+    m: modes.map(x=>x.name),
+    am: activeMode,
+    // i: [name, purpose, [[dur,ease] per mode]]
+    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease])]),
     p: probes.map(pb=>{ const k=intents.findIndex(x=>x.id===pb.intent); return [pb.kind, k<0?0:k]; }),
   };
   return b64urlEncode(JSON.stringify(s));
@@ -380,12 +406,25 @@ function applyState(o){
   if(!o||!Array.isArray(o.d)||!Array.isArray(o.e)||!Array.isArray(o.i)) throw new Error("bad state");
   const d = o.d.map(x=>({name:String(x[0]),ms:+x[1]||200}));
   const e = o.e.map(x=>({name:String(x[0]),bez:[+x[1],+x[2],+x[3],+x[4]]}));
-  const it = o.i.map(x=>({id:nid(),name:String(x[0]),dur:String(x[1]),ease:String(x[2]),purpose:String(x[3]||"")}));
+  // modes: new links carry `m`; legacy links imply a single "default" mode.
+  const md = Array.isArray(o.m)&&o.m.length ? o.m.map(n=>({name:String(n)})) : [{name:"default"}];
+  const it = o.i.map(x=>{
+    // new: [name, purpose, [[dur,ease],...]]  ·  legacy: [name, dur, ease, purpose]
+    const binds = Array.isArray(x[2])
+      ? x[2].map(b=>({dur:String(b[0]),ease:String(b[1])}))
+      : [{dur:String(x[1]),ease:String(x[2])}];
+    const purpose = Array.isArray(x[2]) ? String(x[1]||"") : String(x[3]||"");
+    // pad/trim bindings so every intent has exactly one per mode
+    while(binds.length<md.length) binds.push({...binds[binds.length-1]});
+    binds.length=md.length;
+    return {id:nid(),name:String(x[0]),purpose,binds};
+  });
   if(!d.length||!e.length||!it.length) throw new Error("empty scale");
-  durations=d; easings=e; intents=it;
-  // intents that reference a now-missing name fall back to the first slot
+  durations=d; easings=e; intents=it; modes=md;
+  activeMode=Math.max(0,Math.min(modes.length-1, +o.am||0));
+  // bindings that reference a now-missing name fall back to the first slot
   const dn=new Set(durations.map(x=>x.name)), en=new Set(easings.map(x=>x.name));
-  intents.forEach(x=>{ if(!dn.has(x.dur))x.dur=durations[0].name; if(!en.has(x.ease))x.ease=easings[0].name; });
+  intents.forEach(x=>x.binds.forEach(b=>{ if(!dn.has(b.dur))b.dur=durations[0].name; if(!en.has(b.ease))b.ease=easings[0].name; }));
   // restore each probe's lens (kind) + intent. New format stores [kind, idx];
   // legacy links stored a bare intent index (kind stays the default).
   const pick=k=>intents[Math.max(0,Math.min(intents.length-1,k))].id;
@@ -422,7 +461,7 @@ function renameScale(arr, i, raw, kind){
   const next = uniqueName(s, arr, i);
   if(next!==old){
     arr[i].name = next;
-    intents.forEach(it=>{ if(it[kind]===old) it[kind]=next; });
+    intents.forEach(it=>it.binds.forEach(b=>{ if(b[kind]===old) b[kind]=next; }));
   }
   rerenderAll();
 }
@@ -431,10 +470,11 @@ document.addEventListener("change", e=>{
   if(sc==="ease"){ if(PRESETS[t.value]){ easings[i].bez=PRESETS[t.value].slice(); rerenderAll(); } }
   if(sc==="dname"){ renameScale(durations,i,t.value,"dur"); }
   if(sc==="ename"){ renameScale(easings,i,t.value,"ease"); }
-  if(sc==="idur"){ intents[i].dur=t.value; refreshTokens(); render(); critique(); updateResolvedLines(); writeURL(); }
-  if(sc==="iease"){ intents[i].ease=t.value; render(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="idur"){ bindOf(intents[i]).dur=t.value; refreshTokens(); render(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="iease"){ bindOf(intents[i]).ease=t.value; render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="probe"){ probes[i].intent=t.value; writeURL(); }
   if(sc==="pkind"){ probes[i].kind=t.value; renderBench(); writeURL(); }
+  if(sc==="mname"){ const s=(t.value.trim())||modes[i].name; modes[i].name=uniqueName(s,modes,i); rerenderAll(); }
 });
 document.addEventListener("click", e=>{
   const playT=e.target.closest("[data-play]");
@@ -443,9 +483,14 @@ document.addEventListener("click", e=>{
   if(sc==="irm"){ if(intents.length>1){ const gone=intents[i].id; intents.splice(i,1);
       probes.forEach(p=>{if(p.intent===gone)p.intent=intents[0].id;}); rerenderAll(); } }
   if(sc==="drm"){ if(durations.length>1){ const g=durations[i].name; durations.splice(i,1);
-      const fb=durations[0].name; intents.forEach(it=>{if(it.dur===g)it.dur=fb;}); rerenderAll(); } }
+      const fb=durations[0].name; intents.forEach(it=>it.binds.forEach(b=>{if(b.dur===g)b.dur=fb;})); rerenderAll(); } }
   if(sc==="erm"){ if(easings.length>1){ const g=easings[i].name; easings.splice(i,1);
-      const fb=easings[0].name; intents.forEach(it=>{if(it.ease===g)it.ease=fb;}); rerenderAll(); } }
+      const fb=easings[0].name; intents.forEach(it=>it.binds.forEach(b=>{if(b.ease===g)b.ease=fb;})); rerenderAll(); } }
+  if(sc==="mset"){ activeMode=Math.max(0,Math.min(modes.length-1,i)); rerenderAll(); }
+  if(sc==="madd"){ const src=activeMode; modes.push({name:uniqueName("mode",modes)});
+      intents.forEach(it=>it.binds.push({...it.binds[src]})); activeMode=modes.length-1; rerenderAll(); }
+  if(sc==="mrm"){ if(modes.length>1){ modes.splice(i,1); intents.forEach(it=>it.binds.splice(i,1));
+      activeMode=Math.max(0,Math.min(modes.length-1,activeMode>=i?activeMode-1:activeMode)); rerenderAll(); } }
 });
 // ---------- bézier drag editing ----------
 let bzDrag=null, bzRAF=null;
@@ -487,7 +532,8 @@ document.getElementById("addEasing").addEventListener("click",()=>{
   rerenderAll();
 });
 document.getElementById("addIntent").addEventListener("click",()=>{
-  intents.push({id:nid(),name:"custom",dur:"base",ease:"standard",purpose:"your own"});
+  const dur=durations[0].name, ease=easings[0].name;
+  intents.push({id:nid(),name:"custom",purpose:"your own",binds:modes.map(()=>({dur,ease}))});
   rerenderAll();
 });
 document.getElementById("playAll").addEventListener("click",playAll);
