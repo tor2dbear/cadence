@@ -44,12 +44,14 @@ Prototype (v0.2). Rough edges expected.
 Shipped since v0.2: editable scales (add/remove/rename duration steps and
 easings), a draggable bézier editor (author each easing by dragging its control
 points, with headroom for overshoot), a shareable system — the whole token set
-is encoded in the URL, so a link restores it — and export to CSS, JSON,
-Tailwind config, Style Dictionary, and a typed TS object.
+is encoded in the URL, so a link restores it — export to CSS, JSON, Tailwind
+config, Style Dictionary, and a typed TS object, and a lens-based bench: each
+probe defaults to an abstract "orb" that shows pure motion, and can switch to a
+UI component (drawer, button, accordion, list reveal) to stress-test a token.
 
-Roadmap: custom probes ("bring your own component") — an abstract, component-
-agnostic motion view by default, with a UI-component library you can switch in
-to stress-test a token.
+Roadmap: bring-your-own component into the bench; import an existing motion
+palette (a framework's tokens) and run the system-read over it — the
+"reverse-engineer the art direction" angle.
 
 ## License
 

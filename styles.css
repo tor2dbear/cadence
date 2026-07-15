@@ -79,8 +79,13 @@ button.btn{background:var(--accent);color:#04110f;border:0;border-radius:8px;pad
 .probe{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;position:relative;height:186px}
 .probe__hd{position:absolute;top:0;left:0;right:0;z-index:6;display:flex;align-items:center;gap:6px;padding:8px 10px}
 .probe__name{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
-.probe__sel{margin-left:auto;background:var(--panel-2);color:var(--ink-dim);border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 5px}
+.probe__kind{background:var(--panel-2);color:var(--ink-dim);border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 5px;max-width:52%}
+.probe__sel{margin-left:auto;background:var(--panel-2);color:var(--ink-dim);border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 5px;max-width:44%}
 .probe__stage{position:absolute;inset:0;cursor:pointer}
+
+/* abstract orb lens */
+.orb-base{position:absolute;top:50%;left:14px;right:14px;height:2px;border-radius:2px;background:var(--line);transform:translateY(-50%);pointer-events:none}
+.orb{position:absolute;top:50%;left:14px;width:20px;height:20px;border-radius:50%;background:var(--accent);opacity:.3;transform:translateY(-50%) scale(.5);box-shadow:0 2px 8px rgba(0,0,0,.35);pointer-events:none}
 
 .drawer{position:absolute;top:0;right:0;height:100%;width:60%;background:var(--panel-2);border-left:1px solid var(--line);transform:translateX(105%);padding:40px 14px 14px;display:flex;flex-direction:column;gap:7px}
 .drawer .l{height:8px;border-radius:4px;background:var(--line)}

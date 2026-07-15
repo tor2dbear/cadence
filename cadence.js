@@ -33,11 +33,20 @@ let intents = [
   {id:nid(),name:"hover",dur:"fast",ease:"standard",purpose:"pointer feedback"},
 ];
 // probes reference an intent by id
+// each probe is a lens (kind) pointed at one intent. "orb" is the abstract,
+// component-agnostic default; the rest are a swappable UI-component library.
+const KINDS = [
+  {k:"orb",label:"orb · abstract"},
+  {k:"drawer",label:"drawer"},
+  {k:"button",label:"button"},
+  {k:"acc",label:"accordion"},
+  {k:"reveal",label:"list reveal"},
+];
 let probes = [
-  {type:"drawer",label:"drawer",intent:null},
-  {type:"button",label:"button hover",intent:null},
-  {type:"acc",label:"accordion",intent:null},
-  {type:"reveal",label:"list reveal",intent:null},
+  {kind:"orb",intent:null},
+  {kind:"orb",intent:null},
+  {kind:"orb",intent:null},
+  {kind:"orb",intent:null},
 ];
 // token names double as CSS custom-property suffixes, so keep them slug-safe
 const slug = s => (s||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
@@ -54,9 +63,9 @@ const easeBez = name => (easings.find(e=>e.name===name)||easings[0]).bez;
 const bezStr = a => `cubic-bezier(${a.join(", ")})`;
 const resolve = intent => ({ d: durMs(intent.dur)+"ms", e: bezStr(easeBez(intent.ease)) });
 const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
-// default probe intents
-probes[0].intent = intents[0].id; probes[1].intent = intents[4].id;
-probes[2].intent = intents[2].id; probes[3].intent = intents[0].id;
+// default probe intents: enter / exit / move / hover, one abstract orb each
+probes[0].intent = intents[0].id; probes[1].intent = intents[1].id;
+probes[2].intent = intents[2].id; probes[3].intent = intents[4].id;
 
 // ---------- render: duration ladder ----------
 const maxMs = () => Math.max(...durations.map(d=>d.ms));
@@ -144,15 +153,17 @@ function renderBench(){
   const el=document.getElementById("bench");
   el.innerHTML = probes.map((p,i)=>{
     const opts = intents.map(it=>`<option value="${it.id}" ${it.id===p.intent?"selected":""}>${it.name}</option>`).join("");
+    const kinds = KINDS.map(kd=>`<option value="${kd.k}" ${kd.k===p.kind?"selected":""}>${kd.label}</option>`).join("");
     let stage="";
-    if(p.type==="drawer") stage=`<div class="scrim"></div><div class="drawer"><span class="l"></span><span class="l"></span><span class="l"></span></div>`;
-    if(p.type==="button") stage=`<div class="btnpad">Hover me</div>`;
-    if(p.type==="acc") stage=`<div class="acc"><div class="acc__hd">Details <span class="chev">⌄</span></div><div class="acc__body"><p>Height and chevron ride the same token, so the change feels like one gesture.</p></div></div>`;
-    if(p.type==="reveal") stage=`<div class="reveal"><span class="card"></span><span class="card"></span><span class="card"></span></div>`;
+    if(p.kind==="orb") stage=`<div class="orb"></div><span class="orb-base"></span>`;
+    if(p.kind==="drawer") stage=`<div class="scrim"></div><div class="drawer"><span class="l"></span><span class="l"></span><span class="l"></span></div>`;
+    if(p.kind==="button") stage=`<div class="btnpad">Hover me</div>`;
+    if(p.kind==="acc") stage=`<div class="acc"><div class="acc__hd">Details <span class="chev">⌄</span></div><div class="acc__body"><p>Height and chevron ride the same token, so the change feels like one gesture.</p></div></div>`;
+    if(p.kind==="reveal") stage=`<div class="reveal"><span class="card"></span><span class="card"></span><span class="card"></span></div>`;
     return `<div class="probe" data-i="${i}">
       <div class="probe__hd">
-        <span class="probe__name">${p.label}</span>
-        <select class="probe__sel" data-scope="probe" data-i="${i}" aria-label="intent for ${p.label}">${opts}</select>
+        <select class="probe__kind" data-scope="pkind" data-i="${i}" aria-label="lens">${kinds}</select>
+        <select class="probe__sel" data-scope="probe" data-i="${i}" aria-label="intent">${opts}</select>
       </div>
       <div class="probe__stage" data-play="${i}">${stage}</div>
     </div>`;
@@ -168,26 +179,33 @@ function anim(el,props,r,delay=0){
 function play(i){
   const p=probes[i], r=resolve(findIntent(p.intent));
   const root=document.querySelector(`.probe[data-i="${i}"]`);
-  if(p.type==="drawer"){
+  if(p.kind==="orb"){
+    // abstract lens: travel + fade + scale, purely showing the token's character
+    const o=root.querySelector(".orb");
+    o.style.left="14px"; o.style.opacity=".3"; o.style.transform="translateY(-50%) scale(.5)";
+    anim(o,{left:"calc(100% - 40px)",opacity:"1",transform:"translateY(-50%) scale(1)"},r);
+    setTimeout(()=>anim(o,{left:"14px",opacity:".3",transform:"translateY(-50%) scale(.5)"},r),1400);
+  }
+  if(p.kind==="drawer"){
     const dr=root.querySelector(".drawer"),sc=root.querySelector(".scrim");
     dr.style.transform="translateX(105%)";sc.style.opacity="0";
     anim(sc,{opacity:"1"},r);anim(dr,{transform:"translateX(0)"},r);
     setTimeout(()=>{anim(sc,{opacity:"0"},r);anim(dr,{transform:"translateX(105%)"},r);},1400);
   }
-  if(p.type==="button"){
+  if(p.kind==="button"){
     const b=root.querySelector(".btnpad");
     b.style.transform="translate(-50%,-50%) scale(1)";
     anim(b,{transform:"translate(-50%,-50%) scale(1.14)"},r);
     setTimeout(()=>anim(b,{transform:"translate(-50%,-50%) scale(1)"},r),900);
   }
-  if(p.type==="acc"){
+  if(p.kind==="acc"){
     const b=root.querySelector(".acc__body"),c=root.querySelector(".chev");
     b.style.transition=`height ${r.d} ${r.e}`;c.style.transition=`transform ${r.d} ${r.e}`;
     b.style.height="0px";c.style.transform="rotate(0deg)";
     requestAnimationFrame(()=>{b.style.height=b.scrollHeight+"px";c.style.transform="rotate(180deg)";});
     setTimeout(()=>{b.style.height="0px";c.style.transform="rotate(0deg)";},1500);
   }
-  if(p.type==="reveal"){
+  if(p.kind==="reveal"){
     const cards=[...root.querySelectorAll(".card")];
     cards.forEach(c=>{c.style.opacity="0";c.style.transform="translateY(14px)";});
     cards.forEach((c,k)=>anim(c,{opacity:"1",transform:"translateY(0)"},r,k*70));
@@ -307,7 +325,7 @@ function encodeState(){
     d: durations.map(d=>[d.name,d.ms]),
     e: easings.map(e=>[e.name,...e.bez]),
     i: intents.map(it=>[it.name,it.dur,it.ease,it.purpose||""]),
-    p: probes.map(pb=>{ const k=intents.findIndex(x=>x.id===pb.intent); return k<0?0:k; }),
+    p: probes.map(pb=>{ const k=intents.findIndex(x=>x.id===pb.intent); return [pb.kind, k<0?0:k]; }),
   };
   return b64urlEncode(JSON.stringify(s));
 }
@@ -323,9 +341,15 @@ function applyEncoded(raw){
   // intents that reference a now-missing name fall back to the first slot
   const dn=new Set(durations.map(x=>x.name)), en=new Set(easings.map(x=>x.name));
   intents.forEach(x=>{ if(!dn.has(x.dur))x.dur=durations[0].name; if(!en.has(x.ease))x.ease=easings[0].name; });
-  // probes were stored as intent indices; clamp back onto the restored intents
+  // restore each probe's lens (kind) + intent. New format stores [kind, idx];
+  // legacy links stored a bare intent index (kind stays the default).
   const pick=k=>intents[Math.max(0,Math.min(intents.length-1,k))].id;
-  if(Array.isArray(o.p)&&o.p.length===probes.length) probes.forEach((pb,k)=>pb.intent=pick(+o.p[k]||0));
+  const validKind=k=>KINDS.some(x=>x.k===k)?k:"orb";
+  if(Array.isArray(o.p)&&o.p.length===probes.length) probes.forEach((pb,k)=>{
+    const v=o.p[k];
+    if(Array.isArray(v)){ pb.kind=validKind(v[0]); pb.intent=pick(+v[1]||0); }
+    else pb.intent=pick(+v||0);
+  });
   else probes.forEach((pb,k)=>pb.intent=pick(k));
 }
 function writeURL(){
@@ -365,6 +389,7 @@ document.addEventListener("change", e=>{
   if(sc==="idur"){ intents[i].dur=t.value; refreshTokens(); render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iease"){ intents[i].ease=t.value; render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="probe"){ probes[i].intent=t.value; writeURL(); }
+  if(sc==="pkind"){ probes[i].kind=t.value; renderBench(); writeURL(); }
 });
 document.addEventListener("click", e=>{
   const playT=e.target.closest("[data-play]");
