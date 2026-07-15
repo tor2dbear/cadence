@@ -29,13 +29,14 @@ const nid = () => "i"+(idc++);
 // global axis so one intent resolves to a different (duration, easing) per mode.
 let modes = [{name:"default"}];
 let activeMode = 0;
-// each intent carries one binding {dur, ease} per mode, parallel to `modes`.
+// each intent carries one binding {dur, ease, stagger} per mode. `stagger` (ms)
+// is the per-item delay for sequenced elements (0 = none, animate together).
 let intents = [
-  {id:nid(),name:"enter",purpose:"things appearing",binds:[{dur:"base",ease:"emphasized"}]},
-  {id:nid(),name:"exit",purpose:"things leaving",binds:[{dur:"fast",ease:"accelerate"}]},
-  {id:nid(),name:"move",purpose:"in-place change",binds:[{dur:"slow",ease:"standard"}]},
-  {id:nid(),name:"emphasized",purpose:"hero moments",binds:[{dur:"slower",ease:"emphasized"}]},
-  {id:nid(),name:"hover",purpose:"pointer feedback",binds:[{dur:"fast",ease:"standard"}]},
+  {id:nid(),name:"enter",purpose:"things appearing",binds:[{dur:"base",ease:"emphasized",stagger:70}]},
+  {id:nid(),name:"exit",purpose:"things leaving",binds:[{dur:"fast",ease:"accelerate",stagger:0}]},
+  {id:nid(),name:"move",purpose:"in-place change",binds:[{dur:"slow",ease:"standard",stagger:0}]},
+  {id:nid(),name:"emphasized",purpose:"hero moments",binds:[{dur:"slower",ease:"emphasized",stagger:0}]},
+  {id:nid(),name:"hover",purpose:"pointer feedback",binds:[{dur:"fast",ease:"standard",stagger:0}]},
 ];
 // the binding for the active mode (clamped so ragged data never throws)
 const bindOf = it => it.binds[Math.min(activeMode, it.binds.length-1)] || it.binds[0];
@@ -68,7 +69,7 @@ const findIntent = id => intents.find(x=>x.id===id) || intents[0];
 const durMs = name => (durations.find(d=>d.name===name)||durations[0]).ms;
 const easeBez = name => (easings.find(e=>e.name===name)||easings[0]).bez;
 const bezStr = a => `cubic-bezier(${a.join(", ")})`;
-const resolve = it => { const b=bindOf(it); return { d: durMs(b.dur)+"ms", e: bezStr(easeBez(b.ease)) }; };
+const resolve = it => { const b=bindOf(it); return { d: durMs(b.dur)+"ms", e: bezStr(easeBez(b.ease)), s: +b.stagger||0 }; };
 const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
 // default probe intents: enter / exit / move / hover, one abstract orb each
 probes[0].intent = intents[0].id; probes[1].intent = intents[1].id;
@@ -162,8 +163,10 @@ function renderIntents(){
           <select data-scope="idur" data-i="${i}">${durations.map(d=>`<option ${d.name===b.dur?"selected":""}>${d.name}</option>`).join("")}</select></div>
         <div class="field"><label>Easing</label>
           <select data-scope="iease" data-i="${i}">${easings.map(e=>`<option ${e.name===b.ease?"selected":""}>${e.name}</option>`).join("")}</select></div>
+        <div class="field field--stag"><label>Stagger·ms</label>
+          <input class="stag" type="number" min="0" max="400" step="5" value="${+b.stagger||0}" data-scope="istag" data-i="${i}" aria-label="stagger in ms"></div>
       </div>
-      <div class="intent__resolved">→ ${r.d} · ${r.e}</div>
+      <div class="intent__resolved">→ ${r.d} · ${r.e}${r.s?` · stagger ${r.s}ms`:""}</div>
     </div>`;
   }).join("");
 }
@@ -228,8 +231,8 @@ function play(i){
   if(p.kind==="reveal"){
     const cards=[...root.querySelectorAll(".card")];
     cards.forEach(c=>{c.style.opacity="0";c.style.transform="translateY(14px)";});
-    cards.forEach((c,k)=>anim(c,{opacity:"1",transform:"translateY(0)"},r,k*70));
-    setTimeout(()=>cards.forEach((c,k)=>anim(c,{opacity:"0",transform:"translateY(14px)"},r,k*40)),1500);
+    cards.forEach((c,k)=>anim(c,{opacity:"1",transform:"translateY(0)"},r,k*r.s));
+    setTimeout(()=>cards.forEach((c,k)=>anim(c,{opacity:"0",transform:"translateY(14px)"},r,k*r.s)),1500);
   }
 }
 function playAll(){ probes.forEach((_,i)=>setTimeout(()=>play(i), i*130)); }
@@ -261,6 +264,12 @@ function critique(){
   // 4. long-duration budget
   const longIntent = intents.find(x=>durMs(bindOf(x).dur)>550);
   if(longIntent) out.push(["warn","!",`“${longIntent.name}” resolves to ${durMs(bindOf(longIntent).dur)}ms. Past ~550ms motion starts to feel like waiting — reserve the top of the ladder for large travel only.`]);
+  // 5. stagger budget (measured against a 5-item list)
+  const staggered = intents.filter(x=>+bindOf(x).stagger>0).sort((a,b)=>+bindOf(b).stagger-+bindOf(a).stagger)[0];
+  if(staggered){ const st=+bindOf(staggered).stagger, lead=st*4;
+    if(lead>500) out.push(["warn","!",`“${staggered.name}” staggers ${st}ms — across a 5-item list the last item waits ${lead}ms to even start. Long staggers make lists drag; keep the lead under ~500ms.`]);
+    else out.push(["ok","✓",`“${staggered.name}” staggers ${st}ms — a 5-item list cascades over ${lead}ms, brisk enough to read as one gesture.`]);
+  }
   document.getElementById("hints").innerHTML = out.map(h=>`<div class="rd ${h[0]}"><span class="ic">${h[1]}</span><span>${h[2]}</span></div>`).join("");
 }
 
@@ -280,6 +289,7 @@ function buildCSS(){
   intents.forEach(it=>{ const b=bindOf(it);
     s+=`  <span class="tk2">--motion-${it.name}-duration</span>: <span class="tk">var(--motion-duration-${b.dur})</span>;\n`;
     s+=`  <span class="tk2">--motion-${it.name}-ease</span>: <span class="tk">var(--motion-ease-${b.ease})</span>;\n`;
+    if(+b.stagger>0) s+=`  <span class="tk2">--motion-${it.name}-stagger</span>: ${+b.stagger}ms;\n`;
   });
   return s+`}`;
 }
@@ -288,7 +298,8 @@ function buildJSON(){
   if(modes.length>1) obj.mode=modes[activeMode].name;
   durations.forEach(d=>obj.primitives.duration[d.name]=d.ms+"ms");
   easings.forEach(e=>obj.primitives.easing[e.name]=bezStr(e.bez));
-  intents.forEach(it=>{ const b=bindOf(it); obj.semantic[it.name]={duration:`{duration.${b.dur}}`,easing:`{easing.${b.ease}}`,purpose:it.purpose}; });
+  intents.forEach(it=>{ const b=bindOf(it); const v={duration:`{duration.${b.dur}}`,easing:`{easing.${b.ease}}`,purpose:it.purpose};
+    if(+b.stagger>0) v.stagger=(+b.stagger)+"ms"; obj.semantic[it.name]=v; });
   return JSON.stringify(obj,null,2);
 }
 function buildTailwind(){
@@ -297,27 +308,33 @@ function buildTailwind(){
              ...intents.map(it=>`        ${q(it.name)}: ${q(durMs(bindOf(it).dur)+"ms")}, // intent`)];
   const ease=[...easings.map(e=>`        ${q(e.name)}: ${q(bezStr(e.bez))},`),
               ...intents.map(it=>`        ${q(it.name)}: ${q(bezStr(easeBez(bindOf(it).ease)))}, // intent`)];
+  const stag=intents.filter(it=>+bindOf(it).stagger>0)
+    .map(it=>`        ${q(it.name)}: ${q((+bindOf(it).stagger)+"ms")}, // per-item stagger`);
+  const delayBlock = stag.length ? `      transitionDelay: {\n${stag.join("\n")}\n      },\n` : "";
   return `// tailwind.config.js — motion tokens from Cadence${modeNote()}\n`+
     `module.exports = {\n  theme: {\n    extend: {\n`+
     `      transitionDuration: {\n${dur.join("\n")}\n      },\n`+
     `      transitionTimingFunction: {\n${ease.join("\n")}\n      },\n`+
+    delayBlock+
     `    },\n  },\n};`;
 }
 function buildStyleDictionary(){
   const obj={motion:{duration:{},easing:{}}};
   durations.forEach(d=>obj.motion.duration[d.name]={value:d.ms+"ms",type:"duration"});
   easings.forEach(e=>obj.motion.easing[e.name]={value:bezStr(e.bez),type:"cubicBezier"});
-  intents.forEach(it=>{ const b=bindOf(it); obj.motion[it.name]={
+  intents.forEach(it=>{ const b=bindOf(it); const t={
     duration:{value:`{motion.duration.${b.dur}}`,type:"duration"},
     easing:{value:`{motion.easing.${b.ease}}`,type:"cubicBezier"},
-  }; });
+  }; if(+b.stagger>0) t.stagger={value:(+b.stagger)+"ms",type:"duration"}; obj.motion[it.name]=t; });
   return JSON.stringify(obj,null,2);
 }
 function buildTS(){
   const key=k=>isIdent(k)?k:JSON.stringify(k), q=JSON.stringify;
   const dur=durations.map(d=>`    ${key(d.name)}: ${q(d.ms+"ms")},`).join("\n");
   const ease=easings.map(e=>`    ${key(e.name)}: ${q(bezStr(e.bez))},`).join("\n");
-  const sem=intents.map(it=>{ const b=bindOf(it); return `    ${key(it.name)}: { duration: ${q(durMs(b.dur)+"ms")}, easing: ${q(bezStr(easeBez(b.ease)))} },`; }).join("\n");
+  const sem=intents.map(it=>{ const b=bindOf(it);
+    const stag=+b.stagger>0?`, stagger: ${q((+b.stagger)+"ms")}`:"";
+    return `    ${key(it.name)}: { duration: ${q(durMs(b.dur)+"ms")}, easing: ${q(bezStr(easeBez(b.ease)))}${stag} },`; }).join("\n");
   return `// motion.ts — design tokens from Cadence${modeNote()}\n`+
     `export const motion = {\n`+
     `  duration: {\n${dur}\n  },\n`+
@@ -394,8 +411,8 @@ function encodeState(){
     e: easings.map(e=>[e.name,...e.bez]),
     m: modes.map(x=>x.name),
     am: activeMode,
-    // i: [name, purpose, [[dur,ease] per mode]]
-    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease])]),
+    // i: [name, purpose, [[dur,ease,stagger] per mode]]
+    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease,+b.stagger||0])]),
     p: probes.map(pb=>{ const k=intents.findIndex(x=>x.id===pb.intent); return [pb.kind, k<0?0:k]; }),
   };
   return b64urlEncode(JSON.stringify(s));
@@ -411,8 +428,8 @@ function applyState(o){
   const it = o.i.map(x=>{
     // new: [name, purpose, [[dur,ease],...]]  ·  legacy: [name, dur, ease, purpose]
     const binds = Array.isArray(x[2])
-      ? x[2].map(b=>({dur:String(b[0]),ease:String(b[1])}))
-      : [{dur:String(x[1]),ease:String(x[2])}];
+      ? x[2].map(b=>({dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0}))
+      : [{dur:String(x[1]),ease:String(x[2]),stagger:0}];
     const purpose = Array.isArray(x[2]) ? String(x[1]||"") : String(x[3]||"");
     // pad/trim bindings so every intent has exactly one per mode
     while(binds.length<md.length) binds.push({...binds[binds.length-1]});
@@ -443,7 +460,7 @@ function writeURL(){
 function updateResolvedLines(){
   document.querySelectorAll(".intent__resolved").forEach((el,k)=>{
     if(!intents[k]) return;
-    const r=resolve(intents[k]); el.textContent=`→ ${r.d} · ${r.e}`;
+    const r=resolve(intents[k]); el.textContent=`→ ${r.d} · ${r.e}${r.s?` · stagger ${r.s}ms`:""}`;
   });
 }
 
@@ -452,6 +469,7 @@ document.addEventListener("input", e=>{
   const t=e.target, sc=t.dataset.scope, i=+t.dataset.i;
   if(sc==="dur"){ durations[i].ms=+t.value; refreshTokens(); renderDurations(); render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iname"){ intents[i].name=t.value.trim()||intents[i].name; render(); critique(); writeURL(); }
+  if(sc==="istag"){ bindOf(intents[i]).stagger=Math.max(0,Math.min(400,+t.value||0)); render(); critique(); updateResolvedLines(); writeURL(); }
 });
 // rename a scale slot (duration or easing); intents reference by name, so
 // carry every referencing intent over to the new name. `kind` is "dur"|"ease".
@@ -533,7 +551,7 @@ document.getElementById("addEasing").addEventListener("click",()=>{
 });
 document.getElementById("addIntent").addEventListener("click",()=>{
   const dur=durations[0].name, ease=easings[0].name;
-  intents.push({id:nid(),name:"custom",purpose:"your own",binds:modes.map(()=>({dur,ease}))});
+  intents.push({id:nid(),name:"custom",purpose:"your own",binds:modes.map(()=>({dur,ease,stagger:0}))});
   rerenderAll();
 });
 document.getElementById("playAll").addEventListener("click",playAll);

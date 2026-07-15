@@ -53,13 +53,14 @@ system's motion palette (Material 3, Carbon, Fluent, Ant, Tailwind, Atlassian,
 Polaris, Primer, Spectrum) for comparison or as a starting point, and a
 motion-mode axis: add modes (e.g. productive/expressive, min/mid/max) and each
 intent carries a separate (duration, easing) binding per mode, switched globally
-— so one system can hold coordinated variants without duplicating easings.
+— so one system can hold coordinated variants without duplicating easings. Each
+intent also carries a stagger token (the per-item delay for sequenced elements)
+that drives the list-reveal probe and gets its own system-read check.
 
 Roadmap: bring-your-own component into the bench; import an existing motion
 palette (a framework's tokens) and run the system-read over it — the
-"reverse-engineer the art direction" angle. Further model extensions surfaced by
-the design-system survey: a delay/stagger primitive, and an optional property
-axis on intents.
+"reverse-engineer the art direction" angle. One more model extension surfaced by
+the design-system survey: an optional property axis on intents.
 
 ## License
 
