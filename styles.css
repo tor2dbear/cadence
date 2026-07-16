@@ -103,7 +103,12 @@ svg.bz{display:block;width:100%;height:100%}
 .intent__ref .field--stag{flex:none;width:76px}
 .intent__ref input.stag{width:100%;background:var(--panel-2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px;font-family:var(--mono);font-size:11px;font-variant-numeric:tabular-nums}
 .intent__ref input.stag:focus{outline:none;border-color:var(--accent)}
-.intent__resolved{margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--ink-faint)}
+.intent__adv{margin-top:8px}
+.intent__adv .intent__ref{margin-top:0}
+.intent__foot{display:flex;align-items:center;gap:10px;margin-top:9px}
+.intent__more{flex:none;background:transparent;border:1px solid var(--line);color:var(--ink-faint);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 8px;cursor:pointer}
+.intent__more:hover{border-color:var(--accent);color:var(--ink)}
+.intent__resolved{flex:1;min-width:0;font-family:var(--mono);font-size:10px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .addbtn{width:100%;background:transparent;border:1px dashed var(--line);color:var(--ink-dim);border-radius:9px;padding:9px;cursor:pointer;font-size:12px}
 .addbtn:hover{border-color:var(--accent);color:var(--ink)}
 .addbtn--sm{padding:7px;font-size:11px;margin-top:2px}

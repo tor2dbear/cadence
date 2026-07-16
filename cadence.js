@@ -232,6 +232,11 @@ function renderIntents(){
   const el=document.getElementById("intents");
   el.innerHTML = intents.map((it,i)=>{
     const b=bindOf(it), r=resolve(it);
+    const durF=`<div class="field"><label>Duration</label><select data-scope="idur" data-i="${i}">${durations.map(d=>`<option ${d.name===b.dur?"selected":""}>${d.name}</option>`).join("")}</select></div>`;
+    const easeF=`<div class="field"><label>Easing</label><select data-scope="iease" data-i="${i}">${easings.map(e=>`<option ${e.name===b.ease?"selected":""}>${e.name}</option>`).join("")}</select></div>`;
+    const stagF=`<div class="field field--stag"><label>Stagger·ms</label><input class="stag" type="number" min="0" max="400" step="5" value="${+b.stagger||0}" data-scope="istag" data-i="${i}" aria-label="stagger in ms"></div>`;
+    const propF=`<div class="field"><label>Property</label><select data-scope="iprop" data-i="${i}">${PROPS.map(pp=>`<option ${pp===(b.prop||"all")?"selected":""}>${pp}</option>`).join("")}</select></div>`;
+    const adv = it.open ? `<div class="intent__adv"><div class="intent__ref">${stagF}${propF}</div></div>` : "";
     return `<div class="intent" data-id="${it.id}">
       <div class="intent__top">
         <span class="intent__dot" style="background:${colorOf(i)}" aria-hidden="true"></span>
@@ -239,17 +244,12 @@ function renderIntents(){
         <span class="intent__purpose">${it.purpose||""}</span>
         ${intents.length>1?`<button class="intent__rm" data-scope="irm" data-i="${i}" title="remove" aria-label="remove intent">×</button>`:""}
       </div>
-      <div class="intent__ref">
-        <div class="field"><label>Duration</label>
-          <select data-scope="idur" data-i="${i}">${durations.map(d=>`<option ${d.name===b.dur?"selected":""}>${d.name}</option>`).join("")}</select></div>
-        <div class="field"><label>Easing</label>
-          <select data-scope="iease" data-i="${i}">${easings.map(e=>`<option ${e.name===b.ease?"selected":""}>${e.name}</option>`).join("")}</select></div>
-        <div class="field field--stag"><label>Stagger·ms</label>
-          <input class="stag" type="number" min="0" max="400" step="5" value="${+b.stagger||0}" data-scope="istag" data-i="${i}" aria-label="stagger in ms"></div>
-        <div class="field"><label>Property</label>
-          <select data-scope="iprop" data-i="${i}">${PROPS.map(pp=>`<option ${pp===(b.prop||"all")?"selected":""}>${pp}</option>`).join("")}</select></div>
+      <div class="intent__ref">${durF}${easeF}</div>
+      ${adv}
+      <div class="intent__foot">
+        <button class="intent__more" data-scope="imore" data-i="${i}" aria-expanded="${!!it.open}">${it.open?"less ▴":"more ▾"}</button>
+        <span class="intent__resolved">→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}</span>
       </div>
-      <div class="intent__resolved">→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}</div>
     </div>`;
   }).join("");
 }
@@ -665,6 +665,7 @@ document.addEventListener("click", e=>{
   const playT=e.target.closest("[data-play]");
   if(playT){ play(+playT.dataset.play); return; }
   const t=e.target, sc=t.dataset.scope, i=+t.dataset.i;
+  if(sc==="imore"){ intents[i].open=!intents[i].open; renderIntents(); }
   if(sc==="irm"){ if(intents.length>1){ const gone=intents[i].id; intents.splice(i,1);
       probes.forEach(p=>{if(p.intent===gone)p.intent=intents[0].id;}); rerenderAll(); } }
   if(sc==="drm"){ if(durations.length>1){ const g=durations[i].name; durations.splice(i,1);
