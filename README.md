@@ -49,8 +49,11 @@ cubic-bézier, sampled to CSS `linear()` so real multi-bounce physics animates
 natively (with a cubic-bézier fallback noted in the export), a shareable system — the whole token set
 is encoded in the URL, so a link restores it — export to CSS, JSON, Tailwind
 config, Style Dictionary, and a typed TS object, and a lens-based bench: each
-probe defaults to an abstract "orb" that shows pure motion, and can switch to a
-UI component (drawer, button, accordion, list reveal) to stress-test a token,
+probe is a lens on one intent — a unified "scope" (the default: the easing/spring
+curve, a time playhead, and property-driven demo elements that cascade by
+stagger, all on one surface), an abstract "orb" of pure motion, a "cascade"
+stagger timeline, or a UI component (drawer, button, accordion, list reveal) to
+stress-test a token —
 and a "Load a system" picker that seeds the whole model from a real design
 system's motion palette (Material 3 and Material 3 Expressive, Carbon, Fluent,
 Ant, Tailwind, Atlassian, Polaris, Primer, Spectrum) for comparison or as a

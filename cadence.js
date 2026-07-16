@@ -56,6 +56,7 @@ const bindOf = it => it.binds[Math.min(activeMode, it.binds.length-1)] || it.bin
 // each probe is a lens (kind) pointed at one intent. "orb" is the abstract,
 // component-agnostic default; the rest are a swappable UI-component library.
 const KINDS = [
+  {k:"scope",label:"scope · everything"},
   {k:"orb",label:"orb · abstract"},
   {k:"cascade",label:"cascade · timeline"},
   {k:"drawer",label:"drawer"},
@@ -63,9 +64,20 @@ const KINDS = [
   {k:"acc",label:"accordion"},
   {k:"reveal",label:"list reveal"},
 ];
-const CASC_N = 6;   // items shown in the stagger timeline
+const CASC_N = 6;    // items in the stagger timeline
+const SCOPE_N = 5;   // demo elements in the scope lens
+// how each animated property reads on the scope demo elements
+const SCOPE_ANIM = {
+  opacity:  {props:["opacity"],   before:{opacity:"0"}, after:{opacity:"1"}},
+  transform:{props:["transform"], before:{transform:"translateY(11px) scale(.5)"}, after:{transform:"translateY(0) scale(1)"}},
+  all:      {props:["opacity","transform"], before:{opacity:"0",transform:"translateY(11px)"}, after:{opacity:"1",transform:"translateY(0)"}},
+  color:    {props:["background-color"], before:{background:"var(--panel-2)"}, after:{background:"var(--accent)"}},
+  "background-color":{props:["background-color"], before:{background:"var(--panel-2)"}, after:{background:"var(--accent)"}},
+  height:   {props:["transform"], before:{transform:"scaleY(.18)"}, after:{transform:"scaleY(1)"}},
+  width:    {props:["transform"], before:{transform:"scaleX(.18)"}, after:{transform:"scaleX(1)"}},
+};
 let probes = [
-  {kind:"cascade",intent:null},   // opens on the stagger timeline (pointed at enter)
+  {kind:"scope",intent:null},   // opens on the unified "everything" lens (pointed at enter)
   {kind:"orb",intent:null},
   {kind:"orb",intent:null},
   {kind:"orb",intent:null},
@@ -251,6 +263,16 @@ function renderBench(){
     const ii = intents.findIndex(x=>x.id===p.intent);   // colour the probe by its intent
     const color = colorOf(ii<0?0:ii);
     let stage="";
+    if(p.kind==="scope"){
+      const eo=easeObj(bindOf(findIntent(p.intent)).ease);
+      let curve;
+      if(eo.type==="spring") curve=`<polyline points="${springPoints(eo.spring)}"/>`;
+      else { const [x1,y1,x2,y2]=eo.bez; curve=`<path d="M${SX(0)},${SY(0)} C${SX(x1)},${SY(y1)} ${SX(x2)},${SY(y2)} ${SX(1)},${SY(1)}"/>`; }
+      stage=`<div class="scope">
+        <div class="scope__graph"><svg class="scope__curve" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="${SX(0)}" y1="${SY(0)}" x2="${SX(1)}" y2="${SY(1)}"/>${curve}</svg><div class="scope__head"></div></div>
+        <div class="scope__demo">${'<span class="scope__dot"></span>'.repeat(SCOPE_N)}</div>
+      </div>`;
+    }
     if(p.kind==="orb") stage=`<div class="orb"></div><span class="orb-base"></span>`;
     if(p.kind==="cascade"){
       const rr=resolve(findIntent(p.intent)), dms=parseInt(rr.d)||200, st=rr.s|0;
@@ -285,6 +307,22 @@ function anim(el,props,r,delay=0){
 function play(i){
   const p=probes[i], r=resolve(findIntent(p.intent));
   const root=document.querySelector(`.probe[data-i="${i}"]`);
+  if(p.kind==="scope"){
+    // everything lens: curve + playhead (time), plus staggered demo elements whose
+    // actual property animates with the token's easing/spring (bounce shows natively)
+    const dms=parseInt(r.d)||200, st=r.s|0, total=Math.max(1,(SCOPE_N-1)*st+dms);
+    const head=root.querySelector(".scope__head");
+    const dots=[...root.querySelectorAll(".scope__dot")];
+    const a=SCOPE_ANIM[r.prop]||SCOPE_ANIM.all;
+    const set=(el,o)=>{ for(const kk in o) el.style[kk]=o[kk]; };
+    if(head){ head.style.transition="none"; head.style.left="0%"; head.style.opacity="1"; }
+    dots.forEach(d=>{ d.style.transition="none"; set(d,a.before); });
+    void root.offsetWidth;
+    if(head) head.style.transition=`left ${total}ms linear`;
+    dots.forEach((d,k)=>{ d.style.transition=a.props.map(pr=>`${pr} ${r.d} ${r.e} ${k*st}ms`).join(", "); });
+    requestAnimationFrame(()=>{ if(head) head.style.left="100%"; dots.forEach(d=>set(d,a.after)); });
+    setTimeout(()=>{ if(head){ head.style.transition="opacity 250ms"; head.style.opacity="0"; } }, total+80);
+  }
   if(p.kind==="cascade"){
     // timeline lens: each lane fills at its staggered start; a playhead sweeps time
     const dms=parseInt(r.d)||200, st=r.s|0, total=Math.max(1,(CASC_N-1)*st+dms);
@@ -593,7 +631,7 @@ document.addEventListener("input", e=>{
   if(sc==="sk"||sc==="sd"){
     easings[i].spring[sc==="sk"?"stiffness":"damping"]=+t.value;
     if(t.previousElementSibling) t.previousElementSibling.textContent=t.value;  // live number label
-    updateSpringPlot(i); refreshTokens(); render(); critique(); updateResolvedLines(); writeURL();
+    updateSpringPlot(i); refreshTokens(); render(); renderBench(); critique(); updateResolvedLines(); writeURL();
   }
 });
 // rename a scale slot (duration or easing); intents reference by name, so
