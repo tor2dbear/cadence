@@ -123,7 +123,9 @@ const easeLabel = e => e.type==="spring"
   ? `spring ${e.spring.stiffness}/${e.spring.damping}`
   : bezStr(e.bez);
 const resolve = it => { const b=bindOf(it); const e=easeObj(b.ease);
-  return { d: durMs(b.dur)+"ms", e: easeCSS(e), eLabel: easeLabel(e), s: +b.stagger||0, prop: b.prop||"all" }; };
+  const split = !!(b.effectsEase && b.effectsEase!==b.ease);
+  const eff = split ? easeObj(b.effectsEase) : e;
+  return { d: durMs(b.dur)+"ms", e: easeCSS(e), eLabel: easeLabel(e), eEff: easeCSS(eff), split, s: +b.stagger||0, prop: b.prop||"all" }; };
 const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
 // default probe intents: enter / exit / move / hover, one abstract orb each
 probes[0].intent = intents[0].id; probes[1].intent = intents[1].id;
@@ -233,11 +235,14 @@ function renderIntents(){
   const el=document.getElementById("intents");
   el.innerHTML = intents.map((it,i)=>{
     const b=bindOf(it), r=resolve(it);
+    const isSplit=!!b.effectsEase;
     const durF=`<div class="field"><label>Duration</label><select data-scope="idur" data-i="${i}">${durations.map(d=>`<option ${d.name===b.dur?"selected":""}>${d.name}</option>`).join("")}</select></div>`;
-    const easeF=`<div class="field"><label>Easing</label><select data-scope="iease" data-i="${i}">${easings.map(e=>`<option ${e.name===b.ease?"selected":""}>${e.name}</option>`).join("")}</select></div>`;
+    const easeF=`<div class="field"><label>Easing${isSplit?" · spatial":""}</label><select data-scope="iease" data-i="${i}">${easings.map(e=>`<option ${e.name===b.ease?"selected":""}>${e.name}</option>`).join("")}</select></div>`;
     const stagF=`<div class="field field--stag"><label>Stagger·ms</label><input class="stag" type="number" min="0" max="400" step="5" value="${+b.stagger||0}" data-scope="istag" data-i="${i}" aria-label="stagger in ms"></div>`;
     const propF=`<div class="field"><label>Property</label><select data-scope="iprop" data-i="${i}">${PROPS.map(pp=>`<option ${pp===(b.prop||"all")?"selected":""}>${pp}</option>`).join("")}</select></div>`;
-    const adv = it.open ? `<div class="intent__adv"><div class="intent__ref">${stagF}${propF}</div></div>` : "";
+    const effF=isSplit?`<div class="field"><label>Easing · effects</label><select data-scope="ieff" data-i="${i}">${easings.map(e=>`<option ${e.name===b.effectsEase?"selected":""}>${e.name}</option>`).join("")}</select></div>`:"";
+    const splitT=`<label class="intent__split"><input type="checkbox" data-scope="isplit" data-i="${i}" ${isSplit?"checked":""}> split spatial · effects (position vs colour/opacity)</label>`;
+    const adv = it.open ? `<div class="intent__adv"><div class="intent__ref">${stagF}${propF}${effF}</div>${splitT}</div>` : "";
     return `<div class="intent" data-id="${it.id}">
       <div class="intent__top">
         <span class="intent__dot" style="background:${colorOf(i)}" aria-hidden="true"></span>
@@ -320,7 +325,8 @@ function play(i){
     dots.forEach(d=>{ d.style.transition="none"; set(d,a.before); });
     void root.offsetWidth;
     if(head) head.style.transition=`left ${total}ms linear`;
-    dots.forEach((d,k)=>{ d.style.transition=a.props.map(pr=>`${pr} ${r.d} ${r.e} ${k*st}ms`).join(", "); });
+    const easeFor=pr=>/(opacity|color)/.test(pr)?r.eEff:r.e;   // effects vs spatial when split
+    dots.forEach((d,k)=>{ d.style.transition=a.props.map(pr=>`${pr} ${r.d} ${easeFor(pr)} ${k*st}ms`).join(", "); });
     requestAnimationFrame(()=>{ if(head) head.style.left="100%"; dots.forEach(d=>set(d,a.after)); });
     setTimeout(()=>{ if(head){ head.style.transition="opacity 250ms"; head.style.opacity="0"; } }, total+80);
   }
@@ -406,6 +412,9 @@ function critique(){
     if(lead>500) out.push(["warn","!",`“${staggered.name}” staggers ${st}ms — across a 5-item list the last item waits ${lead}ms to even start. Long staggers make lists drag; keep the lead under ~500ms.`]);
     else out.push(["ok","✓",`“${staggered.name}” staggers ${st}ms — a 5-item list cascades over ${lead}ms, brisk enough to read as one gesture.`]);
   }
+  // 6. spatial/effects split that hasn't diverged is just noise
+  const idleSplit = intents.find(x=>{ const b=bindOf(x); return b.effectsEase && b.effectsEase===b.ease; });
+  if(idleSplit) out.push(["warn","!",`“${idleSplit.name}” is split into spatial · effects but both use the same easing. Diverge them (e.g. a spring for position, a flat curve for opacity) or collapse the split.`]);
   document.getElementById("hints").innerHTML = out.map(h=>`<div class="rd ${h[0]}"><span class="ic">${h[1]}</span><span>${h[2]}</span></div>`).join("");
 }
 
@@ -433,6 +442,11 @@ function buildCSS(){
     // composite transition shorthand: property + duration + easing (+ delay)
     const delay = +b.stagger>0 ? ` ${+b.stagger}ms` : "";
     s+=`  <span class="tk2">--motion-${it.name}</span>: ${b.prop||"all"} <span class="tk">var(--motion-${it.name}-duration)</span> <span class="tk">var(--motion-${it.name}-ease)</span>${delay};\n`;
+    // spatial vs effects: a second easing + composite for colour/opacity
+    if(b.effectsEase && b.effectsEase!==b.ease){
+      s+=`  <span class="tk2">--motion-${it.name}-effects-ease</span>: <span class="tk">var(--motion-ease-${b.effectsEase})</span>;\n`;
+      s+=`  <span class="tk2">--motion-${it.name}-effects</span>: opacity <span class="tk">var(--motion-${it.name}-duration)</span> <span class="tk">var(--motion-${it.name}-effects-ease)</span>${delay};\n`;
+    }
   });
   // a "reduced" mode exports as an OS-honoring override block
   const rmi=modes.findIndex(m=>m.name==="reduced");
@@ -453,6 +467,7 @@ function buildJSON(){
   durations.forEach(d=>obj.primitives.duration[d.name]=d.ms+"ms");
   easings.forEach(e=>obj.primitives.easing[e.name]=easeCSS(e));
   intents.forEach(it=>{ const b=bindOf(it); const v={duration:`{duration.${b.dur}}`,easing:`{easing.${b.ease}}`,purpose:it.purpose};
+    if(b.effectsEase&&b.effectsEase!==b.ease) v.effectsEasing=`{easing.${b.effectsEase}}`;
     if(b.prop&&b.prop!=="all") v.property=b.prop;
     if(+b.stagger>0) v.stagger=(+b.stagger)+"ms"; obj.semantic[it.name]=v; });
   return JSON.stringify(obj,null,2);
@@ -575,8 +590,8 @@ function encodeState(){
     e: easings.map(e=> e.type==="spring" ? [e.name,"spring",e.spring.stiffness,e.spring.damping] : [e.name,...e.bez]),
     m: modes.map(x=>x.name),
     am: activeMode,
-    // i: [name, purpose, [[dur,ease,stagger,prop] per mode]]
-    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease,+b.stagger||0,b.prop||"all"])]),
+    // i: [name, purpose, [[dur,ease,stagger,prop,effectsEase] per mode]]
+    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease,+b.stagger||0,b.prop||"all",b.effectsEase||""])]),
     p: probes.map(pb=>{ const k=intents.findIndex(x=>x.id===pb.intent); return [pb.kind, k<0?0:k]; }),
   };
   return b64urlEncode(JSON.stringify(s));
@@ -594,7 +609,7 @@ function applyState(o){
   const it = o.i.map(x=>{
     // new: [name, purpose, [[dur,ease],...]]  ·  legacy: [name, dur, ease, purpose]
     const binds = Array.isArray(x[2])
-      ? x[2].map(b=>({dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0,prop:String(b[3]||"all")}))
+      ? x[2].map(b=>{ const o={dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0,prop:String(b[3]||"all")}; if(b[4]) o.effectsEase=String(b[4]); return o; })
       : [{dur:String(x[1]),ease:String(x[2]),stagger:0,prop:"all"}];
     const purpose = Array.isArray(x[2]) ? String(x[1]||"") : String(x[3]||"");
     // pad/trim bindings so every intent has exactly one per mode
@@ -607,7 +622,7 @@ function applyState(o){
   activeMode=Math.max(0,Math.min(modes.length-1, +o.am||0));
   // bindings that reference a now-missing name fall back to the first slot
   const dn=new Set(durations.map(x=>x.name)), en=new Set(easings.map(x=>x.name));
-  intents.forEach(x=>x.binds.forEach(b=>{ if(!dn.has(b.dur))b.dur=durations[0].name; if(!en.has(b.ease))b.ease=easings[0].name; }));
+  intents.forEach(x=>x.binds.forEach(b=>{ if(!dn.has(b.dur))b.dur=durations[0].name; if(!en.has(b.ease))b.ease=easings[0].name; if(b.effectsEase&&!en.has(b.effectsEase))delete b.effectsEase; }));
   // restore each probe's lens (kind) + intent. New format stores [kind, idx];
   // legacy links stored a bare intent index (kind stays the default).
   const pick=k=>intents[Math.max(0,Math.min(intents.length-1,k))].id;
@@ -668,7 +683,9 @@ document.addEventListener("change", e=>{
   if(sc==="ename"){ renameScale(easings,i,t.value,"ease"); }
   if(sc==="idur"){ bindOf(intents[i]).dur=t.value; refreshTokens(); render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iease"){ bindOf(intents[i]).ease=t.value; render(); critique(); updateResolvedLines(); writeURL(); }
-  if(sc==="iprop"){ bindOf(intents[i]).prop=t.value; render(); updateResolvedLines(); writeURL(); }
+  if(sc==="iprop"){ bindOf(intents[i]).prop=t.value; render(); renderBench(); updateResolvedLines(); writeURL(); }
+  if(sc==="isplit"){ const bb=bindOf(intents[i]); if(t.checked) bb.effectsEase=bb.ease; else delete bb.effectsEase; rerenderAll(); }
+  if(sc==="ieff"){ bindOf(intents[i]).effectsEase=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="probe"){ probes[i].intent=t.value; renderBench(); writeURL(); }
   if(sc==="pkind"){ probes[i].kind=t.value; renderBench(); writeURL(); }
   if(sc==="mname"){ const s=(t.value.trim())||modes[i].name; modes[i].name=uniqueName(s,modes,i); rerenderAll(); }

@@ -110,6 +110,8 @@ svg.bz{display:block;width:100%;height:100%}
 .intent__ref input.stag:focus{outline:none;border-color:var(--accent)}
 .intent__adv{margin-top:8px}
 .intent__adv .intent__ref{margin-top:0}
+.intent__split{display:flex;align-items:center;gap:6px;margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--ink-faint);cursor:pointer}
+.intent__split input{accent-color:var(--accent);cursor:pointer}
 .intent__foot{display:flex;align-items:center;gap:10px;margin-top:9px}
 .intent__more{flex:none;background:transparent;border:1px solid var(--line);color:var(--ink-faint);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 8px;cursor:pointer}
 .intent__more:hover{border-color:var(--accent);color:var(--ink)}
