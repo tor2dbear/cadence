@@ -52,8 +52,9 @@ config, Style Dictionary, and a typed TS object, and a lens-based bench: each
 probe defaults to an abstract "orb" that shows pure motion, and can switch to a
 UI component (drawer, button, accordion, list reveal) to stress-test a token,
 and a "Load a system" picker that seeds the whole model from a real design
-system's motion palette (Material 3, Carbon, Fluent, Ant, Tailwind, Atlassian,
-Polaris, Primer, Spectrum) for comparison or as a starting point, and a
+system's motion palette (Material 3 and Material 3 Expressive, Carbon, Fluent,
+Ant, Tailwind, Atlassian, Polaris, Primer, Spectrum) for comparison or as a
+starting point — Material 3 Expressive is the one that ships real springs, and a
 motion-mode axis: add modes (e.g. productive/expressive, min/mid/max) and each
 intent carries a separate (duration, easing) binding per mode, switched globally
 — so one system can hold coordinated variants without duplicating easings. Each
