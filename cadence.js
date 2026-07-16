@@ -19,6 +19,12 @@ const SPRING_DEFAULT = {stiffness:170, damping:12};   // a lively single-oversho
 let durations = [
   {name:"fast",ms:150},{name:"base",ms:200},{name:"slow",ms:300},{name:"slower",ms:500},{name:"xslow",ms:800},
 ];
+// distance/travel primitives (px) — no design system tokenizes these; they let
+// the system-read judge whether a duration suits how far something moves.
+let distances = [
+  {name:"nudge",px:8},{name:"inline",px:48},{name:"panel",px:240},{name:"screen",px:720},
+];
+let distOpen = false;   // the distance scale is opt-in (collapsed by default)
 // an easing is either a single cubic-bézier (type "cubic") or a sampled spring
 // (type "spring", {stiffness, damping}) — springs express multi-bounce / physics
 // that a single bézier can't, and export as CSS linear().
@@ -122,10 +128,12 @@ const easeCSS = e => e.type==="spring"
 const easeLabel = e => e.type==="spring"
   ? `spring ${e.spring.stiffness}/${e.spring.damping}`
   : bezStr(e.bez);
+const distPx = name => { const d=distances.find(x=>x.name===name); return d?d.px:null; };
 const resolve = it => { const b=bindOf(it); const e=easeObj(b.ease);
   const split = !!(b.effectsEase && b.effectsEase!==b.ease);
   const eff = split ? easeObj(b.effectsEase) : e;
-  return { d: durMs(b.dur)+"ms", e: easeCSS(e), eLabel: easeLabel(e), eEff: easeCSS(eff), split, s: +b.stagger||0, prop: b.prop||"all" }; };
+  const dpx = b.distance ? distPx(b.distance) : null;
+  return { d: durMs(b.dur)+"ms", e: easeCSS(e), eLabel: easeLabel(e), eEff: easeCSS(eff), split, s: +b.stagger||0, prop: b.prop||"all", distName: b.distance||"", distPx: dpx }; };
 const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
 // default probe intents: enter / exit / move / hover, one abstract orb each
 probes[0].intent = intents[0].id; probes[1].intent = intents[1].id;
@@ -145,6 +153,24 @@ function renderDurations(){
       ${durations.length>1?`<button class="drow__rm" data-scope="drm" data-i="${i}" title="remove step" aria-label="remove ${d.name}">×</button>`:""}
     </div>`;
   }).join("");
+}
+
+// ---------- render: distance scale (opt-in travel primitive) ----------
+function renderDistances(){
+  const el=document.getElementById("distances");
+  if(el){
+    el.innerHTML = distances.map((d,i)=>`<div class="drow">
+      <input class="drow__name" value="${d.name}" data-scope="xname" data-i="${i}" aria-label="distance name" spellcheck="false">
+      <span class="drow__track"><input type="range" min="0" max="1000" step="4" value="${d.px}" data-scope="xpx" data-i="${i}" aria-label="${d.name} distance"></span>
+      <span class="drow__val">${d.px}px</span>
+      ${distances.length>1?`<button class="drow__rm" data-scope="xrm" data-i="${i}" title="remove distance" aria-label="remove ${d.name}">×</button>`:""}
+    </div>`).join("");
+  }
+  // sync the collapse chrome (the block is opt-in / collapsed by default)
+  const wrap=document.getElementById("distanceWrap"), tog=document.getElementById("distToggle");
+  if(wrap) wrap.hidden=!distOpen;
+  if(tog){ tog.setAttribute("aria-expanded", distOpen?"true":"false");
+    const chev=tog.querySelector(".block__chev"); if(chev) chev.textContent=distOpen?"▾":"▸"; }
 }
 
 // ---------- render: easing set (cubic = draggable bézier; spring = sliders) ----------
@@ -240,9 +266,10 @@ function renderIntents(){
     const easeF=`<div class="field"><label>Easing${isSplit?" · spatial":""}</label><select data-scope="iease" data-i="${i}">${easings.map(e=>`<option ${e.name===b.ease?"selected":""}>${e.name}</option>`).join("")}</select></div>`;
     const stagF=`<div class="field field--stag"><label>Stagger·ms</label><input class="stag" type="number" min="0" max="400" step="5" value="${+b.stagger||0}" data-scope="istag" data-i="${i}" aria-label="stagger in ms"></div>`;
     const propF=`<div class="field"><label>Property</label><select data-scope="iprop" data-i="${i}">${PROPS.map(pp=>`<option ${pp===(b.prop||"all")?"selected":""}>${pp}</option>`).join("")}</select></div>`;
+    const distF=`<div class="field"><label>Distance</label><select data-scope="idist" data-i="${i}"><option value="" ${!b.distance?"selected":""}>none</option>${distances.map(d=>`<option ${d.name===b.distance?"selected":""}>${d.name}</option>`).join("")}</select></div>`;
     const effF=isSplit?`<div class="field"><label>Easing · effects</label><select data-scope="ieff" data-i="${i}">${easings.map(e=>`<option ${e.name===b.effectsEase?"selected":""}>${e.name}</option>`).join("")}</select></div>`:"";
     const splitT=`<label class="intent__split"><input type="checkbox" data-scope="isplit" data-i="${i}" ${isSplit?"checked":""}> split spatial · effects (position vs colour/opacity)</label>`;
-    const adv = it.open ? `<div class="intent__adv"><div class="intent__ref">${stagF}${propF}${effF}</div>${splitT}</div>` : "";
+    const adv = it.open ? `<div class="intent__adv"><div class="intent__ref">${stagF}${propF}${distF}${effF}</div>${splitT}</div>` : "";
     return `<div class="intent" data-id="${it.id}">
       <div class="intent__top">
         <span class="intent__dot" style="background:${colorOf(i)}" aria-hidden="true"></span>
@@ -254,7 +281,7 @@ function renderIntents(){
       ${adv}
       <div class="intent__foot">
         <button class="intent__more" data-scope="imore" data-i="${i}" aria-expanded="${!!it.open}">${it.open?"less ▴":"more ▾"}</button>
-        <span class="intent__resolved">→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}</span>
+        <span class="intent__resolved">→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}</span>
       </div>
     </div>`;
   }).join("");
@@ -415,6 +442,17 @@ function critique(){
   // 6. spatial/effects split that hasn't diverged is just noise
   const idleSplit = intents.find(x=>{ const b=bindOf(x); return b.effectsEase && b.effectsEase===b.ease; });
   if(idleSplit) out.push(["warn","!",`“${idleSplit.name}” is split into spatial · effects but both use the same easing. Diverge them (e.g. a spring for position, a flat curve for opacity) or collapse the split.`]);
+  // 7. distance / velocity — only when an intent opts into a travel distance
+  const withDist = intents.map(x=>{ const b=bindOf(x); if(!b.distance) return null;
+    const px=distPx(b.distance); if(px==null) return null;
+    const ms=durMs(b.dur); return {name:x.name, px, ms, v:px/Math.max(1,ms)}; }).filter(Boolean);
+  if(withDist.length){
+    const fast=withDist.slice().sort((a,b)=>b.v-a.v)[0];
+    const slow=withDist.slice().sort((a,b)=>a.v-b.v)[0];
+    if(fast.v>5) out.push(["warn","!",`“${fast.name}” covers ${fast.px}px in ${fast.ms}ms — that's ${fast.v.toFixed(1)}px/ms, fast enough to read as a jump rather than a move. Slow it down or shorten the travel.`]);
+    else if(slow.v<0.4 && slow.px>=64) out.push(["warn","~",`“${slow.name}” crawls ${slow.px}px over ${slow.ms}ms (${slow.v.toFixed(2)}px/ms). Long, slow travel reads as sluggish — tighten the duration or the distance.`]);
+    else out.push(["ok","✓",`Travel speeds read naturally — “${fast.name}” moves ${fast.px}px in ${fast.ms}ms (${fast.v.toFixed(1)}px/ms), in the range the eye tracks as motion.`]);
+  }
   document.getElementById("hints").innerHTML = out.map(h=>`<div class="rd ${h[0]}"><span class="ic">${h[1]}</span><span>${h[2]}</span></div>`).join("");
 }
 
@@ -434,11 +472,18 @@ function buildCSS(){
     s+=`  <span class="tk">--motion-ease-${e.name}</span>: ${easeCSS(e)};\n`;
     if(e.type==="spring") s+=`  <span class="cm">/* fallback: --motion-ease-${e.name}: cubic-bezier(0.34, 1.4, 0.5, 1); */</span>\n`;
   });
+  // distance primitives only when an intent references them (opt-in scale)
+  const usedDist=[...new Set(intents.map(it=>bindOf(it).distance).filter(Boolean))];
+  if(usedDist.length){
+    s+=`\n  <span class="cm">/* primitives · distance (travel) */</span>\n`;
+    distances.filter(d=>usedDist.includes(d.name)).forEach(d=>s+=`  <span class="tk">--motion-distance-${d.name}</span>: ${d.px}px;\n`);
+  }
   s+=`\n  <span class="cm">/* semantic · intents → reference primitives${modeNote()} */</span>\n`;
   intents.forEach(it=>{ const b=bindOf(it);
     s+=`  <span class="tk2">--motion-${it.name}-duration</span>: <span class="tk">var(--motion-duration-${b.dur})</span>;\n`;
     s+=`  <span class="tk2">--motion-${it.name}-ease</span>: <span class="tk">var(--motion-ease-${b.ease})</span>;\n`;
     if(+b.stagger>0) s+=`  <span class="tk2">--motion-${it.name}-stagger</span>: ${+b.stagger}ms;\n`;
+    if(b.distance) s+=`  <span class="tk2">--motion-${it.name}-distance</span>: <span class="tk">var(--motion-distance-${b.distance})</span>;\n`;
     // composite transition shorthand: property + duration + easing (+ delay)
     const delay = +b.stagger>0 ? ` ${+b.stagger}ms` : "";
     s+=`  <span class="tk2">--motion-${it.name}</span>: ${b.prop||"all"} <span class="tk">var(--motion-${it.name}-duration)</span> <span class="tk">var(--motion-${it.name}-ease)</span>${delay};\n`;
@@ -466,9 +511,12 @@ function buildJSON(){
   if(modes.length>1) obj.mode=modes[activeMode].name;
   durations.forEach(d=>obj.primitives.duration[d.name]=d.ms+"ms");
   easings.forEach(e=>obj.primitives.easing[e.name]=easeCSS(e));
+  const usedD=[...new Set(intents.map(it=>bindOf(it).distance).filter(Boolean))];
+  if(usedD.length){ obj.primitives.distance={}; distances.filter(d=>usedD.includes(d.name)).forEach(d=>obj.primitives.distance[d.name]=d.px+"px"); }
   intents.forEach(it=>{ const b=bindOf(it); const v={duration:`{duration.${b.dur}}`,easing:`{easing.${b.ease}}`,purpose:it.purpose};
     if(b.effectsEase&&b.effectsEase!==b.ease) v.effectsEasing=`{easing.${b.effectsEase}}`;
     if(b.prop&&b.prop!=="all") v.property=b.prop;
+    if(b.distance) v.distance=`{distance.${b.distance}}`;
     if(+b.stagger>0) v.stagger=(+b.stagger)+"ms"; obj.semantic[it.name]=v; });
   return JSON.stringify(obj,null,2);
 }
@@ -499,6 +547,7 @@ function buildStyleDictionary(){
     duration:{value:`{motion.duration.${b.dur}}`,type:"duration"},
     easing:{value:`{motion.easing.${b.ease}}`,type:"cubicBezier"},
   }; if(b.prop&&b.prop!=="all") t.property={value:b.prop,type:"other"};
+    if(b.distance){ const px=distPx(b.distance); if(px!=null) t.distance={value:px+"px",type:"dimension"}; }
     if(+b.stagger>0) t.stagger={value:(+b.stagger)+"ms",type:"duration"}; obj.motion[it.name]=t; });
   return JSON.stringify(obj,null,2);
 }
@@ -508,8 +557,10 @@ function buildTS(){
   const ease=easings.map(e=>`    ${key(e.name)}: ${q(easeCSS(e))},`).join("\n");
   const sem=intents.map(it=>{ const b=bindOf(it);
     const prp=(b.prop&&b.prop!=="all")?`, property: ${q(b.prop)}`:"";
+    const dpx=b.distance?distPx(b.distance):null;
+    const dist=dpx!=null?`, distance: ${q(dpx+"px")}`:"";
     const stag=+b.stagger>0?`, stagger: ${q((+b.stagger)+"ms")}`:"";
-    return `    ${key(it.name)}: { duration: ${q(durMs(b.dur)+"ms")}, easing: ${q(easeCSS(easeObj(b.ease)))}${prp}${stag} },`; }).join("\n");
+    return `    ${key(it.name)}: { duration: ${q(durMs(b.dur)+"ms")}, easing: ${q(easeCSS(easeObj(b.ease)))}${prp}${dist}${stag} },`; }).join("\n");
   return `// motion.ts — design tokens from Cadence${modeNote()}\n`+
     `export const motion = {\n`+
     `  duration: {\n${dur}\n  },\n`+
@@ -530,7 +581,7 @@ function refreshTokens(){
   durations.forEach(d=>s.setProperty(`--motion-duration-${d.name}`,d.ms+"ms"));
   easings.forEach(e=>s.setProperty(`--motion-ease-${e.name}`,easeCSS(e)));
 }
-function rerenderAll(){ renderModes();renderDurations();renderEasings();renderIntents();renderBench();refreshTokens();render();critique();writeURL(); }
+function rerenderAll(){ renderModes();renderDurations();renderDistances();renderEasings();renderIntents();renderBench();refreshTokens();render();critique();writeURL(); }
 
 // ---------- starter templates: motion palettes from established design systems ----------
 // state shape matches encodeState: d[[name,ms]] · e[[name,x1,y1,x2,y2]] · i[[name,dur,ease,purpose]] · p[[kind,intentIdx]]
@@ -590,8 +641,9 @@ function encodeState(){
     e: easings.map(e=> e.type==="spring" ? [e.name,"spring",e.spring.stiffness,e.spring.damping] : [e.name,...e.bez]),
     m: modes.map(x=>x.name),
     am: activeMode,
-    // i: [name, purpose, [[dur,ease,stagger,prop,effectsEase] per mode]]
-    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease,+b.stagger||0,b.prop||"all",b.effectsEase||""])]),
+    // i: [name, purpose, [[dur,ease,stagger,prop,effectsEase,distance] per mode]]
+    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease,+b.stagger||0,b.prop||"all",b.effectsEase||"",b.distance||""])]),
+    x: distances.map(d=>[d.name,d.px]),
     p: probes.map(pb=>{ const k=intents.findIndex(x=>x.id===pb.intent); return [pb.kind, k<0?0:k]; }),
   };
   return b64urlEncode(JSON.stringify(s));
@@ -609,7 +661,7 @@ function applyState(o){
   const it = o.i.map(x=>{
     // new: [name, purpose, [[dur,ease],...]]  ·  legacy: [name, dur, ease, purpose]
     const binds = Array.isArray(x[2])
-      ? x[2].map(b=>{ const o={dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0,prop:String(b[3]||"all")}; if(b[4]) o.effectsEase=String(b[4]); return o; })
+      ? x[2].map(b=>{ const o={dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0,prop:String(b[3]||"all")}; if(b[4]) o.effectsEase=String(b[4]); if(b[5]) o.distance=String(b[5]); return o; })
       : [{dur:String(x[1]),ease:String(x[2]),stagger:0,prop:"all"}];
     const purpose = Array.isArray(x[2]) ? String(x[1]||"") : String(x[3]||"");
     // pad/trim bindings so every intent has exactly one per mode
@@ -618,11 +670,17 @@ function applyState(o){
     return {id:nid(),name:String(x[0]),purpose,binds};
   });
   if(!d.length||!e.length||!it.length) throw new Error("empty scale");
-  durations=d; easings=e; intents=it; modes=md;
+  // distance scale: new links carry `x`; legacy/template links fall back to the default set
+  const dist = Array.isArray(o.x)&&o.x.length
+    ? o.x.map(x=>({name:String(x[0]),px:Math.max(0,Math.min(1000,+x[1]||0))}))
+    : [{name:"nudge",px:8},{name:"inline",px:48},{name:"panel",px:240},{name:"screen",px:720}];
+  durations=d; easings=e; intents=it; modes=md; distances=dist;
   activeMode=Math.max(0,Math.min(modes.length-1, +o.am||0));
-  // bindings that reference a now-missing name fall back to the first slot
-  const dn=new Set(durations.map(x=>x.name)), en=new Set(easings.map(x=>x.name));
-  intents.forEach(x=>x.binds.forEach(b=>{ if(!dn.has(b.dur))b.dur=durations[0].name; if(!en.has(b.ease))b.ease=easings[0].name; if(b.effectsEase&&!en.has(b.effectsEase))delete b.effectsEase; }));
+  // bindings that reference a now-missing name fall back to the first slot (distance just drops)
+  const dn=new Set(durations.map(x=>x.name)), en=new Set(easings.map(x=>x.name)), xn=new Set(distances.map(x=>x.name));
+  intents.forEach(x=>x.binds.forEach(b=>{ if(!dn.has(b.dur))b.dur=durations[0].name; if(!en.has(b.ease))b.ease=easings[0].name; if(b.effectsEase&&!en.has(b.effectsEase))delete b.effectsEase; if(b.distance&&!xn.has(b.distance))delete b.distance; }));
+  // reveal the distance scale if anything now uses it
+  distOpen = intents.some(x=>x.binds.some(b=>b.distance));
   // restore each probe's lens (kind) + intent. New format stores [kind, idx];
   // legacy links stored a bare intent index (kind stays the default).
   const pick=k=>intents[Math.max(0,Math.min(intents.length-1,k))].id;
@@ -641,7 +699,7 @@ function writeURL(){
 function updateResolvedLines(){
   document.querySelectorAll(".intent__resolved").forEach((el,k)=>{
     if(!intents[k]) return;
-    const r=resolve(intents[k]); el.textContent=`→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}`;
+    const r=resolve(intents[k]); el.textContent=`→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}`;
   });
 }
 
@@ -653,6 +711,7 @@ document.addEventListener("keydown", e=>{
 document.addEventListener("input", e=>{
   const t=e.target, sc=t.dataset.scope, i=+t.dataset.i;
   if(sc==="dur"){ durations[i].ms=+t.value; refreshTokens(); renderDurations(); render(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="xpx"){ distances[i].px=+t.value; const v=t.closest(".drow")?.querySelector(".drow__val"); if(v)v.textContent=t.value+"px"; render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iname"){ intents[i].name=t.value.trim()||intents[i].name; render(); critique(); writeURL(); }
   if(sc==="istag"){ bindOf(intents[i]).stagger=Math.max(0,Math.min(400,+t.value||0)); render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="sk"||sc==="sd"){
@@ -681,6 +740,8 @@ document.addEventListener("change", e=>{
   }
   if(sc==="dname"){ renameScale(durations,i,t.value,"dur"); }
   if(sc==="ename"){ renameScale(easings,i,t.value,"ease"); }
+  if(sc==="xname"){ renameScale(distances,i,t.value,"distance"); }
+  if(sc==="idist"){ const bb=bindOf(intents[i]); if(t.value) bb.distance=t.value; else delete bb.distance; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="idur"){ bindOf(intents[i]).dur=t.value; refreshTokens(); render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iease"){ bindOf(intents[i]).ease=t.value; render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iprop"){ bindOf(intents[i]).prop=t.value; render(); renderBench(); updateResolvedLines(); writeURL(); }
@@ -701,6 +762,8 @@ document.addEventListener("click", e=>{
       const fb=durations[0].name; intents.forEach(it=>it.binds.forEach(b=>{if(b.dur===g)b.dur=fb;})); rerenderAll(); } }
   if(sc==="erm"){ if(easings.length>1){ const g=easings[i].name; easings.splice(i,1);
       const fb=easings[0].name; intents.forEach(it=>it.binds.forEach(b=>{if(b.ease===g)b.ease=fb;})); rerenderAll(); } }
+  if(sc==="xrm"){ if(distances.length>1){ const g=distances[i].name; distances.splice(i,1);
+      intents.forEach(it=>it.binds.forEach(b=>{if(b.distance===g)delete b.distance;})); rerenderAll(); } }
   if(sc==="mset"){ activeMode=Math.max(0,Math.min(modes.length-1,i)); rerenderAll(); }
   if(sc==="madd"){ const src=activeMode; modes.push({name:uniqueName("mode",modes)});
       intents.forEach(it=>it.binds.push({...it.binds[src]})); activeMode=modes.length-1; rerenderAll(); }
@@ -755,6 +818,13 @@ document.getElementById("addDuration").addEventListener("click",()=>{
   durations.push({name:uniqueName("step",durations),ms});
   rerenderAll();
 });
+document.getElementById("addDistance").addEventListener("click",()=>{
+  const last=distances[distances.length-1];
+  const px=Math.min(1000,Math.max(0, last?Math.round(last.px*2):48));
+  distances.push({name:uniqueName("dist",distances),px});
+  distOpen=true; rerenderAll();
+});
+document.getElementById("distToggle").addEventListener("click",()=>{ distOpen=!distOpen; renderDistances(); });
 document.getElementById("addEasing").addEventListener("click",()=>{
   easings.push({name:uniqueName("custom",easings),type:"cubic",bez:PRESETS.standard.slice()});
   rerenderAll();
