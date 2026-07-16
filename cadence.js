@@ -692,8 +692,13 @@ function applyState(o){
   });
   else probes.forEach((pb,k)=>pb.intent=pick(k));
 }
+// a channel so an open live-demo (tab or preview iframe) re-times as you edit
+let bchan=null; try{ bchan=new BroadcastChannel("cadence"); }catch(_){}
 function writeURL(){
-  try{ history.replaceState(null,"",location.pathname+location.search+"#"+encodeState()); }catch(_){}
+  const enc=encodeState();
+  try{ history.replaceState(null,"",location.pathname+location.search+"#"+enc); }catch(_){}
+  if(bchan){ try{ bchan.postMessage({hash:enc}); }catch(_){} }
+  const dl=document.getElementById("demoLink"); if(dl) dl.href="demo.html#"+enc;
 }
 
 function updateResolvedLines(){
@@ -861,6 +866,18 @@ document.getElementById("share").addEventListener("click",()=>{
     if(!t) return;
     try{ applyState(structuredClone(t)); rerenderAll(); }catch(_){}
   });
+})();
+
+// live-demo preview overlay: an iframe of demo.html seeded with the current
+// system; it stays live via the BroadcastChannel above (same origin).
+(function initPreview(){
+  const pv=document.getElementById("preview"), tog=document.getElementById("previewToggle");
+  const cl=document.getElementById("previewClose"), fr=document.getElementById("previewFrame"), pop=document.getElementById("previewPop");
+  if(!pv||!tog||!fr) return;
+  const open=()=>{ const enc=encodeState(); fr.src="demo.html#"+enc; if(pop) pop.href="demo.html#"+enc; pv.hidden=false; };
+  tog.addEventListener("click",()=>{ if(pv.hidden) open(); else pv.hidden=true; });
+  if(cl) cl.addEventListener("click",()=>{ pv.hidden=true; });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !pv.hidden) pv.hidden=true; });
 })();
 
 // dismissible orientation strip (remembered across visits)

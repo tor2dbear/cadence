@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Cadence live demo — a deliberately plain product surface where the motion system's tokens are applied to real components. Re-times live as you edit the system." />
+<title>Cadence — live demo</title>
+<style>
+/* A deliberately plain product surface. Motion is the only interesting
+   variable — every transition below reads a --role-* token off :root, and
+   the editor pushes new values live (BroadcastChannel + the URL hash). */
+*{box-sizing:border-box}
+:root{
+  --bg:#0f1216; --surface:#f7f8fa; --surface-2:#eef0f4; --card:#ffffff;
+  --ink:#1c2530; --ink-dim:#5b6675; --ink-faint:#8a94a3; --line:#e2e6ec;
+  --accent:#3b6ef5; --accent-soft:#e7edff; --ok:#1f9d6b; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  /* motion fallbacks so a bare demo.html still animates before any token lands */
+  --role-enter-duration:220ms; --role-enter-ease:cubic-bezier(0.22,1,0.36,1); --role-enter-stagger:70ms;
+  --role-exit-duration:150ms;  --role-exit-ease:cubic-bezier(0.4,0,1,1);
+  --role-move-duration:300ms;  --role-move-ease:cubic-bezier(0.2,0,0.2,1);
+  --role-hover-duration:150ms; --role-hover-ease:cubic-bezier(0.2,0,0.2,1);
+  --role-emph-duration:500ms;  --role-emph-ease:cubic-bezier(0.22,1,0.36,1);
+}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  display:flex;justify-content:center;padding:26px 16px 80px;min-height:100vh}
+.app{width:100%;max-width:540px}
+.demohd{display:flex;align-items:center;justify-content:space-between;margin:0 2px 14px}
+.demohd h1{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:0;font-weight:600;font-family:var(--mono)}
+.playseq{font:inherit;font-size:12px;background:transparent;border:1px solid #2c3542;color:#c7ced8;border-radius:7px;padding:5px 11px;cursor:pointer}
+.playseq:hover{border-color:var(--accent);color:#fff}
+
+/* the fake product shell */
+.shell{background:var(--surface);border-radius:14px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.topbar{display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--card);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:650;font-size:14.5px}
+.brand__dot{width:16px;height:16px;border-radius:5px;background:var(--accent)}
+.topbar__sp{flex:1}
+.iconbtn{position:relative;border:0;background:transparent;color:var(--ink-dim);font-size:18px;line-height:1;cursor:pointer;padding:4px 8px;border-radius:7px}
+.iconbtn:hover{background:var(--surface-2);color:var(--ink)}
+
+/* tabs — the active underline slides with `move` */
+.tabs{position:relative;display:flex;gap:2px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line)}
+.tab{border:0;background:transparent;font:inherit;font-weight:550;color:var(--ink-faint);padding:12px 14px;cursor:pointer}
+.tab.active{color:var(--ink)}
+.tab:hover{color:var(--ink-dim)}
+.tabs__ink{position:absolute;bottom:-1px;height:2px;background:var(--accent);border-radius:2px;left:0;width:0;
+  transition:left var(--role-move-duration) var(--role-move-ease), width var(--role-move-duration) var(--role-move-ease)}
+
+.body{padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:15px;margin-bottom:13px}
+.card__hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.card__hd h2{font-size:13.5px;margin:0}
+.card__sub{color:var(--ink-faint);font-size:12px;margin:0 0 12px}
+.linkbtn{border:0;background:transparent;color:var(--accent);font:inherit;font-size:12.5px;cursor:pointer;padding:2px 4px;border-radius:5px}
+.linkbtn:hover{background:var(--accent-soft)}
+
+/* member list — rows cascade in with `enter` + stagger */
+.list{list-style:none;margin:0;padding:0}
+.row{display:flex;align-items:center;gap:11px;padding:9px 4px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.av{width:30px;height:30px;border-radius:50%;background:var(--surface-2);flex:none;display:grid;place-items:center;font-size:12px;font-weight:650;color:var(--ink-dim)}
+.row__name{font-weight:550}
+.row__role{color:var(--ink-faint);font-size:12px}
+.row__sp{flex:1}
+.pill{font-size:11px;font-family:var(--mono);color:var(--ink-dim);background:var(--surface-2);padding:2px 8px;border-radius:20px}
+.list.reveal .row{opacity:0;transform:translateY(var(--role-enter-distance,12px));
+  transition:opacity var(--role-enter-duration) var(--role-enter-ease),
+             transform var(--role-enter-duration) var(--role-enter-ease);
+  transition-delay:calc(var(--i) * var(--role-enter-stagger))}
+.list.reveal.in .row{opacity:1;transform:none}
+
+/* accordion — expands in place with `move` (grid-rows 0fr→1fr) */
+.acc__row{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.acc__chev{color:var(--ink-faint);transition:transform var(--role-move-duration) var(--role-move-ease)}
+.acc.open .acc__chev{transform:rotate(90deg)}
+.acc__wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--role-move-duration) var(--role-move-ease)}
+.acc.open .acc__wrap{grid-template-rows:1fr}
+.acc__inner{overflow:hidden}
+.acc__inner p{color:var(--ink-dim);font-size:12.5px;margin:12px 0 0}
+
+/* action buttons — press/hover with `hover` */
+.actions{display:flex;gap:9px;margin-top:2px}
+.btn{font:inherit;font-weight:600;border-radius:9px;padding:9px 15px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  transition:transform var(--role-hover-duration) var(--role-hover-ease),
+             background-color var(--role-hover-duration) var(--role-hover-ease),
+             box-shadow var(--role-hover-duration) var(--role-hover-ease)}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.10)}
+.btn:active{transform:translateY(0) scale(.97)}
+.btn--primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn--primary:hover{background:#3160e0}
+
+/* toast — enters/exits with the `enter`/`exit` tokens */
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,140%);
+  background:#12181f;color:#eef2f7;padding:11px 16px;border-radius:10px;font-size:13px;font-weight:550;
+  display:flex;align-items:center;gap:9px;box-shadow:0 10px 30px rgba(0,0,0,.4);pointer-events:none;opacity:0;
+  transition:transform var(--role-exit-duration) var(--role-exit-ease), opacity var(--role-exit-duration) var(--role-exit-ease)}
+.toast .ok{color:var(--ok);font-weight:700}
+.toast.show{opacity:1;transform:translate(-50%,0);
+  transition:transform var(--role-enter-duration) var(--role-enter-ease), opacity var(--role-enter-duration) var(--role-enter-ease)}
+
+/* modal — scrim fades, dialog rises; enter to open, exit to close */
+.scrim{position:fixed;inset:0;background:rgba(10,14,20,.5);opacity:0;pointer-events:none;
+  transition:opacity var(--role-exit-duration) var(--role-exit-ease)}
+.scrim.show{opacity:1;pointer-events:auto;transition:opacity var(--role-enter-duration) var(--role-enter-ease)}
+.modal{position:fixed;left:50%;top:50%;width:min(400px,90vw);background:var(--card);border-radius:14px;padding:20px;
+  box-shadow:0 24px 70px rgba(0,0,0,.5);opacity:0;pointer-events:none;
+  transform:translate(-50%,calc(-50% + var(--role-enter-distance,16px))) scale(.96);
+  transition:opacity var(--role-exit-duration) var(--role-exit-ease), transform var(--role-exit-duration) var(--role-exit-ease)}
+.modal.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);
+  transition:opacity var(--role-enter-duration) var(--role-enter-ease), transform var(--role-enter-duration) var(--role-enter-ease)}
+.modal h3{margin:0 0 6px}
+.modal p{color:var(--ink-dim);font-size:13px;margin:0 0 16px}
+.modal .actions{justify-content:flex-end}
+
+/* dropdown — small menu, enter/exit */
+.menu{position:absolute;right:6px;top:calc(100% + 4px);min-width:170px;background:var(--card);border:1px solid var(--line);
+  border-radius:10px;padding:5px;box-shadow:0 14px 40px rgba(0,0,0,.22);transform-origin:top right;z-index:5;
+  opacity:0;pointer-events:none;transform:translateY(-6px) scale(.97);
+  transition:opacity var(--role-exit-duration) var(--role-exit-ease), transform var(--role-exit-duration) var(--role-exit-ease)}
+.menu.show{opacity:1;pointer-events:auto;transform:translateY(0) scale(1);
+  transition:opacity var(--role-enter-duration) var(--role-enter-ease), transform var(--role-enter-duration) var(--role-enter-ease)}
+.menu button{display:block;width:100%;text-align:left;border:0;background:transparent;font:inherit;font-size:13px;
+  padding:8px 10px;border-radius:7px;cursor:pointer;color:var(--ink)}
+.menu button:hover{background:var(--surface-2)}
+
+/* the intent labels — what makes the coupling legible */
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);
+  background:var(--surface-2);border-radius:20px;padding:2px 9px;white-space:nowrap}
+.tag b{color:var(--accent);font-weight:600}
+.tag i{font-style:normal;opacity:.85}
+.cardtag{margin-left:8px}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.001ms !important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="demohd">
+    <h1>Live demo — motion applied</h1>
+    <button class="playseq" id="playSeq">▶ Play sequence</button>
+  </div>
+
+  <div class="shell">
+    <div class="topbar">
+      <span class="brand"><span class="brand__dot"></span>Northwind</span>
+      <span class="topbar__sp"></span>
+      <div style="position:relative">
+        <button class="iconbtn" id="menuBtn" aria-haspopup="true" aria-expanded="false">•••</button>
+        <div class="menu" id="menu">
+          <button>Rename workspace</button>
+          <button>Duplicate</button>
+          <button>Archive</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab active">Overview</button>
+      <button class="tab">Activity</button>
+      <button class="tab">Settings</button>
+      <span class="tabs__ink" id="tabInk"></span>
+    </div>
+
+    <div class="body">
+      <div class="card">
+        <div class="card__hd">
+          <h2>Members <span class="tag cardtag"><b data-role-name="enter">enter</b> <i data-role-dur="enter"></i> · stagger</span></h2>
+          <button class="linkbtn" id="replay">Replay ↻</button>
+        </div>
+        <p class="card__sub">Rows cascade in — each waits one stagger step behind the last.</p>
+        <ul class="list reveal" id="memberList">
+          <li class="row" style="--i:0"><span class="av">AL</span><span><div class="row__name">Ada Lovelace</div><div class="row__role">Owner</div></span><span class="row__sp"></span><span class="pill">admin</span></li>
+          <li class="row" style="--i:1"><span class="av">GH</span><span><div class="row__name">Grace Hopper</div><div class="row__role">Maintainer</div></span><span class="row__sp"></span><span class="pill">write</span></li>
+          <li class="row" style="--i:2"><span class="av">AT</span><span><div class="row__name">Alan Turing</div><div class="row__role">Contributor</div></span><span class="row__sp"></span><span class="pill">write</span></li>
+          <li class="row" style="--i:3"><span class="av">KJ</span><span><div class="row__name">Katherine J.</div><div class="row__role">Viewer</div></span><span class="row__sp"></span><span class="pill">read</span></li>
+        </ul>
+      </div>
+
+      <div class="card acc" id="acc">
+        <div class="acc__row" id="accRow">
+          <div class="card__hd" style="margin:0"><h2>Advanced <span class="tag cardtag"><b data-role-name="move">move</b> <i data-role-dur="move"></i></span></h2></div>
+          <span class="acc__chev">›</span>
+        </div>
+        <div class="acc__wrap"><div class="acc__inner">
+          <p>Height and chevron ride the same <code>move</code> token, so the panel opening reads as one gesture rather than two.</p>
+        </div></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn--primary" id="saveBtn">Save changes <span class="tag" style="background:rgba(255,255,255,.16);color:#dfe7ff"><b style="color:#fff" data-role-name="hover">hover</b></span></button>
+        <button class="btn" id="inviteBtn">Invite people <span class="tag"><b data-role-name="enter">enter</b>/<b data-role-name="exit">exit</b></span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <h3 id="modalTitle">Invite people <span class="tag cardtag"><b data-role-name="enter">enter</b>/<b data-role-name="exit">exit</b></span></h3>
+  <p>The dialog rises and the scrim fades on <code>enter</code>; both reverse — faster — on <code>exit</code>.</p>
+  <div class="actions">
+    <button class="btn" id="modalCancel">Cancel</button>
+    <button class="btn btn--primary" id="modalSend">Send invites</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ok">✓</span> Changes saved <span class="tag" style="background:rgba(255,255,255,.12);color:#cdd5e0"><b style="color:#8ab4ff" data-role-name="enter">enter</b>/<b style="color:#8ab4ff" data-role-name="exit">exit</b></span></div>
+
+<script>
+/* ---- token resolver: turn an encoded Cadence system into --role-* vars ---- */
+const b64urlDecode = s => decodeURIComponent(escape(atob(s.replace(/-/g,"+").replace(/_/g,"/"))));
+function springSamples(sp,N=24){
+  const k=Math.max(1,+sp.stiffness||170), c=Math.max(0,+sp.damping||12), w0=Math.sqrt(k), zeta=c/(2*Math.sqrt(k));
+  const T=zeta>0?Math.min(10,Math.max(0.15,Math.log(220)/(zeta*w0))):6, out=[];
+  for(let i=0;i<N;i++){ const t=(i/(N-1))*T; let x;
+    if(zeta<1){ const wd=w0*Math.sqrt(1-zeta*zeta); x=1-Math.exp(-zeta*w0*t)*(Math.cos(wd*t)+(zeta*w0/wd)*Math.sin(wd*t)); }
+    else if(zeta<1.0001){ x=1-Math.exp(-w0*t)*(1+w0*t); }
+    else { const wd=w0*Math.sqrt(zeta*zeta-1); x=1-Math.exp(-zeta*w0*t)*(Math.cosh(wd*t)+(zeta*w0/wd)*Math.sinh(wd*t)); }
+    out.push(x); }
+  out[0]=0; out[N-1]=1; return out;
+}
+const easeCSS = e => e.type==="spring"
+  ? "linear("+springSamples(e.spring).map(v=>+v.toFixed(4)).join(", ")+")"
+  : `cubic-bezier(${e.bez.join(", ")})`;
+
+// defaults so a bare demo.html (no hash, no editor) still looks alive
+const DEFAULT_STATE = {d:[["fast",150],["base",200],["slow",300],["slower",500],["xslow",800]],
+  e:[["standard",0.2,0,0.2,1],["decelerate",0,0,0.2,1],["accelerate",0.4,0,1,1],["emphasized",0.22,1,0.36,1]],
+  m:["default"],am:0,
+  i:[["enter","things appearing",[["base","emphasized",70,"all","",""]]],["exit","things leaving",[["fast","accelerate",0,"all","",""]]],
+     ["move","in-place change",[["slow","standard",0,"all","",""]]],["emphasized","hero moments",[["slower","emphasized",0,"all","",""]]],
+     ["hover","pointer feedback",[["fast","standard",0,"all","",""]]]],
+  x:[["nudge",8],["inline",48],["panel",240],["screen",720]],p:[]};
+
+function parseState(o){
+  const dur={}; o.d.forEach(x=>dur[String(x[0])]=+x[1]||200);
+  const eas={}; o.e.forEach(x=>{ eas[String(x[0])]= x[1]==="spring"
+    ? {type:"spring",spring:{stiffness:+x[2]||170,damping:+x[3]||12}}
+    : {type:"cubic",bez:[+x[1],+x[2],+x[3],+x[4]]}; });
+  const dist={}; (o.x||[]).forEach(x=>dist[String(x[0])]=+x[1]||0);
+  const am=Math.max(0,+o.am||0);
+  const intents=o.i.map(x=>{
+    const binds=Array.isArray(x[2])?x[2]:[[x[1],x[2],0,"all","",""]];
+    const b=binds[Math.min(am,binds.length-1)]||binds[0];
+    const purpose=Array.isArray(x[2])?String(x[1]||""):String(x[3]||"");
+    return {name:String(x[0]),purpose,dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0,prop:String(b[3]||"all"),distance:b[5]?String(b[5]):""};
+  });
+  return {dur,eas,dist,intents};
+}
+// each demo moment is bound to a ROLE; roles resolve to whichever intent best
+// matches by name, so renamed intents / loaded templates still drive the demo.
+const ROLES=[
+  ["enter",/enter|open|appear|reveal|zoom.?in|slide.?in|\bin\b|in$/i,0],
+  ["exit", /exit|close|leav|dismiss|zoom.?out|\bout\b|out$/i,1],
+  ["move", /move|change|resize|reposition|state|scal/i,2],
+  ["hover",/hover|focus|press|feedback|tap|pointer/i,4],
+  ["emph", /emph|hero|expressive|large/i,3],
+];
+function applyState(o){
+  const st=parseState(o), root=document.documentElement.style;
+  const durMs=n=>(st.dur[n]!=null?st.dur[n]:200)+"ms";
+  const easeOf=n=>easeCSS(st.eas[n]||{type:"cubic",bez:[0.2,0,0.2,1]});
+  Object.entries(st.dur).forEach(([n,ms])=>root.setProperty(`--motion-duration-${n}`,ms+"ms"));
+  Object.entries(st.eas).forEach(([n,e])=>root.setProperty(`--motion-ease-${n}`,easeCSS(e)));
+  Object.entries(st.dist).forEach(([n,px])=>root.setProperty(`--motion-distance-${n}`,px+"px"));
+  st.intents.forEach(it=>{
+    root.setProperty(`--motion-${it.name}-duration`,durMs(it.dur));
+    root.setProperty(`--motion-${it.name}-ease`,easeOf(it.ease));
+    if(it.stagger>0) root.setProperty(`--motion-${it.name}-stagger`,it.stagger+"ms");
+    if(it.distance) root.setProperty(`--motion-${it.name}-distance`,(st.dist[it.distance]||0)+"px");
+  });
+  ROLES.forEach(([role,re,fb])=>{
+    const it=st.intents.find(x=>re.test(x.name))||st.intents[Math.min(fb,st.intents.length-1)]||st.intents[0];
+    if(!it) return;
+    root.setProperty(`--role-${role}-duration`,durMs(it.dur));
+    root.setProperty(`--role-${role}-ease`,easeOf(it.ease));
+    root.setProperty(`--role-${role}-stagger`,(it.stagger||0)+"ms");
+    if(it.distance) root.setProperty(`--role-${role}-distance`,(st.dist[it.distance]||0)+"px");
+    else root.removeProperty(`--role-${role}-distance`);
+    // legible labels: which intent won this role, and its resolved duration
+    document.querySelectorAll(`[data-role-name="${role}"]`).forEach(el=>el.textContent=it.name);
+    document.querySelectorAll(`[data-role-dur="${role}"]`).forEach(el=>el.textContent=durMs(it.dur));
+  });
+}
+function applyHash(h){
+  h=(h||"").replace(/^#/,""); let o=DEFAULT_STATE;
+  if(h){ try{ o=JSON.parse(b64urlDecode(h)); }catch(_){ o=DEFAULT_STATE; } }
+  try{ applyState(o); }catch(_){ try{ applyState(DEFAULT_STATE); }catch(__){} }
+}
+applyHash(location.hash);
+// live: the editor broadcasts its hash on every change
+try{ const ch=new BroadcastChannel("cadence"); ch.onmessage=e=>{ if(e&&e.data&&e.data.hash!=null) applyHash(e.data.hash); }; }catch(_){}
+window.addEventListener("hashchange",()=>applyHash(location.hash));
+
+/* ---- dumb component interactions (fake state only) ---- */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+// list reveal (retriggerable)
+function revealList(){ const l=$("#memberList"); l.classList.remove("in"); void l.offsetWidth; l.classList.add("in"); }
+$("#replay").addEventListener("click",revealList);
+// tabs: slide the underline (move)
+function moveInk(tab){ const ink=$("#tabInk"), r=tab.getBoundingClientRect(), pr=tab.parentElement.getBoundingClientRect();
+  ink.style.left=(r.left-pr.left)+"px"; ink.style.width=r.width+"px"; }
+$$("#tabs .tab").forEach(t=>t.addEventListener("click",()=>{ $$("#tabs .tab").forEach(x=>x.classList.remove("active")); t.classList.add("active"); moveInk(t); }));
+// accordion (move)
+$("#accRow").addEventListener("click",()=>$("#acc").classList.toggle("open"));
+// toast (enter/exit)
+let toastT=null;
+function toast(){ const el=$("#toast"); el.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),2400); }
+$("#saveBtn").addEventListener("click",toast);
+// modal (enter/exit)
+function modal(open){ $("#modal").classList.toggle("show",open); $("#scrim").classList.toggle("show",open); }
+$("#inviteBtn").addEventListener("click",()=>modal(true));
+$("#modalCancel").addEventListener("click",()=>modal(false));
+$("#modalSend").addEventListener("click",()=>{ modal(false); setTimeout(toast,180); });
+$("#scrim").addEventListener("click",()=>modal(false));
+// dropdown (enter/exit)
+const menu=$("#menu"), menuBtn=$("#menuBtn");
+function setMenu(open){ menu.classList.toggle("show",open); menuBtn.setAttribute("aria-expanded",open?"true":"false"); }
+menuBtn.addEventListener("click",e=>{ e.stopPropagation(); setMenu(!menu.classList.contains("show")); });
+document.addEventListener("click",()=>setMenu(false));
+menu.addEventListener("click",e=>e.stopPropagation());
+// a quick guided sequence so the whole system reads at a glance
+function playSeq(){
+  revealList();
+  setTimeout(()=>{ const t=$$("#tabs .tab")[1]; t.click(); },700);
+  setTimeout(()=>{ $("#acc").classList.add("open"); },1200);
+  setTimeout(()=>modal(true),1900);
+  setTimeout(()=>{ modal(false); toast(); },3100);
+  setTimeout(()=>{ const t=$$("#tabs .tab")[0]; t.click(); $("#acc").classList.remove("open"); },4200);
+}
+$("#playSeq").addEventListener("click",playSeq);
+// initial paint: place the tab ink, then reveal the list once laid out
+requestAnimationFrame(()=>{ moveInk($("#tabs .tab.active")); setTimeout(revealList,120); });
+</script>
+</body>
+</html>

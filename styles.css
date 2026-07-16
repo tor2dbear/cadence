@@ -21,6 +21,22 @@ header.top .header-actions{margin-left:auto;display:flex;align-items:center;gap:
 header.top .loadsys{background:var(--panel-2);color:var(--ink-dim);border:1px solid var(--line);border-radius:8px;font-family:var(--mono);font-size:11px;padding:5px 8px;cursor:pointer}
 header.top .loadsys:hover{border-color:var(--accent);color:var(--ink)}
 header.top .proto{font-family:var(--mono);font-size:11px;color:var(--ink-faint);border:1px solid var(--line);padding:3px 8px;border-radius:999px;white-space:nowrap}
+header.top .demobtn{background:var(--panel-2);color:var(--ink-dim);border:1px solid var(--line);border-radius:8px;font-family:var(--mono);font-size:11px;padding:5px 9px;cursor:pointer}
+header.top .demobtn:hover{border-color:var(--accent);color:var(--ink)}
+header.top .demolink{background:var(--accent);color:#0b0c0e;border:1px solid var(--accent);border-radius:8px;font-family:var(--mono);font-size:11px;padding:5px 10px;cursor:pointer;text-decoration:none;font-weight:600;white-space:nowrap}
+header.top .demolink:hover{filter:brightness(1.08)}
+
+/* live-demo preview overlay */
+.preview{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;background:rgba(8,9,11,.72);backdrop-filter:blur(3px)}
+.preview[hidden]{display:none}
+.preview__bar{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+.preview__ttl{font-family:var(--mono);font-size:12px;color:var(--ink)}
+.preview__ttl .lyr{color:var(--ink-faint)}
+.preview__pop{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-dim);text-decoration:none;border:1px solid var(--line);border-radius:7px;padding:4px 9px}
+.preview__pop:hover{border-color:var(--accent);color:var(--ink)}
+.preview__x{background:transparent;border:0;color:var(--ink-faint);font-size:22px;line-height:1;cursor:pointer;padding:0 4px}
+.preview__x:hover{color:var(--ink)}
+.preview__frame{flex:1;width:100%;border:0;background:#0f1216}
 
 /* orientation strip (dismissible, remembered) */
 .intro{display:flex;align-items:center;gap:14px;padding:9px 20px;border-bottom:1px solid var(--line);background:var(--panel);font-size:12.5px;color:var(--ink-dim)}
