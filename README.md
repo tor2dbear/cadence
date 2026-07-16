@@ -43,7 +43,10 @@ Prototype (v0.3). Rough edges expected.
 
 Shipped since v0.2: editable scales (add/remove/rename duration steps and
 easings), a draggable bézier editor (author each easing by dragging its control
-points, with headroom for overshoot), a shareable system — the whole token set
+points, with headroom for overshoot; includes back/anticipate presets), plus
+spring easings — an easing can be a stiffness/damping spring instead of a
+cubic-bézier, sampled to CSS `linear()` so real multi-bounce physics animates
+natively (with a cubic-bézier fallback noted in the export), a shareable system — the whole token set
 is encoded in the URL, so a link restores it — export to CSS, JSON, Tailwind
 config, Style Dictionary, and a typed TS object, and a lens-based bench: each
 probe defaults to an abstract "orb" that shows pure motion, and can switch to a

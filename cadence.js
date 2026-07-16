@@ -13,15 +13,20 @@ const PRESETS = {
   "standard":[0.2,0,0.2,1], "decelerate":[0,0,0.2,1], "accelerate":[0.4,0,1,1],
   "emphasized":[0.22,1,0.36,1], "emph-out":[0.05,0.7,0.1,1], "sharp":[0.4,0,0.6,1],
   "gentle":[0.25,0.1,0.25,1], "linear":[0,0,1,1],
+  "out-back":[0.34,1.56,0.64,1], "in-back":[0.36,0,0.66,-0.56], "in-out-back":[0.68,-0.6,0.32,1.6],
 };
+const SPRING_DEFAULT = {stiffness:170, damping:12};   // a lively single-overshoot spring
 let durations = [
   {name:"fast",ms:150},{name:"base",ms:200},{name:"slow",ms:300},{name:"slower",ms:500},{name:"xslow",ms:800},
 ];
+// an easing is either a single cubic-bézier (type "cubic") or a sampled spring
+// (type "spring", {stiffness, damping}) — springs express multi-bounce / physics
+// that a single bézier can't, and export as CSS linear().
 let easings = [
-  {name:"standard",bez:PRESETS.standard.slice()},
-  {name:"decelerate",bez:PRESETS.decelerate.slice()},
-  {name:"accelerate",bez:PRESETS.accelerate.slice()},
-  {name:"emphasized",bez:PRESETS.emphasized.slice()},
+  {name:"standard",type:"cubic",bez:PRESETS.standard.slice()},
+  {name:"decelerate",type:"cubic",bez:PRESETS.decelerate.slice()},
+  {name:"accelerate",type:"cubic",bez:PRESETS.accelerate.slice()},
+  {name:"emphasized",type:"cubic",bez:PRESETS.emphasized.slice()},
 ];
 let idc = 0;
 const nid = () => "i"+(idc++);
@@ -76,9 +81,37 @@ function uniqueName(base, arr, skipIdx){
 }
 const findIntent = id => intents.find(x=>x.id===id) || intents[0];
 const durMs = name => (durations.find(d=>d.name===name)||durations[0]).ms;
-const easeBez = name => (easings.find(e=>e.name===name)||easings[0]).bez;
+const easeObj = name => easings.find(e=>e.name===name)||easings[0];
 const bezStr = a => `cubic-bezier(${a.join(", ")})`;
-const resolve = it => { const b=bindOf(it); return { d: durMs(b.dur)+"ms", e: bezStr(easeBez(b.ease)), s: +b.stagger||0, prop: b.prop||"all" }; };
+// sample a damped spring (mass 1) to N values over its settle time; endpoints pinned 0→1
+const SPRING_N = 24;
+function springSamples(sp, N=SPRING_N){
+  const k=Math.max(1,+sp.stiffness||170), c=Math.max(0,+sp.damping||12), w0=Math.sqrt(k);
+  const zeta=c/(2*Math.sqrt(k));
+  const T = zeta>0 ? Math.min(10, Math.max(0.15, Math.log(220)/(zeta*w0))) : 6;
+  const out=[];
+  for(let i=0;i<N;i++){
+    const t=(i/(N-1))*T; let x;
+    if(zeta<1){ const wd=w0*Math.sqrt(1-zeta*zeta);
+      x=1-Math.exp(-zeta*w0*t)*(Math.cos(wd*t)+(zeta*w0/wd)*Math.sin(wd*t)); }
+    else if(zeta<1.0001){ x=1-Math.exp(-w0*t)*(1+w0*t); }
+    else { const wd=w0*Math.sqrt(zeta*zeta-1);
+      x=1-Math.exp(-zeta*w0*t)*(Math.cosh(wd*t)+(zeta*w0/wd)*Math.sinh(wd*t)); }
+    out.push(x);
+  }
+  out[0]=0; out[N-1]=1;
+  return out;
+}
+// unified CSS timing-function for either easing type
+const easeCSS = e => e.type==="spring"
+  ? "linear("+springSamples(e.spring).map(v=>+v.toFixed(4)).join(", ")+")"
+  : bezStr(e.bez);
+// short human label (the linear() string is too long to show inline)
+const easeLabel = e => e.type==="spring"
+  ? `spring ${e.spring.stiffness}/${e.spring.damping}`
+  : bezStr(e.bez);
+const resolve = it => { const b=bindOf(it); const e=easeObj(b.ease);
+  return { d: durMs(b.dur)+"ms", e: easeCSS(e), eLabel: easeLabel(e), s: +b.stagger||0, prop: b.prop||"all" }; };
 const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
 // default probe intents: enter / exit / move / hover, one abstract orb each
 probes[0].intent = intents[0].id; probes[1].intent = intents[1].id;
@@ -100,12 +133,22 @@ function renderDurations(){
   }).join("");
 }
 
-// ---------- render: easing set (each card is a draggable bézier editor) ----------
-const BZPAD = 0.35;                        // vertical headroom so overshoot curves are authorable
+// ---------- render: easing set (cubic = draggable bézier; spring = sliders) ----------
+const BZPAD = 0.6;                         // vertical headroom so overshoot / bounce is visible
 const SX = x => x*100;
 const SY = y => (1-(y+BZPAD)/(1+2*BZPAD))*100;
-function easingSVG(bez){
-  const [x1,y1,x2,y2]=bez;
+function springPoints(sp){
+  const s=springSamples(sp), N=s.length;
+  return s.map((v,i)=>`${SX(i/(N-1)).toFixed(2)},${SY(v).toFixed(2)}`).join(" ");
+}
+function easingSVG(e){
+  if(e.type==="spring"){
+    return `<svg class="bz" viewBox="0 0 100 100">
+      <line class="bz-guide" x1="${SX(0)}" y1="${SY(0)}" x2="${SX(1)}" y2="${SY(1)}"/>
+      <polyline class="bz-curve" points="${springPoints(e.spring)}"/>
+    </svg>`;
+  }
+  const [x1,y1,x2,y2]=e.bez;
   const p0=[SX(0),SY(0)],p3=[SX(1),SY(1)],c1=[SX(x1),SY(y1)],c2=[SX(x2),SY(y2)];
   return `<svg class="bz" viewBox="0 0 100 100">
     <line class="bz-guide" x1="${p0[0]}" y1="${p0[1]}" x2="${p3[0]}" y2="${p3[1]}"/>
@@ -116,10 +159,11 @@ function easingSVG(bez){
     <circle class="bz-h" data-pt="2" cx="${c2[0]}" cy="${c2[1]}" r="7"/>
   </svg>`;
 }
-// update one plot's SVG in place (keeps elements alive so a drag isn't interrupted)
+// update a plot's SVG in place (keeps elements alive so a drag/slide isn't interrupted)
 function updateEasingPlot(i){
+  const e=easings[i]; if(e.type==="spring"){ updateSpringPlot(i); return; }
   const svg=document.querySelector(`.ecard__plot[data-i="${i}"] svg.bz`); if(!svg) return;
-  const [x1,y1,x2,y2]=easings[i].bez;
+  const [x1,y1,x2,y2]=e.bez;
   const c1=[SX(x1),SY(y1)],c2=[SX(x2),SY(y2)],p0=[SX(0),SY(0)],p3=[SX(1),SY(1)];
   const arms=svg.querySelectorAll(".bz-arm");
   arms[0].setAttribute("x2",c1[0]); arms[0].setAttribute("y2",c1[1]);
@@ -129,16 +173,31 @@ function updateEasingPlot(i){
   hs[0].setAttribute("cx",c1[0]); hs[0].setAttribute("cy",c1[1]);
   hs[1].setAttribute("cx",c2[0]); hs[1].setAttribute("cy",c2[1]);
 }
+function updateSpringPlot(i){
+  const poly=document.querySelector(`.ecard__plot[data-i="${i}"] polyline.bz-curve`); if(!poly) return;
+  poly.setAttribute("points", springPoints(easings[i].spring));
+}
 function renderEasings(){
   const el=document.getElementById("easings");
   el.innerHTML = easings.map((e,i)=>{
-    const match=Object.keys(PRESETS).find(k=>JSON.stringify(PRESETS[k])===JSON.stringify(e.bez));
-    const opts=Object.keys(PRESETS).map(k=>`<option ${k===match?"selected":""}>${k}</option>`).join("");
-    const custom=match?"":`<option value="custom" selected>custom</option>`;
+    let controls;
+    if(e.type==="spring"){
+      const sp=e.spring;
+      controls = `<select data-scope="ease" data-i="${i}" aria-label="${e.name} type"><option value="spring" selected>spring</option>${Object.keys(PRESETS).map(k=>`<option>${k}</option>`).join("")}</select>
+        <div class="ecard__spring">
+          <label><span>Stiffness</span><b>${sp.stiffness}</b><input type="range" min="20" max="300" step="5" value="${sp.stiffness}" data-scope="sk" data-i="${i}" aria-label="stiffness"></label>
+          <label><span>Damping</span><b>${sp.damping}</b><input type="range" min="2" max="40" step="1" value="${sp.damping}" data-scope="sd" data-i="${i}" aria-label="damping"></label>
+        </div>`;
+    } else {
+      const match=Object.keys(PRESETS).find(k=>JSON.stringify(PRESETS[k])===JSON.stringify(e.bez));
+      const opts=Object.keys(PRESETS).map(k=>`<option ${k===match?"selected":""}>${k}</option>`).join("");
+      const custom=match?"":`<option value="custom" selected>custom</option>`;
+      controls = `<select data-scope="ease" data-i="${i}" aria-label="${e.name} curve">${custom}${opts}<option value="spring">spring…</option></select>`;
+    }
     return `<div class="ecard">
       <div class="ecard__top"><input class="ecard__name" value="${e.name}" data-scope="ename" data-i="${i}" aria-label="easing name" spellcheck="false">${easings.length>1?`<button class="ecard__rm" data-scope="erm" data-i="${i}" title="remove easing" aria-label="remove ${e.name}">×</button>`:""}</div>
-      <div class="ecard__plot" data-i="${i}">${easingSVG(e.bez)}</div>
-      <select data-scope="ease" data-i="${i}" aria-label="${e.name} curve">${custom}${opts}</select>
+      <div class="ecard__plot" data-i="${i}">${easingSVG(e)}</div>
+      ${controls}
     </div>`;
   }).join("");
 }
@@ -178,7 +237,7 @@ function renderIntents(){
         <div class="field"><label>Property</label>
           <select data-scope="iprop" data-i="${i}">${PROPS.map(pp=>`<option ${pp===(b.prop||"all")?"selected":""}>${pp}</option>`).join("")}</select></div>
       </div>
-      <div class="intent__resolved">→ ${r.d} · ${r.e}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}</div>
+      <div class="intent__resolved">→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}</div>
     </div>`;
   }).join("");
 }
@@ -284,8 +343,10 @@ function critique(){
   // 2. easing redundancy
   let dup=null;
   for(let a=0;a<easings.length;a++)for(let b=a+1;b<easings.length;b++){
-    const d=easings[a].bez.reduce((s,v,k)=>s+Math.abs(v-easings[b].bez[k]),0);
-    if(d<0.15) dup=[easings[a].name,easings[b].name];
+    const ea=easings[a],eb=easings[b];
+    if(!ea.bez||!eb.bez) continue;   // redundancy check compares cubic curves only
+    const d=ea.bez.reduce((s,v,k)=>s+Math.abs(v-eb.bez[k]),0);
+    if(d<0.15) dup=[ea.name,eb.name];
   }
   if(dup) out.push(["warn","!",`“${dup[0]}” and “${dup[1]}” are nearly identical curves. A tight easing set is easier to apply consistently — trim one.`]);
   else out.push(["ok","✓",`${easings.length} distinct easings — a lean, legible set.`]);
@@ -319,8 +380,12 @@ function buildCSS(){
   let s=`<span class="cm">/* Cadence — motion system */</span>\n:root{\n`;
   s+=`  <span class="cm">/* primitives · durations */</span>\n`;
   durations.forEach(d=>s+=`  <span class="tk">--motion-duration-${d.name}</span>: ${d.ms}ms;\n`);
-  s+=`\n  <span class="cm">/* primitives · easing */</span>\n`;
-  easings.forEach(e=>s+=`  <span class="tk">--motion-ease-${e.name}</span>: ${bezStr(e.bez)};\n`);
+  const hasSpring=easings.some(e=>e.type==="spring");
+  s+=`\n  <span class="cm">/* primitives · easing${hasSpring?" (linear() = sampled spring; needs a 2023+ browser)":""} */</span>\n`;
+  easings.forEach(e=>{
+    s+=`  <span class="tk">--motion-ease-${e.name}</span>: ${easeCSS(e)};\n`;
+    if(e.type==="spring") s+=`  <span class="cm">/* fallback: --motion-ease-${e.name}: cubic-bezier(0.34, 1.4, 0.5, 1); */</span>\n`;
+  });
   s+=`\n  <span class="cm">/* semantic · intents → reference primitives${modeNote()} */</span>\n`;
   intents.forEach(it=>{ const b=bindOf(it);
     s+=`  <span class="tk2">--motion-${it.name}-duration</span>: <span class="tk">var(--motion-duration-${b.dur})</span>;\n`;
@@ -336,7 +401,7 @@ function buildJSON(){
   const obj={primitives:{duration:{},easing:{}},semantic:{}};
   if(modes.length>1) obj.mode=modes[activeMode].name;
   durations.forEach(d=>obj.primitives.duration[d.name]=d.ms+"ms");
-  easings.forEach(e=>obj.primitives.easing[e.name]=bezStr(e.bez));
+  easings.forEach(e=>obj.primitives.easing[e.name]=easeCSS(e));
   intents.forEach(it=>{ const b=bindOf(it); const v={duration:`{duration.${b.dur}}`,easing:`{easing.${b.ease}}`,purpose:it.purpose};
     if(b.prop&&b.prop!=="all") v.property=b.prop;
     if(+b.stagger>0) v.stagger=(+b.stagger)+"ms"; obj.semantic[it.name]=v; });
@@ -346,8 +411,8 @@ function buildTailwind(){
   const q=JSON.stringify;
   const dur=[...durations.map(d=>`        ${q(d.name)}: ${q(d.ms+"ms")},`),
              ...intents.map(it=>`        ${q(it.name)}: ${q(durMs(bindOf(it).dur)+"ms")}, // intent`)];
-  const ease=[...easings.map(e=>`        ${q(e.name)}: ${q(bezStr(e.bez))},`),
-              ...intents.map(it=>`        ${q(it.name)}: ${q(bezStr(easeBez(bindOf(it).ease)))}, // intent`)];
+  const ease=[...easings.map(e=>`        ${q(e.name)}: ${q(easeCSS(e))},`),
+              ...intents.map(it=>`        ${q(it.name)}: ${q(easeCSS(easeObj(bindOf(it).ease)))}, // intent`)];
   const stag=intents.filter(it=>+bindOf(it).stagger>0)
     .map(it=>`        ${q(it.name)}: ${q((+bindOf(it).stagger)+"ms")}, // per-item stagger`);
   const delayBlock = stag.length ? `      transitionDelay: {\n${stag.join("\n")}\n      },\n` : "";
@@ -364,7 +429,7 @@ function buildTailwind(){
 function buildStyleDictionary(){
   const obj={motion:{duration:{},easing:{}}};
   durations.forEach(d=>obj.motion.duration[d.name]={value:d.ms+"ms",type:"duration"});
-  easings.forEach(e=>obj.motion.easing[e.name]={value:bezStr(e.bez),type:"cubicBezier"});
+  easings.forEach(e=>obj.motion.easing[e.name]={value:easeCSS(e),type:e.type==="spring"?"other":"cubicBezier"});
   intents.forEach(it=>{ const b=bindOf(it); const t={
     duration:{value:`{motion.duration.${b.dur}}`,type:"duration"},
     easing:{value:`{motion.easing.${b.ease}}`,type:"cubicBezier"},
@@ -375,11 +440,11 @@ function buildStyleDictionary(){
 function buildTS(){
   const key=k=>isIdent(k)?k:JSON.stringify(k), q=JSON.stringify;
   const dur=durations.map(d=>`    ${key(d.name)}: ${q(d.ms+"ms")},`).join("\n");
-  const ease=easings.map(e=>`    ${key(e.name)}: ${q(bezStr(e.bez))},`).join("\n");
+  const ease=easings.map(e=>`    ${key(e.name)}: ${q(easeCSS(e))},`).join("\n");
   const sem=intents.map(it=>{ const b=bindOf(it);
     const prp=(b.prop&&b.prop!=="all")?`, property: ${q(b.prop)}`:"";
     const stag=+b.stagger>0?`, stagger: ${q((+b.stagger)+"ms")}`:"";
-    return `    ${key(it.name)}: { duration: ${q(durMs(b.dur)+"ms")}, easing: ${q(bezStr(easeBez(b.ease)))}${prp}${stag} },`; }).join("\n");
+    return `    ${key(it.name)}: { duration: ${q(durMs(b.dur)+"ms")}, easing: ${q(easeCSS(easeObj(b.ease)))}${prp}${stag} },`; }).join("\n");
   return `// motion.ts — design tokens from Cadence${modeNote()}\n`+
     `export const motion = {\n`+
     `  duration: {\n${dur}\n  },\n`+
@@ -398,7 +463,7 @@ function render(){
 function refreshTokens(){
   const s=document.documentElement.style;
   durations.forEach(d=>s.setProperty(`--motion-duration-${d.name}`,d.ms+"ms"));
-  easings.forEach(e=>s.setProperty(`--motion-ease-${e.name}`,bezStr(e.bez)));
+  easings.forEach(e=>s.setProperty(`--motion-ease-${e.name}`,easeCSS(e)));
 }
 function rerenderAll(){ renderModes();renderDurations();renderEasings();renderIntents();renderBench();refreshTokens();render();critique();writeURL(); }
 
@@ -453,7 +518,7 @@ const b64urlDecode = s => decodeURIComponent(escape(atob(s.replace(/-/g,"+").rep
 function encodeState(){
   const s = {
     d: durations.map(d=>[d.name,d.ms]),
-    e: easings.map(e=>[e.name,...e.bez]),
+    e: easings.map(e=> e.type==="spring" ? [e.name,"spring",e.spring.stiffness,e.spring.damping] : [e.name,...e.bez]),
     m: modes.map(x=>x.name),
     am: activeMode,
     // i: [name, purpose, [[dur,ease,stagger,prop] per mode]]
@@ -467,7 +532,9 @@ function applyEncoded(raw){ applyState(JSON.parse(b64urlDecode(raw))); }
 function applyState(o){
   if(!o||!Array.isArray(o.d)||!Array.isArray(o.e)||!Array.isArray(o.i)) throw new Error("bad state");
   const d = o.d.map(x=>({name:String(x[0]),ms:+x[1]||200}));
-  const e = o.e.map(x=>({name:String(x[0]),bez:[+x[1],+x[2],+x[3],+x[4]]}));
+  const e = o.e.map(x=> x[1]==="spring"
+    ? {name:String(x[0]),type:"spring",spring:{stiffness:+x[2]||170,damping:+x[3]||12}}
+    : {name:String(x[0]),type:"cubic",bez:[+x[1],+x[2],+x[3],+x[4]]});
   // modes: new links carry `m`; legacy links imply a single "default" mode.
   const md = Array.isArray(o.m)&&o.m.length ? o.m.map(n=>({name:String(n)})) : [{name:"default"}];
   const it = o.i.map(x=>{
@@ -505,7 +572,7 @@ function writeURL(){
 function updateResolvedLines(){
   document.querySelectorAll(".intent__resolved").forEach((el,k)=>{
     if(!intents[k]) return;
-    const r=resolve(intents[k]); el.textContent=`→ ${r.d} · ${r.e}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}`;
+    const r=resolve(intents[k]); el.textContent=`→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}`;
   });
 }
 
@@ -519,6 +586,11 @@ document.addEventListener("input", e=>{
   if(sc==="dur"){ durations[i].ms=+t.value; refreshTokens(); renderDurations(); render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iname"){ intents[i].name=t.value.trim()||intents[i].name; render(); critique(); writeURL(); }
   if(sc==="istag"){ bindOf(intents[i]).stagger=Math.max(0,Math.min(400,+t.value||0)); render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="sk"||sc==="sd"){
+    easings[i].spring[sc==="sk"?"stiffness":"damping"]=+t.value;
+    if(t.previousElementSibling) t.previousElementSibling.textContent=t.value;  // live number label
+    updateSpringPlot(i); refreshTokens(); render(); critique(); updateResolvedLines(); writeURL();
+  }
 });
 // rename a scale slot (duration or easing); intents reference by name, so
 // carry every referencing intent over to the new name. `kind` is "dur"|"ease".
@@ -534,7 +606,10 @@ function renameScale(arr, i, raw, kind){
 }
 document.addEventListener("change", e=>{
   const t=e.target, sc=t.dataset.scope, i=+t.dataset.i;
-  if(sc==="ease"){ if(PRESETS[t.value]){ easings[i].bez=PRESETS[t.value].slice(); rerenderAll(); } }
+  if(sc==="ease"){
+    if(t.value==="spring"){ easings[i]={name:easings[i].name,type:"spring",spring:{...SPRING_DEFAULT}}; rerenderAll(); }
+    else if(PRESETS[t.value]){ easings[i]={name:easings[i].name,type:"cubic",bez:PRESETS[t.value].slice()}; rerenderAll(); }
+  }
   if(sc==="dname"){ renameScale(durations,i,t.value,"dur"); }
   if(sc==="ename"){ renameScale(easings,i,t.value,"ease"); }
   if(sc==="idur"){ bindOf(intents[i]).dur=t.value; refreshTokens(); render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
@@ -596,7 +671,7 @@ document.getElementById("addDuration").addEventListener("click",()=>{
   rerenderAll();
 });
 document.getElementById("addEasing").addEventListener("click",()=>{
-  easings.push({name:uniqueName("custom",easings),bez:PRESETS.standard.slice()});
+  easings.push({name:uniqueName("custom",easings),type:"cubic",bez:PRESETS.standard.slice()});
   rerenderAll();
 });
 document.getElementById("addIntent").addEventListener("click",()=>{
