@@ -224,7 +224,8 @@ function renderModes(){
         ${modes.length>1?`<button class="mode__rm" data-scope="mrm" data-i="${i}" title="remove mode" aria-label="remove mode">×</button>`:""}
       </span>`;
     return `<button class="mode" data-scope="mset" data-i="${i}">${m.name}</button>`;
-  }).join("") + `<button class="mode mode--add" data-scope="madd" title="add a mode (copies the current one)">+ mode</button>`;
+  }).join("") + `<button class="mode mode--add" data-scope="madd" title="add a mode (copies the current one)">+ mode</button>`
+    + (modes.some(m=>m.name==="reduced") ? "" : `<button class="mode mode--reduced" data-scope="mreduced" title="add a reduced-motion mode (minimal, exported under prefers-reduced-motion)">+ reduced-motion</button>`);
 }
 
 // ---------- render: intents ----------
@@ -433,7 +434,18 @@ function buildCSS(){
     const delay = +b.stagger>0 ? ` ${+b.stagger}ms` : "";
     s+=`  <span class="tk2">--motion-${it.name}</span>: ${b.prop||"all"} <span class="tk">var(--motion-${it.name}-duration)</span> <span class="tk">var(--motion-${it.name}-ease)</span>${delay};\n`;
   });
-  return s+`}`;
+  // a "reduced" mode exports as an OS-honoring override block
+  const rmi=modes.findIndex(m=>m.name==="reduced");
+  let rb="";
+  if(rmi>=0){
+    rb=`\n\n<span class="cm">/* honor OS reduced-motion */</span>\n@media (prefers-reduced-motion: reduce){\n  :root{\n`;
+    intents.forEach(it=>{ const b=it.binds[Math.min(rmi,it.binds.length-1)]||it.binds[0];
+      const delay=+b.stagger>0?` ${+b.stagger}ms`:"";
+      rb+=`    <span class="tk2">--motion-${it.name}</span>: ${b.prop||"all"} <span class="tk">var(--motion-duration-${b.dur})</span> <span class="tk">var(--motion-ease-${b.ease})</span>${delay};\n`;
+    });
+    rb+=`  }\n}`;
+  }
+  return s+`}`+rb;
 }
 function buildJSON(){
   const obj={primitives:{duration:{},easing:{}},semantic:{}};
@@ -675,6 +687,12 @@ document.addEventListener("click", e=>{
   if(sc==="mset"){ activeMode=Math.max(0,Math.min(modes.length-1,i)); rerenderAll(); }
   if(sc==="madd"){ const src=activeMode; modes.push({name:uniqueName("mode",modes)});
       intents.forEach(it=>it.binds.push({...it.binds[src]})); activeMode=modes.length-1; rerenderAll(); }
+  if(sc==="mreduced"){
+      const fastDur=durations.slice().sort((a,b)=>a.ms-b.ms)[0].name;
+      const flatEase=(easings.find(e=>e.name==="linear")||easings[0]).name;
+      modes.push({name:uniqueName("reduced",modes)});
+      intents.forEach(it=>{ const cur=it.binds[activeMode]||it.binds[0]; it.binds.push({dur:fastDur,ease:flatEase,stagger:0,prop:cur.prop||"all"}); });
+      activeMode=modes.length-1; rerenderAll(); }
   if(sc==="mrm"){ if(modes.length>1){ modes.splice(i,1); intents.forEach(it=>it.binds.splice(i,1));
       activeMode=Math.max(0,Math.min(modes.length-1,activeMode>=i?activeMode-1:activeMode)); rerenderAll(); } }
 });
@@ -707,6 +725,13 @@ document.addEventListener("pointerup", ()=>{
   document.querySelectorAll(".bz-h.drag").forEach(h=>h.classList.remove("drag"));
   rerenderAll();                            // normalize the preset dropdown (custom vs matched)
 });
+// global tempo: scale the whole ladder, preserving proportions
+function scaleTempo(f){
+  durations.forEach(d=>{ d.ms=Math.max(60,Math.min(1000,Math.round(d.ms*f/5)*5)); });
+  rerenderAll();
+}
+document.getElementById("tempoDown").addEventListener("click",()=>scaleTempo(0.9));
+document.getElementById("tempoUp").addEventListener("click",()=>scaleTempo(1.1));
 document.getElementById("addDuration").addEventListener("click",()=>{
   const last=durations[durations.length-1];
   const ms=Math.min(1000,Math.max(60, last?Math.round(last.ms*1.5):300));

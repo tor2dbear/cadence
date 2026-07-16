@@ -38,6 +38,11 @@ h2.sec{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-sp
 h2.sec .lyr{color:var(--ink-faint);opacity:.7}
 .sub{color:var(--ink-faint);font-size:11.5px;margin:0 0 12px}
 .block{margin-bottom:24px}
+.block__hd{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.tempo{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:10px;color:var(--ink-faint)}
+.tempo button{background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);border-radius:5px;width:20px;height:20px;cursor:pointer;font-size:12px;line-height:1;padding:0}
+.tempo button:hover{border-color:var(--accent);color:var(--ink)}
+.mode--reduced{color:var(--ink-faint);border-style:dashed}
 
 /* ---- Layer 1: duration ladder ---- */
 .ladder{display:flex;flex-direction:column;gap:7px;margin-bottom:6px}

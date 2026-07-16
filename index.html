@@ -28,7 +28,10 @@
     <h2 class="sec">Scales <span class="lyr">· primitives</span></h2>
     <p class="sub">The general vocabulary. Component-agnostic — everything else references these.</p>
     <div class="block">
-      <h2 class="sec">Duration ladder</h2>
+      <div class="block__hd">
+        <h2 class="sec">Duration ladder</h2>
+        <div class="tempo"><span>tempo</span><button id="tempoDown" title="slower — scale all durations down">−</button><button id="tempoUp" title="faster — scale all durations up">+</button></div>
+      </div>
       <div class="ladder" id="durations"></div>
       <button class="addbtn addbtn--sm" id="addDuration">+ Add step</button>
     </div>
