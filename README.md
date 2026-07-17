@@ -38,37 +38,57 @@ python3 -m http.server 4173
 | `index.html` | Markup |
 | `styles.css` | Styles |
 | `cadence.js` | Model, rendering, animation, and the system-read layer |
+| `demo.html` | Standalone live demo — the system applied to a real UI |
 
 ## Status
 
 Prototype (v0.3). Rough edges expected.
 
-Shipped since v0.2: editable scales (add/remove/rename duration steps and
-easings), a draggable bézier editor (author each easing by dragging its control
-points, with headroom for overshoot; includes back/anticipate presets), plus
-spring easings — an easing can be a stiffness/damping spring instead of a
-cubic-bézier, sampled to CSS `linear()` so real multi-bounce physics animates
-natively (with a cubic-bézier fallback noted in the export), a shareable system — the whole token set
-is encoded in the URL, so a link restores it — export to CSS, JSON, Tailwind
-config, Style Dictionary, and a typed TS object, and a lens-based bench: each
-probe is a lens on one intent — a unified "scope" (the default: the easing/spring
-curve, a time playhead, and property-driven demo elements that cascade by
-stagger, all on one surface), an abstract "orb" of pure motion, a "cascade"
-stagger timeline, or a UI component (drawer, button, accordion, list reveal) to
-stress-test a token —
-and a "Load a system" picker that seeds the whole model from a real design
-system's motion palette (Material 3 and Material 3 Expressive, Carbon, Fluent,
-Ant, Tailwind, Atlassian, Polaris, Primer, Spectrum) for comparison or as a
-starting point — Material 3 Expressive is the one that ships real springs, and a
-motion-mode axis: add modes (e.g. productive/expressive, min/mid/max) and each
-intent carries a separate (duration, easing) binding per mode, switched globally
-— so one system can hold coordinated variants without duplicating easings. Each
-intent also carries a stagger token (the per-item delay for sequenced elements)
-that drives the list-reveal probe, a "cascade" bench lens that plots the stagger
-as a timeline (each item a bar at k×stagger, width = duration, with a sweeping
-playhead), its own system-read check, and a property axis — each intent names the CSS property it animates, so the CSS
-export can emit a ready-to-use composite `transition` shorthand (property +
-duration + easing + delay), the way Primer's `transition.*` tokens do.
+### Shipped since v0.2
+
+**Authoring the scales**
+- Editable scales — add / remove / rename duration steps and easings; a global
+  **tempo** control scales the whole ladder while keeping its proportions.
+- A draggable **bézier editor** — author each easing by dragging its control
+  points, with headroom for overshoot (includes back / anticipate presets).
+- **Spring easings** — an easing can be a stiffness/damping spring instead of a
+  cubic-bézier, sampled to CSS `linear()` so real multi-bounce physics animates
+  natively (a cubic-bézier fallback is noted in the export).
+- An optional **distance (travel) scale** — a third primitive; intents can
+  reference how far they move, which the system read uses to judge velocity.
+
+**Composing intents**
+- A **motion-mode axis** — add modes (productive/expressive, min/mid/max, a
+  reduced-motion mode that exports under `prefers-reduced-motion`) and each
+  intent carries a separate binding per mode, switched globally.
+- Per-intent **stagger** (the per-item delay for sequenced elements), a
+  **property** axis (the CSS property each intent animates), an optional
+  spatial · effects **easing split**, and a **distance** reference.
+
+**Seeing it**
+- A lens-based bench: each probe is a lens on one intent — a unified **scope**
+  (curve + time playhead + property-driven demo elements that cascade by
+  stagger), an abstract **orb**, a **cascade** stagger timeline, or a UI
+  component (drawer, button, accordion, list reveal).
+- A **live demo** (`demo.html`) — a real product surface where the system is
+  applied to actual components; it re-times live as you edit (BroadcastChannel +
+  the URL hash), openable in a tab or as an in-editor preview overlay.
+
+**Sharing & exporting**
+- A **shareable system** — the whole token set is encoded in the URL, so a link
+  restores it.
+- Export to **CSS** custom properties (semantic tokens `var()`-reference the
+  primitives, with composite `transition` shorthands), **JSON**, a **Tailwind**
+  config, a **Style Dictionary** token file, and a typed **TS** object.
+- A **"Load a system"** picker that seeds the model from a real design system's
+  motion palette (Material 3 and Material 3 Expressive, Carbon, Fluent, Ant,
+  Tailwind, Atlassian, Polaris, Primer, Spectrum) — Material 3 Expressive ships
+  real springs.
+
+**The opinion layer** — a system read that critiques the whole system: ladder
+evenness, redundant easings, enter/exit asymmetry, duration budget, stagger
+budget, an idle spatial/effects split, and distance/velocity (travel fast enough
+to read as a jump).
 
 Roadmap: bring-your-own component into the bench; import an existing motion
 palette (a framework's tokens) and run the system-read over it — the
