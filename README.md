@@ -2,6 +2,8 @@
 
 A motion **system** designer — not another easing toy.
 
+**Live:** [cadence.tor2dbear.com](https://cadence.tor2dbear.com) · [live demo](https://cadence.tor2dbear.com/demo.html) (the system applied to a real UI, re-timing as you edit)
+
 Most tools let you tune one `cubic-bezier` at a time. Cadence treats motion the
 way design systems treat color and type: as two layers of tokens.
 
