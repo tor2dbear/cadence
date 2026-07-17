@@ -90,9 +90,17 @@ evenness, redundant easings, enter/exit asymmetry, duration budget, stagger
 budget, an idle spatial/effects split, and distance/velocity (travel fast enough
 to read as a jump).
 
-Roadmap: bring-your-own component into the bench; import an existing motion
-palette (a framework's tokens) and run the system-read over it — the
-"reverse-engineer the art direction" angle.
+Roadmap (stays static): bring-your-own component into the bench; import an
+existing motion palette (a framework's tokens) and run the system-read over it —
+the "reverse-engineer the art direction" angle.
+
+Candidates that would add a backend (a conscious fork from static-only):
+the **opinion layer as a service** — extract the pure resolve + system-read into
+a headless module and expose it as a serverless endpoint (a Cloudflare Worker
+fits the current stack) plus an optional MCP wrapper, so a CI step or an agent
+can POST a system and get its warnings ("block the build if exit is slower than
+enter"); and light security-header hardening (CSP, `frame-ancestors` on the
+demo) at the CDN layer.
 
 ## License
 
