@@ -49,8 +49,10 @@ header.top .demolink:hover{filter:brightness(1.08)}
 
 /* 2-col by default (editor full width); the export column appears on the right
    only when opened, reflowing the layout rather than overlaying it. */
-.wrap{display:grid;grid-template-columns:330px minmax(0,1fr)}
-.wrap.xopen{grid-template-columns:330px minmax(0,1fr) 500px}
+/* capped + centred so the editor doesn't sprawl on wide screens (symmetric
+   margins rather than one huge column); full-bleed below the cap */
+.wrap{display:grid;grid-template-columns:400px minmax(0,1fr);max-width:1340px;margin-inline:auto}
+.wrap.xopen{grid-template-columns:400px minmax(0,1fr) 500px;max-width:1500px}
 .col{padding:18px 20px;min-width:0}
 .col.scales{border-right:1px solid var(--line)}
 .col.export{border-left:1px solid var(--line);background:var(--panel)}
@@ -214,7 +216,7 @@ pre.code{background:#0e1013;border:1px solid var(--line);border-radius:9px;paddi
 /* an open export needs more width than the 2-col editor; below this it drops to
    its own full-width row instead of squeezing the editor into a cramped column */
 @media (max-width:1260px){
-  .wrap.xopen{grid-template-columns:330px minmax(0,1fr)}
+  .wrap.xopen{grid-template-columns:400px minmax(0,1fr)}
   .wrap.xopen .col.export{grid-column:1 / -1;border-left:0;border-top:1px solid var(--line)}
 }
 @media (max-width:1000px){
