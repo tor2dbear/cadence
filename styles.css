@@ -221,6 +221,9 @@ pre.code{background:#0e1013;border:1px solid var(--line);border-radius:9px;paddi
   .wrap,.wrap.xopen{grid-template-columns:1fr}
   .col.scales{border-right:0;border-bottom:1px solid var(--line)}
   .col.export{border-left:0;border-top:1px solid var(--line)}
+  /* on narrow screens the reflow column would land far below the fold, so open
+     export as a full-screen sheet instead — visible immediately, × to close */
+  .wrap.xopen .col.export{position:fixed;inset:0;z-index:45;overflow:auto;border:0}
   header.top .tag{flex-basis:100%;order:3}
 }
 @media (max-width:620px){ .bench{grid-template-columns:1fr} .eset{grid-template-columns:1fr} }
