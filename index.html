@@ -16,6 +16,7 @@
   <span class="tag">a motion <em>system</em> designer — scales, intents, and a swappable bench</span>
   <div class="header-actions">
     <select class="loadsys" id="loadSystem" aria-label="Load a design system's motion palette"></select>
+    <button class="demobtn" id="exportToggle" title="Open the export panel — CSS, JSON, Tailwind, Style Dictionary, TS">Export</button>
     <button class="demobtn" id="previewToggle" title="Preview the demo over the editor — it re-times live as you edit">Preview</button>
     <a class="demolink" id="demoLink" href="demo.html" target="_blank" rel="noopener" title="Open the live demo in a new tab — tile it beside the editor and it re-times live">▶ Live demo</a>
     <span class="proto">PROTOTYPE v0.3</span>
@@ -32,7 +33,7 @@
 </div>
 
 <div class="intro" id="intro">
-  <span class="intro__txt">Two token layers — tune <strong>primitives</strong> (durations &amp; easings) on the left, compose <strong>intents</strong> in the middle, ship from <strong>export</strong> on the right. New here? <strong>Load a system&nbsp;↑</strong> to explore a real one.</span>
+  <span class="intro__txt">Two token layers — tune <strong>primitives</strong> (durations &amp; easings) on the left, compose &amp; test <strong>intents</strong> in the main area, then open <strong>Export&nbsp;↗</strong> for the tokens. New here? <strong>Load a system&nbsp;↑</strong> to explore a real one.</span>
   <button class="intro__x" id="introClose" title="Dismiss" aria-label="Dismiss intro">×</button>
 </div>
 
@@ -85,9 +86,13 @@
     </div>
   </section>
 
-  <!-- EXPORT -->
-  <aside class="col export">
-    <h2 class="sec">Export</h2>
+  <!-- EXPORT — a collapsible column, toggled from the header (hidden by default
+       so the editor gets full width; opening reflows rather than overlays) -->
+  <aside class="col export" id="exportPanel" hidden aria-label="Export design tokens">
+    <div class="export__hd">
+      <h2 class="sec">Export <span class="lyr">· tokens</span></h2>
+      <button class="export__x" id="exportClose" aria-label="Close export">×</button>
+    </div>
     <p class="sub">Two layers: primitives, then semantic tokens that reference them.</p>
     <div class="tabs">
       <button class="tab active" data-fmt="css">CSS</button>
@@ -97,8 +102,10 @@
       <button class="tab" data-fmt="ts">TS</button>
     </div>
     <pre class="code" id="out"></pre>
-    <button class="copy" id="copy">Copy</button>
-    <button class="copy" id="share" title="Copy a link that encodes this whole system">Copy share link</button>
+    <div class="export__actions">
+      <button class="copy" id="copy">Copy</button>
+      <button class="copy" id="share" title="Copy a link that encodes this whole system">Copy share link</button>
+    </div>
   </aside>
 </div>
 

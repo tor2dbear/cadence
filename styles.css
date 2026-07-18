@@ -47,10 +47,19 @@ header.top .demolink:hover{filter:brightness(1.08)}
 .intro__x{background:transparent;border:0;color:var(--ink-faint);cursor:pointer;font-size:17px;line-height:1;padding:0 4px;flex:none}
 .intro__x:hover{color:var(--ink)}
 
-.wrap{display:grid;grid-template-columns:330px minmax(0,1fr) 300px}
+/* 2-col by default (editor full width); the export column appears on the right
+   only when opened, reflowing the layout rather than overlaying it. */
+.wrap{display:grid;grid-template-columns:330px minmax(0,1fr)}
+.wrap.xopen{grid-template-columns:330px minmax(0,1fr) 500px}
 .col{padding:18px 20px;min-width:0}
 .col.scales{border-right:1px solid var(--line)}
 .col.export{border-left:1px solid var(--line);background:var(--panel)}
+.col.export[hidden]{display:none}
+.export__hd{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.export__x{background:transparent;border:0;color:var(--ink-faint);font-size:20px;line-height:1;cursor:pointer;padding:0 2px}
+.export__x:hover{color:var(--ink)}
+.export__actions{display:flex;gap:8px}
+.export__actions .copy{flex:1}
 h2.sec{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-faint);margin:0 0 6px;font-weight:600}
 h2.sec .lyr{color:var(--ink-faint);opacity:.7}
 .sub{color:var(--ink-faint);font-size:11.5px;margin:0 0 12px}
@@ -203,7 +212,7 @@ pre.code{background:#0e1013;border:1px solid var(--line);border-radius:9px;paddi
 .tk{color:var(--accent)} .tk2{color:var(--violet)} .cm{color:var(--ink-faint)}
 
 @media (max-width:1000px){
-  .wrap{grid-template-columns:1fr}
+  .wrap,.wrap.xopen{grid-template-columns:1fr}
   .col.scales{border-right:0;border-bottom:1px solid var(--line)}
   .col.export{border-left:0;border-top:1px solid var(--line)}
   header.top .tag{flex-basis:100%;order:3}

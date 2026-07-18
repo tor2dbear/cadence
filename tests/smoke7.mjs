@@ -10,6 +10,7 @@ const easeOf = (p, i=0) => p.locator('#intents .intent').nth(i).locator('.intent
 
 const page = await mk();
 await page.goto(BASE, { waitUntil: 'networkidle' });
+{ const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
 // default: one mode named "default"
 assert('starts with one mode "default"', (await page.locator('.mode.active .mode__name').inputValue()) === 'default');
@@ -42,6 +43,7 @@ assert('CSS export notes the mode', (await page.locator('#out').innerText()).inc
 const url = await page.evaluate(() => location.href);
 const p2 = await mk();
 await p2.goto(url, { waitUntil: 'networkidle' });
+{ const _x=p2.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 const modeButtons = await p2.locator('.modes .mode[data-scope="mset"]').count();  // non-active modes
 assert('restored: 2 modes total (1 active + 1 button)', modeButtons === 1);
 // active mode is index 1 ("mode") → enter ease should be the divergent one
@@ -63,6 +65,7 @@ assert('remove mode → single mode remains', (await p2.locator('.mode__name').c
 const LEGACY = BASE + '#eyJkIjpbWyJmYXN0IiwxNTBdLFsiYmFzZSIsMjAwXSxbInNsb3ciLDMwMF0sWyJzbG93ZXIiLDUwMF0sWyJ4c2xvdyIsMTAwMF1dLCJlIjpbWyJzdGFuZGFyZCIsMC4yLDAsMC4yLDFdLFsiZGVjZWxlcmF0ZSIsMCwwLDAuMiwxXSxbImFjY2VsZXJhdGUiLDAuNCwwLDEsMV0sWyJlbXBoYXNpemVkIiwwLjIyLDEsMC4zNiwxXSxbImN1c3QiLDAsMCwxLDFdXSwiaSI6W1siZW50ZXIiLCJiYXNlIiwiZW1waGFzaXplZCIsInRoaW5ncyBhcHBlYXJpbmciXSxbImV4aXQiLCJmYXN0IiwiYWNjZWxlcmF0ZSIsInRoaW5ncyBsZWF2aW5nIl0sWyJlbXBoYXNpemVkIiwic2xvd2VyIiwiZW1waGFzaXplZCIsImhlcm8gbW9tZW50cyJdLFsiaG92ZXIiLCJmYXN0Iiwic3RhbmRhcmQiLCJwb2ludGVyIGZlZWRiYWNrIl0sWyJjdXN0b20iLCJzbG93ZXIiLCJkZWNlbGVyYXRlIiwieW91ciBvd24iXV0sInAiOlswLDMsMCwwXX0';
 const p3 = await mk();
 await p3.goto(LEGACY, { waitUntil: 'networkidle' });
+{ const _x=p3.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 assert('legacy link → single default mode', (await p3.locator('.mode.active .mode__name').inputValue()) === 'default' && (await p3.locator('#easings .ecard').count()) === 5);
 
 assert('no console/page errors', errors.length === 0);

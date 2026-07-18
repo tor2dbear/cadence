@@ -10,6 +10,7 @@ const out = (fmt) => page.click(`.tab[data-fmt="${fmt}"]`).then(()=>page.locator
 const enterStag = page.locator('#intents .intent').first().locator('input.stag');
 
 await page.goto(BASE, { waitUntil: 'networkidle' });
+{ const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 await page.locator('#intents .intent').first().locator('.intent__more').click();  // reveal stagger/property
 
 // default: enter carries stagger 70, shown in the resolved line
@@ -51,6 +52,7 @@ assert('Style Dictionary emits stagger token', JSON.parse(sd).motion.enter.stagg
 const url = await page.evaluate(() => location.href);
 const p2 = await browser.newPage();
 await p2.goto(url, { waitUntil: 'networkidle' });
+{ const _x=p2.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 await p2.locator('#intents .intent').first().locator('.intent__more').click();  // stagger lives in the advanced panel
 assert('stagger restored on fresh load', (await p2.locator('#intents .intent').first().locator('input.stag').inputValue()) === '200');
 

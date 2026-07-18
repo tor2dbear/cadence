@@ -9,6 +9,7 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 const out = (fmt) => page.click(`.tab[data-fmt="${fmt}"]`).then(()=>page.locator('#out').innerText());
 const ecard0 = page.locator('#easings .ecard').first();
 await page.goto(BASE, { waitUntil: 'networkidle' });
+{ const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
 // Level 1: a back/overshoot preset is available and exports as cubic-bezier
 await ecard0.locator('select[data-scope="ease"]').selectOption('out-back');
@@ -51,6 +52,7 @@ assert('bench transition uses linear()', tr.includes('linear('));
 const url = await page.evaluate(() => location.href);
 const p2 = await browser.newPage();
 await p2.goto(url, { waitUntil: 'networkidle' });
+{ const _x=p2.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 assert('spring restored from URL (sliders present)', (await p2.locator('#easings .ecard').first().locator('input[data-scope="sk"]').inputValue())==='60');
 
 // convert back to a cubic preset

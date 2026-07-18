@@ -880,6 +880,18 @@ document.getElementById("share").addEventListener("click",()=>{
   document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !pv.hidden) pv.hidden=true; });
 })();
 
+// export column: hidden by default so the editor is full-width; opening adds a
+// reflowing right column (no overlay) whose code still updates live as you edit
+(function initExport(){
+  const panel=document.getElementById("exportPanel"), tog=document.getElementById("exportToggle");
+  const cl=document.getElementById("exportClose"), wrap=document.querySelector(".wrap");
+  if(!panel||!tog||!wrap) return;
+  const setOpen=o=>{ panel.hidden=!o; wrap.classList.toggle("xopen",o); tog.setAttribute("aria-expanded",o?"true":"false"); };
+  tog.addEventListener("click",()=>setOpen(panel.hidden));
+  if(cl) cl.addEventListener("click",()=>setOpen(false));
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !panel.hidden) setOpen(false); });
+})();
+
 // dismissible orientation strip (remembered across visits)
 (function initIntro(){
   const el=document.getElementById("intro"); if(!el) return;

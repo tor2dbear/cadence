@@ -9,6 +9,7 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 const P0 = '.probe[data-i="0"]';
 const dotTr = (i) => page.locator(`${P0} .scope__dot`).nth(i).evaluate(el => el.style.transition);
 await page.goto(BASE, { waitUntil: 'networkidle' });
+{ const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 await page.locator('#intents .intent').first().locator('.intent__more').click();  // reveal stagger/property
 
 // probe 0 defaults to the scope lens: curve + 5 demo dots + playhead
@@ -38,6 +39,7 @@ assert('scope demo uses linear() for the spring', (await dotTr(0)).includes('lin
 const url = await page.evaluate(() => location.href);
 const p2 = await browser.newPage();
 await p2.goto(url, { waitUntil: 'networkidle' });
+{ const _x=p2.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 assert('scope lens restored from URL', (await p2.locator(`${P0} .probe__kind`).inputValue()) === 'scope');
 
 assert('no console/page errors', errors.length === 0);
