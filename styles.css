@@ -211,6 +211,12 @@ pre.code{background:#0e1013;border:1px solid var(--line);border-radius:9px;paddi
 .copy{margin-top:8px;width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);border-radius:8px;padding:10px;cursor:pointer;font-size:12px}
 .tk{color:var(--accent)} .tk2{color:var(--violet)} .cm{color:var(--ink-faint)}
 
+/* an open export needs more width than the 2-col editor; below this it drops to
+   its own full-width row instead of squeezing the editor into a cramped column */
+@media (max-width:1260px){
+  .wrap.xopen{grid-template-columns:330px minmax(0,1fr)}
+  .wrap.xopen .col.export{grid-column:1 / -1;border-left:0;border-top:1px solid var(--line)}
+}
 @media (max-width:1000px){
   .wrap,.wrap.xopen{grid-template-columns:1fr}
   .col.scales{border-right:0;border-bottom:1px solid var(--line)}
