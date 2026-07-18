@@ -886,7 +886,16 @@ document.getElementById("share").addEventListener("click",()=>{
   const panel=document.getElementById("exportPanel"), tog=document.getElementById("exportToggle");
   const cl=document.getElementById("exportClose"), wrap=document.querySelector(".wrap");
   if(!panel||!tog||!wrap) return;
-  const setOpen=o=>{ panel.hidden=!o; wrap.classList.toggle("xopen",o); tog.setAttribute("aria-expanded",o?"true":"false"); };
+  const behind=[...document.querySelectorAll(".col.scales,.col.mid")];
+  const isSheet=()=>matchMedia("(max-width:1260px)").matches;   // export is a modal sheet below this
+  const setOpen=o=>{
+    panel.hidden=!o; wrap.classList.toggle("xopen",o); tog.setAttribute("aria-expanded",o?"true":"false");
+    // as a full-screen sheet: pull focus into it and make the editor behind
+    // inert, so keyboard users aren't tabbing through hidden controls
+    const modal=o&&isSheet();
+    behind.forEach(el=>modal?el.setAttribute("inert",""):el.removeAttribute("inert"));
+    if(modal){ (cl||panel).focus(); } else if(!o){ tog.focus(); }
+  };
   tog.addEventListener("click",()=>setOpen(panel.hidden));
   if(cl) cl.addEventListener("click",()=>setOpen(false));
   document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !panel.hidden) setOpen(false); });

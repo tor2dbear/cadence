@@ -213,19 +213,17 @@ pre.code{background:#0e1013;border:1px solid var(--line);border-radius:9px;paddi
 .copy{margin-top:8px;width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);border-radius:8px;padding:10px;cursor:pointer;font-size:12px}
 .tk{color:var(--accent)} .tk2{color:var(--violet)} .cm{color:var(--ink-faint)}
 
-/* an open export needs more width than the 2-col editor; below this it drops to
-   its own full-width row instead of squeezing the editor into a cramped column */
+/* below the side-by-side threshold there's no room for a 3rd column, and a
+   reflow row would land far below the fold (looking like nothing happened), so
+   open export as a full-screen sheet — visible immediately, × / Esc to close */
 @media (max-width:1260px){
   .wrap.xopen{grid-template-columns:400px minmax(0,1fr)}
-  .wrap.xopen .col.export{grid-column:1 / -1;border-left:0;border-top:1px solid var(--line)}
+  .wrap.xopen .col.export{position:fixed;inset:0;z-index:45;overflow:auto;border:0}
 }
 @media (max-width:1000px){
   .wrap,.wrap.xopen{grid-template-columns:1fr}
   .col.scales{border-right:0;border-bottom:1px solid var(--line)}
   .col.export{border-left:0;border-top:1px solid var(--line)}
-  /* on narrow screens the reflow column would land far below the fold, so open
-     export as a full-screen sheet instead — visible immediately, × to close */
-  .wrap.xopen .col.export{position:fixed;inset:0;z-index:45;overflow:auto;border:0}
   header.top .tag{flex-basis:100%;order:3}
 }
 @media (max-width:620px){ .bench{grid-template-columns:1fr} .eset{grid-template-columns:1fr} }
