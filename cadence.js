@@ -886,7 +886,9 @@ document.getElementById("share").addEventListener("click",()=>{
   const panel=document.getElementById("exportPanel"), tog=document.getElementById("exportToggle");
   const cl=document.getElementById("exportClose"), wrap=document.querySelector(".wrap");
   if(!panel||!tog||!wrap) return;
-  const behind=[...document.querySelectorAll(".col.scales,.col.mid")];
+  // everything the full-screen sheet covers — including the header/intro, which
+  // live outside .wrap — goes inert so nothing behind it stays keyboard-reachable
+  const behind=[...document.querySelectorAll("header.top,.intro,.col.scales,.col.mid")];
   const isSheet=()=>matchMedia("(max-width:1260px)").matches;   // export is a modal sheet below this
   const setOpen=o=>{
     panel.hidden=!o; wrap.classList.toggle("xopen",o); tog.setAttribute("aria-expanded",o?"true":"false");
