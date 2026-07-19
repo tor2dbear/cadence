@@ -14,6 +14,7 @@ const assert = (name, cond) => console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}`)
 // --- author a system on page A ---
 const a = await newPage();
 await a.goto(BASE, { waitUntil: 'networkidle' });
+{ const _x=a.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
 // hash should be written on load
 await a.waitForFunction(() => location.hash.length > 1);
@@ -38,6 +39,7 @@ assert('shared URL has hash', sharedURL.includes('#'));
 // --- open the shared URL fresh on page B ---
 const b = await newPage();
 await b.goto(sharedURL, { waitUntil: 'networkidle' });
+{ const _x=b.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 assert('restored duration count', await b.locator('#durations .drow').count() === durCountA);
 assert('restored easing count', await b.locator('#easings .ecard').count() === easeCountA);
 const namesB = await b.locator('#durations .drow__name').evaluateAll(els => els.map(e => e.value));
@@ -57,6 +59,7 @@ assert('restored export contains --motion-duration-instant', outB.includes('--mo
 // --- malformed hash falls back to defaults ---
 const c = await newPage();
 await c.goto(BASE + '#s=totally%20broken!!!', { waitUntil: 'networkidle' });
+{ const _x=c.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 assert('malformed hash -> default 5 durations', await c.locator('#durations .drow').count() === 5);
 assert('malformed hash -> default 4 easings', await c.locator('#easings .ecard').count() === 4);
 

@@ -9,6 +9,7 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 const out = (fmt) => page.click(`.tab[data-fmt="${fmt}"]`).then(()=>page.locator('#out').innerText());
 const enter = () => page.locator('#intents .intent').first();
 await page.goto(BASE, { waitUntil: 'networkidle' });
+{ const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 await enter().locator('.intent__more').click();
 
 // split toggle present, off by default; no effects field yet
@@ -44,6 +45,7 @@ assert('scope: transform uses spatial easing', tr.includes('transform') && tr.in
 const url = await page.evaluate(() => location.href);
 const p2 = await browser.newPage();
 await p2.goto(url, { waitUntil: 'networkidle' });
+{ const _x=p2.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 await p2.locator('#intents .intent').first().locator('.intent__more').click();
 assert('split restored from URL', (await p2.locator('#intents .intent').first().locator('[data-scope="ieff"]').inputValue()) === 'accelerate');
 

@@ -9,6 +9,7 @@ page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 
 await page.goto(BASE, { waitUntil: 'networkidle' });
+{ const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
 // each easing card has exactly 2 draggable handles
 const card0 = page.locator('#easings .ecard').nth(0);
@@ -48,6 +49,7 @@ await card0.locator('select').selectOption('sharp');           // some known cha
 const url = await page.evaluate(() => location.href);
 const p2 = await browser.newPage();
 await p2.goto(url, { waitUntil: 'networkidle' });
+{ const _x=p2.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 const restored = await p2.locator('#out').innerText();
 assert('shared curve restored on reload', restored.includes('--motion-ease-standard: cubic-bezier(0.4, 0, 0.6, 1)'));
 

@@ -10,6 +10,7 @@ const out = (fmt) => page.click(`.tab[data-fmt="${fmt}"]`).then(()=>page.locator
 const enterProp = page.locator('#intents .intent').first().locator('[data-scope="iprop"]');
 
 await page.goto(BASE, { waitUntil: 'networkidle' });
+{ const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 await page.locator('#intents .intent').first().locator('.intent__more').click();  // reveal stagger/property
 
 // property field present, defaults to "all"
@@ -40,6 +41,7 @@ assert('Tailwind emits transitionProperty', tw.includes('transitionProperty') &&
 const url = await page.evaluate(() => location.href);
 const p2 = await browser.newPage();
 await p2.goto(url, { waitUntil: 'networkidle' });
+{ const _x=p2.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 await p2.locator('#intents .intent').first().locator('.intent__more').click();  // property lives in the advanced panel
 assert('property restored on fresh load', (await p2.locator('#intents .intent').first().locator('[data-scope="iprop"]').inputValue()) === 'opacity');
 
