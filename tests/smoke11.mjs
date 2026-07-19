@@ -8,6 +8,7 @@ page.on('console', m => { if (m.type()==='error') errors.push(m.text()); });
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 await page.goto(BASE, { waitUntil: 'networkidle' });
+{ const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
 // intent dots colour by role
 const dot0 = await page.locator('.intent__dot').first().evaluate(el => getComputedStyle(el).backgroundColor);
@@ -37,6 +38,7 @@ assert('intro stays hidden after reload', (await page.locator('#intro').isHidden
 const m = await ctx.newPage();
 await m.setViewportSize({ width: 380, height: 780 });
 await m.goto(BASE, { waitUntil: 'networkidle' });
+{ const _x=m.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 const ov = await m.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth);
 assert('mobile: no horizontal overflow', ov);
 assert('header actions grouped', (await m.locator('.header-actions .loadsys').count()) === 1 && (await m.locator('.header-actions .proto').count()) === 1);

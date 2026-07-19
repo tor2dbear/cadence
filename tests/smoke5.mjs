@@ -11,6 +11,7 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 
 const page = await mk();
 await page.goto(BASE, { waitUntil: 'networkidle' });
+{ const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
 // default: 4 probes, all "orb" lens, each stage has an .orb
 assert('4 probes', await page.locator('.probe').count() === 4);
@@ -37,12 +38,14 @@ await page.waitForTimeout(1600);
 const url = await page.evaluate(() => location.href);
 const p2 = await mk();
 await p2.goto(url, { waitUntil: 'networkidle' });
+{ const _x=p2.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 assert('restored: probe 0 lens = drawer', (await p2.locator('.probe__kind').first().inputValue()) === 'drawer');
 assert('restored: probe 1 lens = orb', (await p2.locator('.probe__kind').nth(1).inputValue()) === 'orb');
 
 // legacy link (bare intent indices, no kind) still loads: intents restored, kinds default to orb
 const p3 = await mk();
 await p3.goto(LEGACY, { waitUntil: 'networkidle' });
+{ const _x=p3.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 assert('legacy link: 5 easings restored', await p3.locator('#easings .ecard').count() === 5);
 const lk = await p3.locator('.probe__kind').evaluateAll(els => els.map(e => e.value));
 assert('legacy link: kinds fall back to defaults (scope + orbs)', lk[0] === 'scope' && lk.slice(1).every(k => k === 'orb'));

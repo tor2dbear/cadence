@@ -8,6 +8,7 @@ page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 const leftOf = (i) => page.locator('.probe[data-i="0"] .casc__bar').nth(i).evaluate(el => parseFloat(el.style.left));
 await page.goto(BASE, { waitUntil: 'networkidle' });
+{ const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 await page.locator('#intents .intent').first().locator('.intent__more').click();  // reveal stagger/property
 await page.locator('.probe[data-i="0"] .probe__kind').selectOption('cascade');
 await page.waitForTimeout(40);
@@ -43,6 +44,7 @@ assert('cascade plays (fill scales up)', filled.includes('scaleX(1)') || filled.
 const url = await page.evaluate(() => location.href);
 const p2 = await browser.newPage();
 await p2.goto(url, { waitUntil: 'networkidle' });
+{ const _x=p2.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 assert('cascade lens restored from URL', (await p2.locator('.probe[data-i="0"] .probe__kind').inputValue()) === 'cascade');
 
 assert('no console/page errors', errors.length === 0);

@@ -7,6 +7,7 @@ page.on('console', m => { if (m.type()==='error') errors.push(m.text()); });
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 await page.goto(BASE, { waitUntil: 'networkidle' });
+{ const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
 // picker present + populated (11 systems + placeholder = 12 options)
 const opts = await page.locator('#loadSystem option').count();
@@ -42,6 +43,7 @@ await page.waitForTimeout(60);
 const url = await page.evaluate(() => location.href);
 const p2 = await browser.newPage();
 await p2.goto(url, { waitUntil: 'networkidle' });
+{ const _x=p2.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 const carbonEase = await p2.locator('#easings .ecard').count();
 const carbonHasExpressive = (await p2.locator('#out').innerText()).includes('--motion-ease-entrance-expressive');
 assert('Carbon URL round-trips on fresh load', carbonEase === 6 && carbonHasExpressive);

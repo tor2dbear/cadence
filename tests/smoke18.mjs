@@ -11,6 +11,7 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
   page.on('console', m => { if (m.type()==='error') errors.push(m.text()); });
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   await page.goto(DEMO, { waitUntil: 'networkidle' });
+  { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
   // role tokens land on :root
   const dur = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--role-enter-duration').trim());
   assert('demo resolves --role-enter-duration by default', dur === '200ms');
@@ -37,6 +38,7 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
   // build a hash from the editor after loading a spring template (Material 3 Expressive)
   const ed = await browser.newPage({ viewport: { width: 1280, height: 950 } });
   await ed.goto(EDITOR, { waitUntil: 'networkidle' });
+  { const _x=ed.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
   await ed.selectOption('#loadSystem', 'Material 3 Expressive · Google');
   await ed.waitForTimeout(50);
   const hash = await ed.evaluate(() => location.hash);
@@ -48,6 +50,7 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   await page.goto(DEMO + hash, { waitUntil: 'networkidle' });
+  { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
   // a spring intent → --role-enter-ease should be a linear() timing function
   const ease = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--role-enter-ease').trim());
   assert('spring template yields linear() easing in demo', ease.startsWith('linear('));
@@ -63,6 +66,7 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
   page.on('console', m => { if (m.type()==='error') errors.push(m.text()); });
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   await page.goto(EDITOR, { waitUntil: 'networkidle' });
+  { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
   assert('preview overlay hidden initially', await page.locator('#preview').isHidden());
   await page.click('#previewToggle');
   assert('preview overlay opens', await page.locator('#preview').isVisible());
