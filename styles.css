@@ -21,7 +21,8 @@ header.top .tag{color:var(--ink-dim);font-size:12px}
 header.top .header-actions{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 header.top .loadsys{background:var(--panel-2);color:var(--ink-dim);border:1px solid var(--line);border-radius:8px;font-family:var(--mono);font-size:11px;padding:5px 8px;cursor:pointer}
 header.top .loadsys:hover{border-color:var(--accent);color:var(--ink)}
-header.top .proto{font-family:var(--mono);font-size:11px;color:var(--ink-faint);border:1px solid var(--line);padding:3px 8px;border-radius:999px;white-space:nowrap}
+header.top .proto{font-family:var(--mono);font-size:11px;color:var(--ink-faint);border:1px solid var(--line);padding:3px 8px;border-radius:999px;white-space:nowrap;text-decoration:none}
+header.top a.proto:hover{border-color:var(--accent);color:var(--ink)}
 header.top .demobtn{background:var(--panel-2);color:var(--ink-dim);border:1px solid var(--line);border-radius:8px;font-family:var(--mono);font-size:11px;padding:5px 9px;cursor:pointer}
 header.top .demobtn:hover{border-color:var(--accent);color:var(--ink)}
 header.top .demolink{background:var(--accent);color:#0b0c0e;border:1px solid var(--accent);border-radius:8px;font-family:var(--mono);font-size:11px;padding:5px 10px;cursor:pointer;text-decoration:none;font-weight:600;white-space:nowrap}
