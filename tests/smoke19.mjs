@@ -17,7 +17,7 @@ await page.goto(BASE, { waitUntil: 'networkidle' });
 await enterMore().click();  // reveal the advanced panel
 
 // with nothing tagged, the Scroll tab shows a placeholder (not a broken export)
-assert('scroll export placeholder when no reveals', (await out('scroll')).includes('No scroll reveals yet'));
+assert('scroll export placeholder when no reveals', (await out('scroll')).includes('No scroll-driven motion yet'));
 
 // tick "scroll reveal" on enter → defaults to 15% and shows in the resolved line
 // (click, not check(): toggling re-renders the panel and detaches the node)
@@ -35,7 +35,7 @@ assert('emits @supports fallback guard', scr.includes('@supports not (animation-
 assert('fallback drives .is-in class', scr.includes('.reveal-enter.is-in{ opacity:1; transform:none; }'));
 assert('ships an IntersectionObserver driver', scr.includes('new IntersectionObserver') && scr.includes("threshold:0.15"));
 assert('honors reduced-motion', scr.includes('@media (prefers-reduced-motion:reduce){'));
-assert('honesty note: scrub vs trigger', /SCRUBS[\s\S]*TRIGGERS/.test(scr));
+assert('honesty note: scrub vs trigger', /scrubs on entry[\s\S]*triggers at a threshold/i.test(scr));
 
 // system read gains a reveal note only now (opt-in — quiet by default)
 assert('system read notes the reveal', /scroll reveal/.test(await page.locator('#hints').innerText()));
@@ -71,7 +71,7 @@ assert('reveal % restored on fresh load',
 // untick → reveal drops, Scroll tab returns to the placeholder
 await revChk.click();
 assert('unticking removes the % field', await revAt.count() === 0);
-assert('scroll export back to placeholder', (await out('scroll')).includes('No scroll reveals yet'));
+assert('scroll export back to placeholder', (await out('scroll')).includes('No scroll-driven motion yet'));
 
 assert('no console/page errors', errors.length === 0);
 if (errors.length) console.log('ERRORS:', errors);

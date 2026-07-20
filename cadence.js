@@ -43,6 +43,13 @@ let activeMode = 0;
 // which CSS property an intent animates (Primer/Atlassian treat this as a
 // first-class attribute). "all" is the neutral default.
 const PROPS = ["all","opacity","transform","color","background-color","height","width"];
+// scroll-scrub: an element's animation progress follows scroll POSITION rather
+// than a clock (no duration — the range is the axis). Three axes: the timeline
+// source, the range it spans, and the effect (which property maps from→to).
+const SCRUB_TL = ["view","scroll"];
+const SCRUB_RANGE = ["cover","entry","exit","contain"];
+const SCRUB_FX = ["progress","parallax","fade"];
+const SCRUB_DEFAULT = {tl:"view",range:"cover",fx:"progress"};
 // a stable colour per intent (by position) so the bench reads by role, not one
 // flat teal. Defaults land on enter=teal, exit=red, move=amber, emphasized=violet.
 const INTENT_COLORS = ["#8ad0c6","#e08b7f","#e9b872","#b79cf0","#7ab8f0","#d69ce0","#9ad17f"];
@@ -70,6 +77,7 @@ const KINDS = [
   {k:"acc",label:"accordion"},
   {k:"reveal",label:"list reveal"},
   {k:"scrollreveal",label:"scroll · in-view"},
+  {k:"scrub",label:"scroll · scrub"},
 ];
 const CASC_N = 6;    // items in the stagger timeline
 const SCOPE_N = 5;   // demo elements in the scope lens
@@ -134,7 +142,7 @@ const resolve = it => { const b=bindOf(it); const e=easeObj(b.ease);
   const split = !!(b.effectsEase && b.effectsEase!==b.ease);
   const eff = split ? easeObj(b.effectsEase) : e;
   const dpx = b.distance ? distPx(b.distance) : null;
-  return { d: durMs(b.dur)+"ms", e: easeCSS(e), eLabel: easeLabel(e), eEff: easeCSS(eff), split, s: +b.stagger||0, prop: b.prop||"all", distName: b.distance||"", distPx: dpx, reveal: (typeof b.reveal==="number") ? b.reveal : null }; };
+  return { d: durMs(b.dur)+"ms", e: easeCSS(e), eLabel: easeLabel(e), eEff: easeCSS(eff), split, s: +b.stagger||0, prop: b.prop||"all", distName: b.distance||"", distPx: dpx, reveal: (typeof b.reveal==="number") ? b.reveal : null, scrub: b.scrub ? {tl:b.scrub.tl||"view",range:b.scrub.range||"cover",fx:b.scrub.fx||"progress"} : null }; };
 const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
 // default probe intents: enter / exit / move / hover, one abstract orb each
 probes[0].intent = intents[0].id; probes[1].intent = intents[1].id;
@@ -269,11 +277,16 @@ function renderIntents(){
     const propF=`<div class="field"><label>Property</label><select data-scope="iprop" data-i="${i}">${PROPS.map(pp=>`<option ${pp===(b.prop||"all")?"selected":""}>${pp}</option>`).join("")}</select></div>`;
     const distF=`<div class="field"><label>Distance</label><select data-scope="idist" data-i="${i}"><option value="" ${!b.distance?"selected":""}>none</option>${distances.map(d=>`<option ${d.name===b.distance?"selected":""}>${d.name}</option>`).join("")}</select></div>`;
     const effF=isSplit?`<div class="field"><label>Easing · effects</label><select data-scope="ieff" data-i="${i}">${easings.map(e=>`<option ${e.name===b.effectsEase?"selected":""}>${e.name}</option>`).join("")}</select></div>`:"";
-    const isReveal=typeof b.reveal==="number";
-    const revF=isReveal?`<div class="field field--stag"><label>Reveal·%</label><input class="stag" type="number" min="0" max="100" step="5" value="${b.reveal}" data-scope="irevat" data-i="${i}" aria-label="reveal trigger, percent in view"></div>`:"";
+    const isReveal=typeof b.reveal==="number", scrub=b.scrub||null, scrollOn=isReveal||!!scrub;
+    // scroll-driven: reveal (plays once on entry) OR scrub (follows scroll position)
+    const modeF=scrollOn?`<div class="field"><label>Scroll</label><select data-scope="iscrollmode" data-i="${i}"><option value="reveal" ${!scrub?"selected":""}>reveal · on entry</option><option value="scrub" ${scrub?"selected":""}>scrub · follow</option></select></div>`:"";
+    const revF=(scrollOn&&!scrub)?`<div class="field field--stag"><label>Reveal·%</label><input class="stag" type="number" min="0" max="100" step="5" value="${b.reveal}" data-scope="irevat" data-i="${i}" aria-label="reveal trigger, percent in view"></div>`:"";
+    const tlF=scrub?`<div class="field"><label>Timeline</label><select data-scope="iscrubtl" data-i="${i}">${SCRUB_TL.map(v=>`<option ${v===scrub.tl?"selected":""}>${v}</option>`).join("")}</select></div>`:"";
+    const rangeF=(scrub&&scrub.tl!=="scroll")?`<div class="field"><label>Range</label><select data-scope="iscrubrange" data-i="${i}">${SCRUB_RANGE.map(v=>`<option ${v===scrub.range?"selected":""}>${v}</option>`).join("")}</select></div>`:"";
+    const fxF=scrub?`<div class="field"><label>Effect</label><select data-scope="iscrubfx" data-i="${i}">${SCRUB_FX.map(v=>`<option ${v===scrub.fx?"selected":""}>${v}</option>`).join("")}</select></div>`:"";
     const splitT=`<label class="intent__split"><input type="checkbox" data-scope="isplit" data-i="${i}" ${isSplit?"checked":""}> split spatial · effects (position vs colour/opacity)</label>`;
-    const revT=`<label class="intent__split"><input type="checkbox" data-scope="ireveal" data-i="${i}" ${isReveal?"checked":""}> scroll reveal · plays when it scrolls into view</label>`;
-    const adv = it.open ? `<div class="intent__adv"><div class="intent__ref">${stagF}${propF}${distF}${effF}${revF}</div>${splitT}${revT}</div>` : "";
+    const revT=`<label class="intent__split"><input type="checkbox" data-scope="ireveal" data-i="${i}" ${scrollOn?"checked":""}> scroll-driven · reacts as it scrolls (reveal once, or scrub with position)</label>`;
+    const adv = it.open ? `<div class="intent__adv"><div class="intent__ref">${stagF}${propF}${distF}${effF}${modeF}${revF}${tlF}${rangeF}${fxF}</div>${splitT}${revT}</div>` : "";
     return `<div class="intent" data-id="${it.id}">
       <div class="intent__top">
         <span class="intent__dot" style="background:${colorOf(i)}" aria-hidden="true"></span>
@@ -285,7 +298,7 @@ function renderIntents(){
       ${adv}
       <div class="intent__foot">
         <button class="intent__more" data-scope="imore" data-i="${i}" aria-expanded="${!!it.open}">${it.open?"less ▴":"more ▾"}</button>
-        <span class="intent__resolved">→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}${r.reveal!=null?` · reveal@${r.reveal}%`:""}</span>
+        <span class="intent__resolved">→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}${r.reveal!=null?` · reveal@${r.reveal}%`:""}${r.scrub?` · scrub·${r.scrub.tl}/${r.scrub.fx}`:""}</span>
       </div>
     </div>`;
   }).join("");
@@ -336,6 +349,14 @@ function renderBench(){
         +'<span class="sr-card"></span>'.repeat(5)
         +`<div class="sr-pad"></div></div><span class="sreveal__cue">scroll ↓</span></div>`;
     }
+    if(p.kind==="scrub"){
+      // a real scroll box whose target scrubs to the box's scroll position —
+      // the honest counterpart to native scroll() (progress = position, no clock)
+      const sc=resolve(findIntent(p.intent)).scrub||SCRUB_DEFAULT;
+      stage=`<div class="scrubx" data-fx="${sc.fx}"><div class="scrubx__scroll">`
+        +`<div class="sr-pad"></div><div class="sr-pad"></div></div>`
+        +`<div class="scrubx__target scrubx__target--${sc.fx}"></div><span class="sreveal__cue">scroll ↓</span></div>`;
+    }
     return `<div class="probe" data-i="${i}" style="--accent:${color}">
       <div class="probe__hd">
         <select class="probe__kind" data-scope="pkind" data-i="${i}" aria-label="lens">${kinds}</select>
@@ -369,7 +390,24 @@ function armScrollReveal(pr){
   }}),{root:scroll,threshold:at});
   cards.forEach(c=>io.observe(c));
 }
-function armScrollReveals(){ document.querySelectorAll(".probe").forEach(armScrollReveal); }
+// scrub lens: map the box's own scroll position (0→1) to the target's property,
+// so the effect follows the scroll rather than a clock — native scroll() in miniature
+function armScrub(pr){
+  const box=pr.querySelector(".scrubx"); if(!box) return;
+  const scroll=box.querySelector(".scrubx__scroll"), target=box.querySelector(".scrubx__target");
+  if(!scroll||!target) return;
+  const fx=box.dataset.fx;
+  const set=p=>{
+    if(fx==="progress"){ target.style.transform=`scaleX(${p})`; }
+    else if(fx==="parallax"){ target.style.transform=`translateY(${(20-40*p).toFixed(1)}px)`; }
+    else { target.style.opacity=String(p); }
+  };
+  if(reduce){ set(1); return; }
+  const apply=()=>{ const max=scroll.scrollHeight-scroll.clientHeight; set(max>0?scroll.scrollTop/max:0); };
+  scroll.addEventListener("scroll",apply,{passive:true});
+  apply();
+}
+function armScrollReveals(){ document.querySelectorAll(".probe").forEach(pr=>{ armScrollReveal(pr); armScrub(pr); }); }
 
 // ---------- animation ----------
 function anim(el,props,r,delay=0){
@@ -440,6 +478,11 @@ function play(i){
     const sc=root.querySelector(".sreveal__scroll"); if(sc) sc.scrollTop=0;
     armScrollReveal(root);
   }
+  if(p.kind==="scrub"){
+    // replay: scroll back to the top; the target scrubs as you scroll again
+    const sc=root.querySelector(".scrubx__scroll"); if(sc) sc.scrollTop=0;
+    armScrub(root);
+  }
   if(p.kind==="reveal"){
     const cards=[...root.querySelectorAll(".card")];
     cards.forEach(c=>{c.style.opacity="0";c.style.transform="translateY(14px)";});
@@ -504,6 +547,14 @@ function critique(){
     const staggered = revIntents.find(x=>+bindOf(x).stagger>0);
     if(staggered) out.push(["warn","~",`“${staggered.name}” is a scroll reveal carrying a ${+bindOf(staggered).stagger}ms stagger. Native scroll-driven gives each item its own timeline, so the stagger only lands in the JS fallback — the two paths won't look identical. Drop the stagger, or accept the split.`]);
     else out.push(["ok","✓",`${revIntents.length} scroll reveal${revIntents.length>1?"s":""} — exported as native CSS scroll-driven with an IntersectionObserver fallback for browsers without it (Firefox today).`]);
+  }
+  // 9. scroll scrubs — flag non-linear easing (scrub speed then fights the scroll)
+  const scrubIntents = intents.filter(x=>bindOf(x).scrub);
+  if(scrubIntents.length){
+    const isLin=e=>e.bez && Math.abs(e.bez[0])<.05 && Math.abs(e.bez[1])<.05 && Math.abs(e.bez[2]-1)<.05 && Math.abs(e.bez[3]-1)<.05;
+    const nonLin = scrubIntents.find(x=>!isLin(easeObj(bindOf(x).ease)));
+    if(nonLin) out.push(["warn","~",`“${nonLin.name}” scrubs with a non-linear easing — the motion speeds up and slows down against your scroll. That reads as intentional for a reveal-style scrub, but parallax/progress usually want a linear curve for a true 1:1 feel.`]);
+    else out.push(["ok","✓",`${scrubIntents.length} scroll scrub${scrubIntents.length>1?"s":""} — native scroll-driven (no duration; the range is the axis) with a scroll-position fallback for browsers without it.`]);
   }
   document.getElementById("hints").innerHTML = out.map(h=>`<div class="rd ${h[0]}"><span class="ic">${h[1]}</span><span>${h[2]}</span></div>`).join("");
 }
@@ -620,29 +671,36 @@ function buildTS(){
     `  // semantic intents (resolved from primitives)\n`+
     `  intent: {\n${sem}\n  },\n} as const;`;
 }
-// scroll reveals: for every intent tagged "scroll reveal", emit BOTH the native
-// CSS scroll-driven recipe (animation-timeline:view()) and an IntersectionObserver
-// fallback for browsers without it (Firefox today) — with the honest note that
-// native SCRUBS the reveal to scroll while the fallback TRIGGERS it at a threshold.
+// scroll-driven motion: for every intent tagged scroll-driven, emit BOTH the
+// native CSS recipe (animation-timeline) and a JS fallback for browsers without
+// it (Firefox today). Two shapes: REVEAL (plays once at a threshold — native
+// scrubs, fallback triggers) and SCRUB (progress follows scroll position — no
+// duration, the range is the axis; fallback is a scroll-position driver).
+const scrubFrames = (fx, travel) =>
+  fx==="parallax" ? {prop:"transform", from:`translateY(${travel})`, to:`translateY(-${travel})`, extra:""} :
+  fx==="fade"     ? {prop:"opacity",    from:"0",                     to:"1",                        extra:""} :
+                    {prop:"transform",  from:"scaleX(0)",             to:"scaleX(1)",                extra:"  transform-origin:left;\n"};
 function buildScroll(){
   const revs=intents.filter(it=>typeof bindOf(it).reveal==="number");
-  if(!revs.length){
-    return "/* No scroll reveals yet.\n"
+  const scrubs=intents.filter(it=>bindOf(it).scrub);
+  if(!revs.length && !scrubs.length){
+    return "/* No scroll-driven motion yet.\n"
       + " *\n"
-      + " * Open an intent's “more” panel and tick “scroll reveal” to emit a\n"
-      + " * scroll-into-view recipe here — native CSS scroll-driven animation with\n"
-      + " * an IntersectionObserver fallback for browsers that lack it. */";
+      + " * Open an intent's “more” panel and tick “scroll-driven”, then choose\n"
+      + " * reveal (plays once on entry) or scrub (progress follows scroll). Both\n"
+      + " * export here as native CSS scroll-driven animation with a JS fallback\n"
+      + " * for browsers that lack it (Firefox today). */";
   }
-  let s="/* Cadence — scroll reveals"+modeNote()+"\n"
+  let s="/* Cadence — scroll-driven motion"+modeNote()+"\n"
     + " *\n"
     + " * Native CSS scroll-driven animation (Chrome/Edge 115+, Safari 26+, Opera),\n"
-    + " * with an IntersectionObserver fallback for browsers without it (Firefox today).\n"
+    + " * with a JS fallback for browsers without it (Firefox today).\n"
     + " *\n"
-    + " * Note: the native path SCRUBS the reveal to scroll position; the fallback\n"
-    + " * TRIGGERS it once at a threshold. For a short reveal the two read almost\n"
-    + " * identically — the gap only widens for long / parallax motion.\n"
-    + " * Pair with the intent tokens from the CSS tab (--motion-<intent>-*). */\n\n";
-  const selList=revs.map(it=>".reveal-"+it.name).join(", ");
+    + " * REVEAL scrubs on entry natively / triggers at a threshold in the fallback.\n"
+    + " * SCRUB has no duration — scroll POSITION is the axis; the fallback maps the\n"
+    + " * element's viewport progress to the same property. Keep scrub easing linear\n"
+    + " * for a true 1:1 feel. Pair with the CSS-tab tokens (--motion-<intent>-*). */\n\n";
+  // ---- reveals ----
   revs.forEach(it=>{
     const b=bindOf(it), nm=it.name;
     const dvar=`var(--motion-${nm}-duration)`, evar=`var(--motion-${nm}-ease)`;
@@ -666,12 +724,48 @@ function buildScroll(){
     s+=`}\n`;
     s+=`@media (prefers-reduced-motion:reduce){\n  .reveal-${nm}{ animation:none; transition:none; opacity:1; transform:none; }\n}\n\n`;
   });
-  s+="/* Fallback driver — runs only where native scroll timelines are missing. */\n";
+  // ---- scrubs ----
+  scrubs.forEach(it=>{
+    const b=bindOf(it), nm=it.name, sc=b.scrub;
+    const evar=`var(--motion-${nm}-ease)`;
+    const travelPx=b.distance ? (distPx(b.distance)||40) : 40;
+    const travel=b.distance ? `var(--motion-distance-${b.distance})` : "40px";
+    const kf=scrubFrames(sc.fx, travel);
+    const tl = sc.tl==="scroll" ? "scroll()" : "view()";
+    const rangeLine = sc.tl==="scroll" ? "" : `  animation-range:${sc.range} 0% ${sc.range} 100%;\n`;
+    s+=`/* — ${nm} · scrub (${sc.tl} / ${sc.fx}) — progress follows scroll */\n`;
+    s+=`@keyframes scrub-${nm}{\n  from{ ${kf.prop}:${kf.from}; }\n  to{ ${kf.prop}:${kf.to}; }\n}\n`;
+    s+=`.scrub-${nm}{\n`;
+    s+=kf.extra;
+    s+=`  animation:scrub-${nm} auto ${evar} both;   /* auto duration → the timeline drives it */\n`;
+    s+=`  animation-timeline:${tl};\n`;
+    s+=rangeLine;
+    s+=`}\n`;
+    s+=`@media (prefers-reduced-motion:reduce){\n  .scrub-${nm}{ animation:none; ${kf.prop}:${kf.to}; }\n}\n\n`;
+  });
+  // ---- fallback drivers ----
+  s+="/* Fallback — runs only where native scroll timelines are missing (Firefox today). */\n";
   s+="if(!CSS.supports('animation-timeline: view()')){\n";
-  s+="  const io=new IntersectionObserver(es=>{\n";
-  s+="    for(const e of es) if(e.isIntersecting){ e.target.classList.add('is-in'); io.unobserve(e.target); }\n";
-  s+="  },{threshold:"+(revs.length===1?(Math.max(0,Math.min(100,bindOf(revs[0]).reveal))/100).toFixed(2):"0.15")+"});   /* maps to the reveal % */\n";
-  s+="  document.querySelectorAll('"+selList+"').forEach(el=>io.observe(el));\n";
+  if(revs.length){
+    const selList=revs.map(it=>".reveal-"+it.name).join(", ");
+    s+="  /* reveals: trigger at a threshold */\n";
+    s+="  const io=new IntersectionObserver(es=>{\n";
+    s+="    for(const e of es) if(e.isIntersecting){ e.target.classList.add('is-in'); io.unobserve(e.target); }\n";
+    s+="  },{threshold:"+(revs.length===1?(Math.max(0,Math.min(100,bindOf(revs[0]).reveal))/100).toFixed(2):"0.15")+"});   /* maps to the reveal % */\n";
+    s+="  document.querySelectorAll('"+selList+"').forEach(el=>io.observe(el));\n";
+  }
+  if(scrubs.length){
+    const items=scrubs.map(it=>{ const sc=bindOf(it).scrub; const amt=bindOf(it).distance?(distPx(bindOf(it).distance)||40):40;
+      return `['.scrub-${it.name}','${sc.fx}',${amt}]`; }).join(", ");
+    s+="  /* scrubs: map the element's viewport progress (0→1) to the property */\n";
+    s+="  const prog=el=>{ const r=el.getBoundingClientRect(); return Math.min(1,Math.max(0,(innerHeight-r.top)/(innerHeight+r.height))); };\n";
+    s+="  const fx={ progress:(el,p)=>{el.style.transform='scaleX('+p+')';el.style.transformOrigin='left';},\n";
+    s+="             parallax:(el,p,a)=>{el.style.transform='translateY('+(a-2*a*p)+'px)';},\n";
+    s+="             fade:(el,p)=>{el.style.opacity=p;} };\n";
+    s+="  const scrubItems=["+items+"];\n";
+    s+="  const upd=()=>scrubItems.forEach(([sel,f,a])=>document.querySelectorAll(sel).forEach(el=>fx[f](el,prog(el),a)));\n";
+    s+="  addEventListener('scroll',upd,{passive:true}); addEventListener('resize',upd); upd();\n";
+  }
   s+="}";
   return s;
 }
@@ -749,7 +843,7 @@ function encodeState(){
     m: modes.map(x=>x.name),
     am: activeMode,
     // i: [name, purpose, [[dur,ease,stagger,prop,effectsEase,distance] per mode]]
-    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease,+b.stagger||0,b.prop||"all",b.effectsEase||"",b.distance||"",typeof b.reveal==="number"?b.reveal:-1])]),
+    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease,+b.stagger||0,b.prop||"all",b.effectsEase||"",b.distance||"",typeof b.reveal==="number"?b.reveal:-1,b.scrub?[b.scrub.tl,b.scrub.range,b.scrub.fx]:0])]),
     x: distances.map(d=>[d.name,d.px]),
     p: probes.map(pb=>{ const k=intents.findIndex(x=>x.id===pb.intent); return [pb.kind, k<0?0:k]; }),
   };
@@ -768,7 +862,7 @@ function applyState(o){
   const it = o.i.map(x=>{
     // new: [name, purpose, [[dur,ease],...]]  ·  legacy: [name, dur, ease, purpose]
     const binds = Array.isArray(x[2])
-      ? x[2].map(b=>{ const o={dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0,prop:String(b[3]||"all")}; if(b[4]) o.effectsEase=String(b[4]); if(b[5]) o.distance=String(b[5]); if(typeof b[6]!=="undefined" && +b[6]>=0) o.reveal=Math.max(0,Math.min(100,+b[6])); return o; })
+      ? x[2].map(b=>{ const o={dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0,prop:String(b[3]||"all")}; if(b[4]) o.effectsEase=String(b[4]); if(b[5]) o.distance=String(b[5]); if(typeof b[6]!=="undefined" && +b[6]>=0) o.reveal=Math.max(0,Math.min(100,+b[6])); if(Array.isArray(b[7])){ o.scrub={tl:String(b[7][0]||"view"),range:String(b[7][1]||"cover"),fx:String(b[7][2]||"progress")}; delete o.reveal; } return o; })
       : [{dur:String(x[1]),ease:String(x[2]),stagger:0,prop:"all"}];
     const purpose = Array.isArray(x[2]) ? String(x[1]||"") : String(x[3]||"");
     // pad/trim bindings so every intent has exactly one per mode
@@ -811,7 +905,7 @@ function writeURL(){
 function updateResolvedLines(){
   document.querySelectorAll(".intent__resolved").forEach((el,k)=>{
     if(!intents[k]) return;
-    const r=resolve(intents[k]); el.textContent=`→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}${r.reveal!=null?` · reveal@${r.reveal}%`:""}`;
+    const r=resolve(intents[k]); el.textContent=`→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}${r.reveal!=null?` · reveal@${r.reveal}%`:""}${r.scrub?` · scrub·${r.scrub.tl}/${r.scrub.fx}`:""}`;
   });
 }
 
@@ -859,7 +953,11 @@ document.addEventListener("change", e=>{
   if(sc==="iease"){ bindOf(intents[i]).ease=t.value; render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iprop"){ bindOf(intents[i]).prop=t.value; render(); renderBench(); updateResolvedLines(); writeURL(); }
   if(sc==="isplit"){ const bb=bindOf(intents[i]); if(t.checked) bb.effectsEase=bb.ease; else delete bb.effectsEase; rerenderAll(); }
-  if(sc==="ireveal"){ const bb=bindOf(intents[i]); if(t.checked) bb.reveal=15; else delete bb.reveal; rerenderAll(); }
+  if(sc==="ireveal"){ const bb=bindOf(intents[i]); if(t.checked){ bb.reveal=15; delete bb.scrub; } else { delete bb.reveal; delete bb.scrub; } rerenderAll(); }
+  if(sc==="iscrollmode"){ const bb=bindOf(intents[i]); if(t.value==="scrub"){ delete bb.reveal; bb.scrub={...SCRUB_DEFAULT}; } else { delete bb.scrub; bb.reveal=15; } rerenderAll(); }
+  if(sc==="iscrubtl"){ const bb=bindOf(intents[i]); if(bb.scrub) bb.scrub.tl=t.value; rerenderAll(); }
+  if(sc==="iscrubrange"){ const bb=bindOf(intents[i]); if(bb.scrub) bb.scrub.range=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="iscrubfx"){ const bb=bindOf(intents[i]); if(bb.scrub) bb.scrub.fx=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="ieff"){ bindOf(intents[i]).effectsEase=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="probe"){ probes[i].intent=t.value; renderBench(); writeURL(); }
   if(sc==="pkind"){ probes[i].kind=t.value; renderBench(); writeURL(); }

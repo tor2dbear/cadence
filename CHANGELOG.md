@@ -5,6 +5,31 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.5.0] — 2026-07-20
+
+Scroll, part two: **scrub**. Where a reveal plays once on entry, a scrub binds
+an element's progress to scroll *position* — parallax, a progress bar, a fade
+that tracks the scrollbar. No duration; the range is the axis.
+
+### Added — scroll scrub
+- **Scrub mode** on any scroll-driven intent (a `reveal · on entry` /
+  `scrub · follow` switch). A scrub exposes three axes: **timeline**
+  (`view()` — the element's own passage — or `scroll()` — the page), **range**
+  (`cover` / `entry` / `exit` / `contain`), and **effect** (`progress` /
+  `parallax` / `fade`). Reveal and scrub are mutually exclusive — an element
+  either plays once or scrubs continuously.
+- **Dual export in the Scroll tab.** Native CSS emits `@keyframes` +
+  `animation: … auto …` (auto duration → the timeline drives it) +
+  `animation-timeline` + `animation-range`. The **JS fallback** maps the
+  element's viewport progress (0→1) to the same property via a passive scroll
+  listener, for browsers without native scroll timelines (Firefox today).
+  Reduced-motion pins the end state.
+- **System read** flags a scrub running on a non-linear easing — the motion
+  then speeds up and slows down against the scroll, which parallax/progress
+  usually don't want.
+- **Live scrub probe** — a bench lens (`scroll · scrub`) whose target tracks
+  the box's own scroll position, so you can feel position-as-axis directly.
+
 ## [0.4.0] — 2026-07-20
 
 Scroll into the picture: the first scroll-driven surface. Any intent can now be
