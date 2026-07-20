@@ -5,6 +5,24 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.6.1] — 2026-07-20
+
+The live demo catches up to the tool: it now exercises all three scroll/state
+surfaces, each driven by the same `--role-*` tokens the shell already uses, so
+they re-time live as you edit the system.
+
+### Added — demo surface
+- **View transitions on the tabs** — switching Overview / Activity / Settings
+  runs `document.startViewTransition`, cross-fading the panel on the `move`
+  token, with a feature-detected instant-swap fallback. Real Activity and
+  Settings panels were added so there's something to transition between.
+- **Native scroll reveal** — a section below the shell whose cards reveal via
+  `animation-timeline: view()` (timed by `enter`), with an IntersectionObserver
+  fallback.
+- **Scroll scrub** — a reading-progress bar that tracks the scrollbar via
+  `animation-timeline: scroll()`, with a scroll-listener fallback.
+- Reduced-motion pins every end state; unsupported browsers just show content.
+
 ## [0.6.0] — 2026-07-20
 
 View Transitions. The View Transitions API's only knobs are duration + easing —
