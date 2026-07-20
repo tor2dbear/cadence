@@ -5,6 +5,30 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.4.0] — 2026-07-20
+
+Scroll into the picture: the first scroll-driven surface. Any intent can now be
+tagged as a **scroll reveal** — motion that plays as the element enters the
+viewport — with a dual export that stays honest about where the platform is.
+
+### Added — scroll reveals
+- **Scroll-reveal toggle** on any intent (in the advanced panel), with a
+  **trigger threshold** (reveal by _N_% into view). It reuses the intent's own
+  duration, easing and distance, so a reveal is just a semantic token with a
+  trigger — no new knobs.
+- **Dual export — a new “Scroll” tab.** For every reveal it emits both the
+  native **CSS scroll-driven** recipe (`animation-timeline: view()` +
+  `animation-range`, Chrome/Edge 115+, Safari 26+, Opera) **and** an
+  **IntersectionObserver fallback** (behind `@supports not (...)`) for browsers
+  without it — Firefox today. Reduced-motion honoured in both paths.
+- **Honesty baked in.** The export names the real difference — native _scrubs_
+  the reveal to scroll position, the fallback _triggers_ it once at a threshold —
+  and the **system read** warns when a reveal's stagger only lands in the JS
+  path (native gives each item its own timeline).
+- **Live in-view probe** — a new bench lens (`scroll · in-view`): a genuine
+  scroll box whose cards reveal as they cross the threshold, driven by a scoped
+  IntersectionObserver, so the abstract token becomes something you can scroll.
+
 ## [0.3.0] — 2026-07-18
 
 The enrichment milestone: richer motion primitives, an opinion layer that reads
