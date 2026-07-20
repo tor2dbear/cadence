@@ -5,6 +5,29 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.6.0] — 2026-07-20
+
+View Transitions. The View Transitions API's only knobs are duration + easing —
+which an intent already is — so Cadence can drive DOM state swaps (navigation,
+toggles) straight from your semantic tokens.
+
+### Added — view transitions
+- **View-transition toggle** on any intent, with a **kind**: `root` (a
+  whole-page cross-fade) or `shared` (a named element that morphs between
+  states). Independent of the scroll-driven modes — a different trigger
+  (state swap, not scroll).
+- **New “Transitions” export tab.** Emits the `::view-transition-old/new/group`
+  pseudo-elements timed by that intent's `--motion-<intent>-duration` /
+  `-ease`, a `view-transition-name` for shared elements, a reduced-motion block
+  that keeps the instant swap, and a `swap()` scaffold that feature-detects
+  `startViewTransition` so unsupported browsers just update the DOM.
+- **System read** notes that same-document VT is Baseline now (Chrome/Edge
+  111+, Safari 18+, Firefox 144+), so this is progressive enhancement, not a
+  gamble.
+- **Simulated bench lens** (`view transition`): a real `startViewTransition`
+  would snapshot the whole page, so the lens mimics the old→new cross-fade /
+  shared morph with plain transitions timed by the intent — enough to feel it.
+
 ## [0.5.0] — 2026-07-20
 
 Scroll, part two: **scrub**. Where a reveal plays once on entry, a scrub binds

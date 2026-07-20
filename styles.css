@@ -219,6 +219,16 @@ button.btn{background:var(--accent);color:#04110f;border:0;border-radius:8px;pad
 .scrubx__target--parallax{left:50%;top:50%;width:46%;height:52px;margin-left:-23%;margin-top:-26px;border-radius:9px;opacity:.92}
 .scrubx__target--fade{left:50%;top:50%;width:46%;height:52px;margin-left:-23%;margin-top:-26px;border-radius:9px;opacity:0}
 
+/* view-transition lens — a simulated state swap (a real startViewTransition
+   would snapshot the whole page): root cross-fade, or a shared element morph */
+.vt{position:absolute;inset:0}
+.vt__cue{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--ink-faint);pointer-events:none}
+.vt--root .vt__old,.vt--root .vt__new{position:absolute;left:20px;right:20px;top:44px;bottom:32px;border-radius:9px;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.vt__old{background:var(--panel-2);border:1px solid var(--line)}
+.vt__new{background:var(--accent);opacity:0;transform:scale(1.04)}
+.vt__morph{position:absolute;left:20px;top:44px;width:34px;height:22px;border-radius:7px;background:var(--accent);box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.vt__morph.b{left:46%;top:100px;width:44%;height:40px}
+
 /* ---- system read ---- */
 .adnote{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
 .rd{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--ink-dim);padding:8px 0;border-bottom:1px dashed var(--line)}
