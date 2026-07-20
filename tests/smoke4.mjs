@@ -11,7 +11,7 @@ await page.goto(BASE, { waitUntil: 'networkidle' });
 
 const pick = async fmt => { await page.click(`.tab[data-fmt="${fmt}"]`); return page.locator('#out').innerText(); };
 
-assert('5 tabs present', await page.locator('.tabs .tab').count() === 5);
+assert('6 tabs present', await page.locator('.tabs .tab').count() === 6);
 
 const css = await pick('css');
 assert('CSS: primitives + var() reference', css.includes('--motion-duration-fast: 150ms') && css.includes('--motion-enter-ease: var(--motion-ease-emphasized)'));

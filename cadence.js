@@ -69,6 +69,7 @@ const KINDS = [
   {k:"button",label:"button"},
   {k:"acc",label:"accordion"},
   {k:"reveal",label:"list reveal"},
+  {k:"scrollreveal",label:"scroll · in-view"},
 ];
 const CASC_N = 6;    // items in the stagger timeline
 const SCOPE_N = 5;   // demo elements in the scope lens
@@ -133,7 +134,7 @@ const resolve = it => { const b=bindOf(it); const e=easeObj(b.ease);
   const split = !!(b.effectsEase && b.effectsEase!==b.ease);
   const eff = split ? easeObj(b.effectsEase) : e;
   const dpx = b.distance ? distPx(b.distance) : null;
-  return { d: durMs(b.dur)+"ms", e: easeCSS(e), eLabel: easeLabel(e), eEff: easeCSS(eff), split, s: +b.stagger||0, prop: b.prop||"all", distName: b.distance||"", distPx: dpx }; };
+  return { d: durMs(b.dur)+"ms", e: easeCSS(e), eLabel: easeLabel(e), eEff: easeCSS(eff), split, s: +b.stagger||0, prop: b.prop||"all", distName: b.distance||"", distPx: dpx, reveal: (typeof b.reveal==="number") ? b.reveal : null }; };
 const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
 // default probe intents: enter / exit / move / hover, one abstract orb each
 probes[0].intent = intents[0].id; probes[1].intent = intents[1].id;
@@ -268,8 +269,11 @@ function renderIntents(){
     const propF=`<div class="field"><label>Property</label><select data-scope="iprop" data-i="${i}">${PROPS.map(pp=>`<option ${pp===(b.prop||"all")?"selected":""}>${pp}</option>`).join("")}</select></div>`;
     const distF=`<div class="field"><label>Distance</label><select data-scope="idist" data-i="${i}"><option value="" ${!b.distance?"selected":""}>none</option>${distances.map(d=>`<option ${d.name===b.distance?"selected":""}>${d.name}</option>`).join("")}</select></div>`;
     const effF=isSplit?`<div class="field"><label>Easing · effects</label><select data-scope="ieff" data-i="${i}">${easings.map(e=>`<option ${e.name===b.effectsEase?"selected":""}>${e.name}</option>`).join("")}</select></div>`:"";
+    const isReveal=typeof b.reveal==="number";
+    const revF=isReveal?`<div class="field field--stag"><label>Reveal·%</label><input class="stag" type="number" min="0" max="100" step="5" value="${b.reveal}" data-scope="irevat" data-i="${i}" aria-label="reveal trigger, percent in view"></div>`:"";
     const splitT=`<label class="intent__split"><input type="checkbox" data-scope="isplit" data-i="${i}" ${isSplit?"checked":""}> split spatial · effects (position vs colour/opacity)</label>`;
-    const adv = it.open ? `<div class="intent__adv"><div class="intent__ref">${stagF}${propF}${distF}${effF}</div>${splitT}</div>` : "";
+    const revT=`<label class="intent__split"><input type="checkbox" data-scope="ireveal" data-i="${i}" ${isReveal?"checked":""}> scroll reveal · plays when it scrolls into view</label>`;
+    const adv = it.open ? `<div class="intent__adv"><div class="intent__ref">${stagF}${propF}${distF}${effF}${revF}</div>${splitT}${revT}</div>` : "";
     return `<div class="intent" data-id="${it.id}">
       <div class="intent__top">
         <span class="intent__dot" style="background:${colorOf(i)}" aria-hidden="true"></span>
@@ -281,7 +285,7 @@ function renderIntents(){
       ${adv}
       <div class="intent__foot">
         <button class="intent__more" data-scope="imore" data-i="${i}" aria-expanded="${!!it.open}">${it.open?"less ▴":"more ▾"}</button>
-        <span class="intent__resolved">→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}</span>
+        <span class="intent__resolved">→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}${r.reveal!=null?` · reveal@${r.reveal}%`:""}</span>
       </div>
     </div>`;
   }).join("");
@@ -321,6 +325,17 @@ function renderBench(){
     if(p.kind==="button") stage=`<div class="btnpad">Hover me</div>`;
     if(p.kind==="acc") stage=`<div class="acc"><div class="acc__hd">Details <span class="chev">⌄</span></div><div class="acc__body"><p>Height and chevron ride the same token, so the change feels like one gesture.</p></div></div>`;
     if(p.kind==="reveal") stage=`<div class="reveal"><span class="card"></span><span class="card"></span><span class="card"></span></div>`;
+    if(p.kind==="scrollreveal"){
+      // a real scroll box: cards start below the fold and reveal as they cross
+      // the intent's trigger threshold (via IntersectionObserver, so it's the
+      // genuine in-view behaviour — the honest counterpart to native view())
+      const rr=resolve(findIntent(p.intent));
+      const at=rr.reveal!=null?rr.reveal:15;
+      stage=`<div class="sreveal" data-at="${at}"><div class="sreveal__scroll">`
+        +`<div class="sr-pad"></div>`
+        +'<span class="sr-card"></span>'.repeat(5)
+        +`<div class="sr-pad"></div></div><span class="sreveal__cue">scroll ↓</span></div>`;
+    }
     return `<div class="probe" data-i="${i}" style="--accent:${color}">
       <div class="probe__hd">
         <select class="probe__kind" data-scope="pkind" data-i="${i}" aria-label="lens">${kinds}</select>
@@ -329,7 +344,32 @@ function renderBench(){
       <div class="probe__stage" data-play="${i}">${stage}</div>
     </div>`;
   }).join("");
+  armScrollReveals();
 }
+
+// scroll-reveal lens: attach a scoped IntersectionObserver so cards reveal as
+// they cross the intent's threshold inside their own scroll box. Re-armed on
+// every renderBench (old boxes are replaced, so their observers fall away).
+function armScrollReveal(pr){
+  const box=pr.querySelector(".sreveal"); if(!box) return;
+  const i=+pr.dataset.i, r=resolve(findIntent(probes[i].intent));
+  const scroll=box.querySelector(".sreveal__scroll");
+  const cards=[...box.querySelectorAll(".sr-card")];
+  const travel=Math.max(8,Math.min(40, r.distPx!=null?r.distPx:16));
+  if(reduce){ cards.forEach(c=>{c.style.opacity="1";c.style.transform="none";c.style.transition="none";}); return; }
+  cards.forEach(c=>{ c.style.transition="none"; c.style.opacity="0"; c.style.transform=`translateY(${travel}px)`; });
+  void box.offsetWidth;
+  const at=Math.max(0.01,Math.min(1,(+box.dataset.at||15)/100));
+  // each card reveals on its own timeline — in-view reveal is per-item, so
+  // stagger (a list concept) deliberately doesn't apply here
+  const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){
+    const c=e.target;
+    c.style.transition=`opacity ${r.d} ${r.eEff||r.e}, transform ${r.d} ${r.e}`;
+    c.style.opacity="1"; c.style.transform="none"; io.unobserve(c);
+  }}),{root:scroll,threshold:at});
+  cards.forEach(c=>io.observe(c));
+}
+function armScrollReveals(){ document.querySelectorAll(".probe").forEach(armScrollReveal); }
 
 // ---------- animation ----------
 function anim(el,props,r,delay=0){
@@ -395,6 +435,11 @@ function play(i){
     requestAnimationFrame(()=>{b.style.height=b.scrollHeight+"px";c.style.transform="rotate(180deg)";});
     setTimeout(()=>{b.style.height="0px";c.style.transform="rotate(0deg)";},1500);
   }
+  if(p.kind==="scrollreveal"){
+    // replay: scroll back to the top and re-arm, so the reveals re-fire on scroll
+    const sc=root.querySelector(".sreveal__scroll"); if(sc) sc.scrollTop=0;
+    armScrollReveal(root);
+  }
   if(p.kind==="reveal"){
     const cards=[...root.querySelectorAll(".card")];
     cards.forEach(c=>{c.style.opacity="0";c.style.transform="translateY(14px)";});
@@ -452,6 +497,13 @@ function critique(){
     if(fast.v>5) out.push(["warn","!",`“${fast.name}” covers ${fast.px}px in ${fast.ms}ms — that's ${fast.v.toFixed(1)}px/ms, fast enough to read as a jump rather than a move. Slow it down or shorten the travel.`]);
     else if(slow.v<0.4 && slow.px>=64) out.push(["warn","~",`“${slow.name}” crawls ${slow.px}px over ${slow.ms}ms (${slow.v.toFixed(2)}px/ms). Long, slow travel reads as sluggish — tighten the duration or the distance.`]);
     else out.push(["ok","✓",`Travel speeds read naturally — “${fast.name}” moves ${fast.px}px in ${fast.ms}ms (${fast.v.toFixed(1)}px/ms), in the range the eye tracks as motion.`]);
+  }
+  // 8. scroll reveals — only when an intent opts in (keeps the default read quiet)
+  const revIntents = intents.filter(x=>typeof bindOf(x).reveal==="number");
+  if(revIntents.length){
+    const staggered = revIntents.find(x=>+bindOf(x).stagger>0);
+    if(staggered) out.push(["warn","~",`“${staggered.name}” is a scroll reveal carrying a ${+bindOf(staggered).stagger}ms stagger. Native scroll-driven gives each item its own timeline, so the stagger only lands in the JS fallback — the two paths won't look identical. Drop the stagger, or accept the split.`]);
+    else out.push(["ok","✓",`${revIntents.length} scroll reveal${revIntents.length>1?"s":""} — exported as native CSS scroll-driven with an IntersectionObserver fallback for browsers without it (Firefox today).`]);
   }
   document.getElementById("hints").innerHTML = out.map(h=>`<div class="rd ${h[0]}"><span class="ic">${h[1]}</span><span>${h[2]}</span></div>`).join("");
 }
@@ -568,10 +620,65 @@ function buildTS(){
     `  // semantic intents (resolved from primitives)\n`+
     `  intent: {\n${sem}\n  },\n} as const;`;
 }
+// scroll reveals: for every intent tagged "scroll reveal", emit BOTH the native
+// CSS scroll-driven recipe (animation-timeline:view()) and an IntersectionObserver
+// fallback for browsers without it (Firefox today) — with the honest note that
+// native SCRUBS the reveal to scroll while the fallback TRIGGERS it at a threshold.
+function buildScroll(){
+  const revs=intents.filter(it=>typeof bindOf(it).reveal==="number");
+  if(!revs.length){
+    return "/* No scroll reveals yet.\n"
+      + " *\n"
+      + " * Open an intent's “more” panel and tick “scroll reveal” to emit a\n"
+      + " * scroll-into-view recipe here — native CSS scroll-driven animation with\n"
+      + " * an IntersectionObserver fallback for browsers that lack it. */";
+  }
+  let s="/* Cadence — scroll reveals"+modeNote()+"\n"
+    + " *\n"
+    + " * Native CSS scroll-driven animation (Chrome/Edge 115+, Safari 26+, Opera),\n"
+    + " * with an IntersectionObserver fallback for browsers without it (Firefox today).\n"
+    + " *\n"
+    + " * Note: the native path SCRUBS the reveal to scroll position; the fallback\n"
+    + " * TRIGGERS it once at a threshold. For a short reveal the two read almost\n"
+    + " * identically — the gap only widens for long / parallax motion.\n"
+    + " * Pair with the intent tokens from the CSS tab (--motion-<intent>-*). */\n\n";
+  const selList=revs.map(it=>".reveal-"+it.name).join(", ");
+  revs.forEach(it=>{
+    const b=bindOf(it), nm=it.name;
+    const dvar=`var(--motion-${nm}-duration)`, evar=`var(--motion-${nm}-ease)`;
+    const travel=b.distance ? `var(--motion-distance-${b.distance})` : "16px";
+    const at=Math.max(0,Math.min(100,b.reveal));
+    s+=`/* — ${nm} · reveal by ${at}% into view */\n`;
+    s+=`@keyframes reveal-${nm}{\n  from{ opacity:0; transform:translateY(${travel}); }\n  to{ opacity:1; transform:none; }\n}\n`;
+    s+=`.reveal-${nm}{\n`;
+    s+=`  animation:reveal-${nm} ${dvar} ${evar} both;\n`;
+    s+=`  animation-timeline:view();\n`;
+    s+=`  animation-range:entry 0% entry ${100-at}%;   /* done ${at}% past the entry edge */\n`;
+    s+=`}\n`;
+    if(+b.stagger>0)
+      s+=`/* “${nm}” carries a ${+b.stagger}ms stagger. Native scroll-driven gives each\n`
+        +`   item its own timeline, so stagger lands only in the fallback below\n`
+        +`   (set el.style.transitionDelay = i*${+b.stagger}+'ms' as you observe). */\n`;
+    s+=`@supports not (animation-timeline:view()){\n`;
+    s+=`  .reveal-${nm}{ animation:none; opacity:0; transform:translateY(${travel});\n`;
+    s+=`    transition:${dvar} ${evar}; transition-property:opacity,transform; }\n`;
+    s+=`  .reveal-${nm}.is-in{ opacity:1; transform:none; }\n`;
+    s+=`}\n`;
+    s+=`@media (prefers-reduced-motion:reduce){\n  .reveal-${nm}{ animation:none; transition:none; opacity:1; transform:none; }\n}\n\n`;
+  });
+  s+="/* Fallback driver — runs only where native scroll timelines are missing. */\n";
+  s+="if(!CSS.supports('animation-timeline: view()')){\n";
+  s+="  const io=new IntersectionObserver(es=>{\n";
+  s+="    for(const e of es) if(e.isIntersecting){ e.target.classList.add('is-in'); io.unobserve(e.target); }\n";
+  s+="  },{threshold:"+(revs.length===1?(Math.max(0,Math.min(100,bindOf(revs[0]).reveal))/100).toFixed(2):"0.15")+"});   /* maps to the reveal % */\n";
+  s+="  document.querySelectorAll('"+selList+"').forEach(el=>io.observe(el));\n";
+  s+="}";
+  return s;
+}
 function render(){
   const o=document.getElementById("out");
   if(fmt==="css"){ o.innerHTML=buildCSS(); return; }
-  const build={json:buildJSON,tailwind:buildTailwind,sd:buildStyleDictionary,ts:buildTS}[fmt]||buildJSON;
+  const build={json:buildJSON,tailwind:buildTailwind,sd:buildStyleDictionary,ts:buildTS,scroll:buildScroll}[fmt]||buildJSON;
   o.textContent=build();
 }
 
@@ -642,7 +749,7 @@ function encodeState(){
     m: modes.map(x=>x.name),
     am: activeMode,
     // i: [name, purpose, [[dur,ease,stagger,prop,effectsEase,distance] per mode]]
-    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease,+b.stagger||0,b.prop||"all",b.effectsEase||"",b.distance||""])]),
+    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease,+b.stagger||0,b.prop||"all",b.effectsEase||"",b.distance||"",typeof b.reveal==="number"?b.reveal:-1])]),
     x: distances.map(d=>[d.name,d.px]),
     p: probes.map(pb=>{ const k=intents.findIndex(x=>x.id===pb.intent); return [pb.kind, k<0?0:k]; }),
   };
@@ -661,7 +768,7 @@ function applyState(o){
   const it = o.i.map(x=>{
     // new: [name, purpose, [[dur,ease],...]]  ·  legacy: [name, dur, ease, purpose]
     const binds = Array.isArray(x[2])
-      ? x[2].map(b=>{ const o={dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0,prop:String(b[3]||"all")}; if(b[4]) o.effectsEase=String(b[4]); if(b[5]) o.distance=String(b[5]); return o; })
+      ? x[2].map(b=>{ const o={dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0,prop:String(b[3]||"all")}; if(b[4]) o.effectsEase=String(b[4]); if(b[5]) o.distance=String(b[5]); if(typeof b[6]!=="undefined" && +b[6]>=0) o.reveal=Math.max(0,Math.min(100,+b[6])); return o; })
       : [{dur:String(x[1]),ease:String(x[2]),stagger:0,prop:"all"}];
     const purpose = Array.isArray(x[2]) ? String(x[1]||"") : String(x[3]||"");
     // pad/trim bindings so every intent has exactly one per mode
@@ -704,7 +811,7 @@ function writeURL(){
 function updateResolvedLines(){
   document.querySelectorAll(".intent__resolved").forEach((el,k)=>{
     if(!intents[k]) return;
-    const r=resolve(intents[k]); el.textContent=`→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}`;
+    const r=resolve(intents[k]); el.textContent=`→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}${r.reveal!=null?` · reveal@${r.reveal}%`:""}`;
   });
 }
 
@@ -719,6 +826,7 @@ document.addEventListener("input", e=>{
   if(sc==="xpx"){ distances[i].px=+t.value; const v=t.closest(".drow")?.querySelector(".drow__val"); if(v)v.textContent=t.value+"px"; render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iname"){ intents[i].name=t.value.trim()||intents[i].name; render(); critique(); writeURL(); }
   if(sc==="istag"){ bindOf(intents[i]).stagger=Math.max(0,Math.min(400,+t.value||0)); render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="irevat"){ bindOf(intents[i]).reveal=Math.max(0,Math.min(100,+t.value||0)); render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="sk"||sc==="sd"){
     easings[i].spring[sc==="sk"?"stiffness":"damping"]=+t.value;
     if(t.previousElementSibling) t.previousElementSibling.textContent=t.value;  // live number label
@@ -751,6 +859,7 @@ document.addEventListener("change", e=>{
   if(sc==="iease"){ bindOf(intents[i]).ease=t.value; render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iprop"){ bindOf(intents[i]).prop=t.value; render(); renderBench(); updateResolvedLines(); writeURL(); }
   if(sc==="isplit"){ const bb=bindOf(intents[i]); if(t.checked) bb.effectsEase=bb.ease; else delete bb.effectsEase; rerenderAll(); }
+  if(sc==="ireveal"){ const bb=bindOf(intents[i]); if(t.checked) bb.reveal=15; else delete bb.reveal; rerenderAll(); }
   if(sc==="ieff"){ bindOf(intents[i]).effectsEase=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="probe"){ probes[i].intent=t.value; renderBench(); writeURL(); }
   if(sc==="pkind"){ probes[i].kind=t.value; renderBench(); writeURL(); }
