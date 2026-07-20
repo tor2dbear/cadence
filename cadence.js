@@ -50,6 +50,12 @@ const SCRUB_TL = ["view","scroll"];
 const SCRUB_RANGE = ["cover","entry","exit","contain"];
 const SCRUB_FX = ["progress","parallax","fade"];
 const SCRUB_DEFAULT = {tl:"view",range:"cover",fx:"progress"};
+// view transitions: animate DOM STATE swaps (navigation, toggles) via the
+// View Transitions API. Same-document VT is Baseline; the only knobs are
+// duration + easing — which an intent already is. Two shapes: a whole-page
+// `root` cross-fade, or a `shared` named element that morphs between states.
+const VT_TYPE = ["root","shared"];
+const VT_DEFAULT = {type:"root"};
 // a stable colour per intent (by position) so the bench reads by role, not one
 // flat teal. Defaults land on enter=teal, exit=red, move=amber, emphasized=violet.
 const INTENT_COLORS = ["#8ad0c6","#e08b7f","#e9b872","#b79cf0","#7ab8f0","#d69ce0","#9ad17f"];
@@ -78,6 +84,7 @@ const KINDS = [
   {k:"reveal",label:"list reveal"},
   {k:"scrollreveal",label:"scroll · in-view"},
   {k:"scrub",label:"scroll · scrub"},
+  {k:"viewtransition",label:"view transition"},
 ];
 const CASC_N = 6;    // items in the stagger timeline
 const SCOPE_N = 5;   // demo elements in the scope lens
@@ -142,7 +149,7 @@ const resolve = it => { const b=bindOf(it); const e=easeObj(b.ease);
   const split = !!(b.effectsEase && b.effectsEase!==b.ease);
   const eff = split ? easeObj(b.effectsEase) : e;
   const dpx = b.distance ? distPx(b.distance) : null;
-  return { d: durMs(b.dur)+"ms", e: easeCSS(e), eLabel: easeLabel(e), eEff: easeCSS(eff), split, s: +b.stagger||0, prop: b.prop||"all", distName: b.distance||"", distPx: dpx, reveal: (typeof b.reveal==="number") ? b.reveal : null, scrub: b.scrub ? {tl:b.scrub.tl||"view",range:b.scrub.range||"cover",fx:b.scrub.fx||"progress"} : null }; };
+  return { d: durMs(b.dur)+"ms", e: easeCSS(e), eLabel: easeLabel(e), eEff: easeCSS(eff), split, s: +b.stagger||0, prop: b.prop||"all", distName: b.distance||"", distPx: dpx, reveal: (typeof b.reveal==="number") ? b.reveal : null, scrub: b.scrub ? {tl:b.scrub.tl||"view",range:b.scrub.range||"cover",fx:b.scrub.fx||"progress"} : null, vt: b.vt ? {type:b.vt.type||"root"} : null }; };
 const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
 // default probe intents: enter / exit / move / hover, one abstract orb each
 probes[0].intent = intents[0].id; probes[1].intent = intents[1].id;
@@ -284,9 +291,12 @@ function renderIntents(){
     const tlF=scrub?`<div class="field"><label>Timeline</label><select data-scope="iscrubtl" data-i="${i}">${SCRUB_TL.map(v=>`<option ${v===scrub.tl?"selected":""}>${v}</option>`).join("")}</select></div>`:"";
     const rangeF=(scrub&&scrub.tl!=="scroll")?`<div class="field"><label>Range</label><select data-scope="iscrubrange" data-i="${i}">${SCRUB_RANGE.map(v=>`<option ${v===scrub.range?"selected":""}>${v}</option>`).join("")}</select></div>`:"";
     const fxF=scrub?`<div class="field"><label>Effect</label><select data-scope="iscrubfx" data-i="${i}">${SCRUB_FX.map(v=>`<option ${v===scrub.fx?"selected":""}>${v}</option>`).join("")}</select></div>`:"";
+    const vt=b.vt||null;
+    const vtTypeF=vt?`<div class="field"><label>VT kind</label><select data-scope="ivttype" data-i="${i}">${VT_TYPE.map(v=>`<option ${v===vt.type?"selected":""}>${v}</option>`).join("")}</select></div>`:"";
     const splitT=`<label class="intent__split"><input type="checkbox" data-scope="isplit" data-i="${i}" ${isSplit?"checked":""}> split spatial · effects (position vs colour/opacity)</label>`;
     const revT=`<label class="intent__split"><input type="checkbox" data-scope="ireveal" data-i="${i}" ${scrollOn?"checked":""}> scroll-driven · reacts as it scrolls (reveal once, or scrub with position)</label>`;
-    const adv = it.open ? `<div class="intent__adv"><div class="intent__ref">${stagF}${propF}${distF}${effF}${modeF}${revF}${tlF}${rangeF}${fxF}</div>${splitT}${revT}</div>` : "";
+    const vtT=`<label class="intent__split"><input type="checkbox" data-scope="ivt" data-i="${i}" ${vt?"checked":""}> view transition · animates DOM state swaps (nav, toggles)</label>`;
+    const adv = it.open ? `<div class="intent__adv"><div class="intent__ref">${stagF}${propF}${distF}${effF}${modeF}${revF}${tlF}${rangeF}${fxF}${vtTypeF}</div>${splitT}${revT}${vtT}</div>` : "";
     return `<div class="intent" data-id="${it.id}">
       <div class="intent__top">
         <span class="intent__dot" style="background:${colorOf(i)}" aria-hidden="true"></span>
@@ -298,7 +308,7 @@ function renderIntents(){
       ${adv}
       <div class="intent__foot">
         <button class="intent__more" data-scope="imore" data-i="${i}" aria-expanded="${!!it.open}">${it.open?"less ▴":"more ▾"}</button>
-        <span class="intent__resolved">→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}${r.reveal!=null?` · reveal@${r.reveal}%`:""}${r.scrub?` · scrub·${r.scrub.tl}/${r.scrub.fx}`:""}</span>
+        <span class="intent__resolved">→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}${r.reveal!=null?` · reveal@${r.reveal}%`:""}${r.scrub?` · scrub·${r.scrub.tl}/${r.scrub.fx}`:""}${r.vt?` · vt·${r.vt.type}`:""}</span>
       </div>
     </div>`;
   }).join("");
@@ -356,6 +366,15 @@ function renderBench(){
       stage=`<div class="scrubx" data-fx="${sc.fx}"><div class="scrubx__scroll">`
         +`<div class="sr-pad"></div><div class="sr-pad"></div></div>`
         +`<div class="scrubx__target scrubx__target--${sc.fx}"></div><span class="sreveal__cue">scroll ↓</span></div>`;
+    }
+    if(p.kind==="viewtransition"){
+      // a simulated state swap — a real startViewTransition() would snapshot the
+      // whole page, so this mimics the old→new cross-fade / shared morph with
+      // plain transitions timed by the intent's token (click to replay)
+      const ty=(resolve(findIntent(p.intent)).vt||VT_DEFAULT).type;
+      stage=ty==="shared"
+        ? `<div class="vt vt--shared"><span class="vt__morph"></span><span class="vt__cue">state swap ↻ (simulated)</span></div>`
+        : `<div class="vt vt--root"><span class="vt__old"></span><span class="vt__new"></span><span class="vt__cue">state swap ↻ (simulated)</span></div>`;
     }
     return `<div class="probe" data-i="${i}" style="--accent:${color}">
       <div class="probe__hd">
@@ -483,6 +502,24 @@ function play(i){
     const sc=root.querySelector(".scrubx__scroll"); if(sc) sc.scrollTop=0;
     armScrub(root);
   }
+  if(p.kind==="viewtransition"){
+    const ty=(r.vt||VT_DEFAULT).type;
+    if(ty==="shared"){
+      const m=root.querySelector(".vt__morph"); if(!m) return;
+      m.style.transition="none"; m.classList.remove("b"); void m.offsetWidth;
+      m.style.transition=`left ${r.d} ${r.e}, top ${r.d} ${r.e}, width ${r.d} ${r.e}, height ${r.d} ${r.e}`;
+      requestAnimationFrame(()=>m.classList.add("b"));
+      setTimeout(()=>{ m.classList.remove("b"); },1500);
+    } else {
+      const o=root.querySelector(".vt__old"), n=root.querySelector(".vt__new"); if(!o||!n) return;
+      const reset=()=>{ o.style.transition="none";n.style.transition="none"; o.style.opacity="1";o.style.transform="scale(1)"; n.style.opacity="0";n.style.transform="scale(1.04)"; };
+      reset(); void root.offsetWidth;
+      const tr=`opacity ${r.d} ${r.e}, transform ${r.d} ${r.e}`;
+      o.style.transition=tr; n.style.transition=tr;
+      requestAnimationFrame(()=>{ o.style.opacity="0";o.style.transform="scale(.98)"; n.style.opacity="1";n.style.transform="scale(1)"; });
+      setTimeout(reset,1600);
+    }
+  }
   if(p.kind==="reveal"){
     const cards=[...root.querySelectorAll(".card")];
     cards.forEach(c=>{c.style.opacity="0";c.style.transform="translateY(14px)";});
@@ -555,6 +592,11 @@ function critique(){
     const nonLin = scrubIntents.find(x=>!isLin(easeObj(bindOf(x).ease)));
     if(nonLin) out.push(["warn","~",`“${nonLin.name}” scrubs with a non-linear easing — the motion speeds up and slows down against your scroll. That reads as intentional for a reveal-style scrub, but parallax/progress usually want a linear curve for a true 1:1 feel.`]);
     else out.push(["ok","✓",`${scrubIntents.length} scroll scrub${scrubIntents.length>1?"s":""} — native scroll-driven (no duration; the range is the axis) with a scroll-position fallback for browsers without it.`]);
+  }
+  // 10. view transitions — opt-in; VT's only knobs are duration + easing
+  const vtIntents = intents.filter(x=>bindOf(x).vt);
+  if(vtIntents.length){
+    out.push(["ok","✓",`${vtIntents.length} view transition${vtIntents.length>1?"s":""} — same-document VT is Baseline (Chrome/Edge 111+, Safari 18+, Firefox 144+). The recipe feature-detects startViewTransition and honours reduced-motion, so unsupported browsers just swap instantly.`]);
   }
   document.getElementById("hints").innerHTML = out.map(h=>`<div class="rd ${h[0]}"><span class="ic">${h[1]}</span><span>${h[2]}</span></div>`).join("");
 }
@@ -769,10 +811,55 @@ function buildScroll(){
   s+="}";
   return s;
 }
+// view transitions: animate DOM state swaps via the View Transitions API. The
+// only knobs are duration + easing, so an intent maps straight onto the
+// ::view-transition-* pseudo-elements. Same-document VT is Baseline; the JS
+// scaffold feature-detects startViewTransition so older browsers swap instantly.
+function buildVT(){
+  const vts=intents.filter(it=>bindOf(it).vt);
+  if(!vts.length){
+    return "/* No view transitions yet.\n"
+      + " *\n"
+      + " * Open an intent's “more” panel and tick “view transition” to emit a\n"
+      + " * recipe here: the ::view-transition-* pseudo-elements timed by that\n"
+      + " * intent's duration + easing, plus a startViewTransition() scaffold. */";
+  }
+  let s="/* Cadence — view transitions"+modeNote()+"\n"
+    + " *\n"
+    + " * Same-document View Transitions are Baseline (Chrome/Edge 111+, Safari 18+,\n"
+    + " * Firefox 144+). The only knobs are duration + easing, so each intent maps\n"
+    + " * straight onto the pseudo-elements. Progressive enhancement — the scaffold\n"
+    + " * feature-detects startViewTransition(), so older browsers just swap. */\n\n";
+  vts.forEach(it=>{
+    const nm=it.name, ty=bindOf(it).vt.type;
+    const dvar=`var(--motion-${nm}-duration)`, evar=`var(--motion-${nm}-ease)`;
+    if(ty==="shared"){
+      s+=`/* — ${nm} · shared element morph. Put the SAME view-transition-name on the\n`;
+      s+=`   element in BOTH states (before and after the DOM swap) so the browser\n`;
+      s+=`   morphs it between them; names must be unique per snapshot. */\n`;
+      s+=`.${nm}-shared{ view-transition-name:${nm}; }\n`;
+      s+=`::view-transition-group(${nm}){\n  animation-duration:${dvar};\n  animation-timing-function:${evar};\n}\n`;
+      s+=`::view-transition-old(${nm}),\n::view-transition-new(${nm}){\n  animation-duration:${dvar};\n  animation-timing-function:${evar};\n}\n\n`;
+    } else {
+      s+=`/* — ${nm} · root cross-fade (whole page old→new) */\n`;
+      s+=`::view-transition-old(root),\n::view-transition-new(root){\n  animation-duration:${dvar};\n  animation-timing-function:${evar};\n}\n\n`;
+    }
+  });
+  s+=`/* Honor reduced-motion — skip the animation, keep the instant swap. */\n`;
+  s+=`@media (prefers-reduced-motion:reduce){\n`;
+  s+=`  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){ animation:none !important; }\n}\n\n`;
+  s+="/* Wrap any DOM change; the browser snapshots old→new and cross-fades. */\n";
+  s+="function swap(update){\n";
+  s+="  if(!document.startViewTransition){ update(); return; }   /* fallback: no animation */\n";
+  s+="  document.startViewTransition(update);\n";
+  s+="}\n";
+  s+="// swap(() => { /* navigate, toggle, or re-render the DOM here */ });";
+  return s;
+}
 function render(){
   const o=document.getElementById("out");
   if(fmt==="css"){ o.innerHTML=buildCSS(); return; }
-  const build={json:buildJSON,tailwind:buildTailwind,sd:buildStyleDictionary,ts:buildTS,scroll:buildScroll}[fmt]||buildJSON;
+  const build={json:buildJSON,tailwind:buildTailwind,sd:buildStyleDictionary,ts:buildTS,scroll:buildScroll,vt:buildVT}[fmt]||buildJSON;
   o.textContent=build();
 }
 
@@ -843,7 +930,7 @@ function encodeState(){
     m: modes.map(x=>x.name),
     am: activeMode,
     // i: [name, purpose, [[dur,ease,stagger,prop,effectsEase,distance] per mode]]
-    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease,+b.stagger||0,b.prop||"all",b.effectsEase||"",b.distance||"",typeof b.reveal==="number"?b.reveal:-1,b.scrub?[b.scrub.tl,b.scrub.range,b.scrub.fx]:0])]),
+    i: intents.map(it=>[it.name,it.purpose||"",it.binds.map(b=>[b.dur,b.ease,+b.stagger||0,b.prop||"all",b.effectsEase||"",b.distance||"",typeof b.reveal==="number"?b.reveal:-1,b.scrub?[b.scrub.tl,b.scrub.range,b.scrub.fx]:0,b.vt?[b.vt.type]:0])]),
     x: distances.map(d=>[d.name,d.px]),
     p: probes.map(pb=>{ const k=intents.findIndex(x=>x.id===pb.intent); return [pb.kind, k<0?0:k]; }),
   };
@@ -862,7 +949,7 @@ function applyState(o){
   const it = o.i.map(x=>{
     // new: [name, purpose, [[dur,ease],...]]  ·  legacy: [name, dur, ease, purpose]
     const binds = Array.isArray(x[2])
-      ? x[2].map(b=>{ const o={dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0,prop:String(b[3]||"all")}; if(b[4]) o.effectsEase=String(b[4]); if(b[5]) o.distance=String(b[5]); if(typeof b[6]!=="undefined" && +b[6]>=0) o.reveal=Math.max(0,Math.min(100,+b[6])); if(Array.isArray(b[7])){ o.scrub={tl:String(b[7][0]||"view"),range:String(b[7][1]||"cover"),fx:String(b[7][2]||"progress")}; delete o.reveal; } return o; })
+      ? x[2].map(b=>{ const o={dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0,prop:String(b[3]||"all")}; if(b[4]) o.effectsEase=String(b[4]); if(b[5]) o.distance=String(b[5]); if(typeof b[6]!=="undefined" && +b[6]>=0) o.reveal=Math.max(0,Math.min(100,+b[6])); if(Array.isArray(b[7])){ o.scrub={tl:String(b[7][0]||"view"),range:String(b[7][1]||"cover"),fx:String(b[7][2]||"progress")}; delete o.reveal; } if(Array.isArray(b[8])){ o.vt={type:String(b[8][0]||"root")}; } return o; })
       : [{dur:String(x[1]),ease:String(x[2]),stagger:0,prop:"all"}];
     const purpose = Array.isArray(x[2]) ? String(x[1]||"") : String(x[3]||"");
     // pad/trim bindings so every intent has exactly one per mode
@@ -905,7 +992,7 @@ function writeURL(){
 function updateResolvedLines(){
   document.querySelectorAll(".intent__resolved").forEach((el,k)=>{
     if(!intents[k]) return;
-    const r=resolve(intents[k]); el.textContent=`→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}${r.reveal!=null?` · reveal@${r.reveal}%`:""}${r.scrub?` · scrub·${r.scrub.tl}/${r.scrub.fx}`:""}`;
+    const r=resolve(intents[k]); el.textContent=`→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}${r.reveal!=null?` · reveal@${r.reveal}%`:""}${r.scrub?` · scrub·${r.scrub.tl}/${r.scrub.fx}`:""}${r.vt?` · vt·${r.vt.type}`:""}`;
   });
 }
 
@@ -958,6 +1045,8 @@ document.addEventListener("change", e=>{
   if(sc==="iscrubtl"){ const bb=bindOf(intents[i]); if(bb.scrub) bb.scrub.tl=t.value; rerenderAll(); }
   if(sc==="iscrubrange"){ const bb=bindOf(intents[i]); if(bb.scrub) bb.scrub.range=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iscrubfx"){ const bb=bindOf(intents[i]); if(bb.scrub) bb.scrub.fx=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="ivt"){ const bb=bindOf(intents[i]); if(t.checked) bb.vt={...VT_DEFAULT}; else delete bb.vt; rerenderAll(); }
+  if(sc==="ivttype"){ const bb=bindOf(intents[i]); if(bb.vt) bb.vt.type=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="ieff"){ bindOf(intents[i]).effectsEase=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="probe"){ probes[i].intent=t.value; renderBench(); writeURL(); }
   if(sc==="pkind"){ probes[i].kind=t.value; renderBench(); writeURL(); }
