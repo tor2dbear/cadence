@@ -209,6 +209,16 @@ button.btn{background:var(--accent);color:#04110f;border:0;border-radius:8px;pad
 .sr-card{display:block;height:30px;margin:10px 0;border-radius:7px;background:var(--panel-2);border:1px solid var(--line)}
 .sreveal__cue{position:absolute;left:0;right:0;bottom:0;text-align:center;font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--ink-faint);pointer-events:none;padding:14px 0 6px;background:linear-gradient(transparent,var(--panel))}
 
+/* scroll-scrub lens — the target's property tracks the box's scroll position
+   (progress = scroll, no clock): native scroll() in miniature */
+.scrubx{position:absolute;inset:0}
+.scrubx__scroll{position:absolute;inset:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.scrubx__scroll .sr-pad{height:210px;flex:none}
+.scrubx__target{position:absolute;pointer-events:none;background:var(--accent);box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.scrubx__target--progress{left:14px;right:14px;bottom:22px;height:6px;border-radius:3px;transform:scaleX(0);transform-origin:left}
+.scrubx__target--parallax{left:50%;top:50%;width:46%;height:52px;margin-left:-23%;margin-top:-26px;border-radius:9px;opacity:.92}
+.scrubx__target--fade{left:50%;top:50%;width:46%;height:52px;margin-left:-23%;margin-top:-26px;border-radius:9px;opacity:0}
+
 /* ---- system read ---- */
 .adnote{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
 .rd{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--ink-dim);padding:8px 0;border-bottom:1px dashed var(--line)}
