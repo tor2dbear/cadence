@@ -5,6 +5,21 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.8.1] — 2026-07-22
+
+### Changed — the live demo joins the identity
+- **`demo.html` now wears the Sand/Ink-navy identity in both light and dark.**
+  It followed the old near-black stage + blue accent and clashed with the
+  rest of the app; it's now fully tokenised and dual-theme
+  (`prefers-color-scheme`) — a warm sand stage framing the product shell in
+  light, a warm-dark stage in dark, with the ink-navy / periwinkle accent.
+- **The demo's labels are self-hosted JetBrains Mono**, tying its mono to the
+  app without a CDN. The product surface itself stays in system sans (it's a
+  deliberately plain, "any product" surface — only its motion should be
+  interesting).
+- Extended the identity guard (`smoke26`) to the demo: no external font host,
+  mono self-hosted, the old blue accent gone, dual-theme present.
+
 ## [0.8.0] — 2026-07-22
 
 A visual identity of its own — the app stops looking like a generic dark-mode

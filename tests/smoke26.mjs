@@ -14,9 +14,15 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 // --- static-source checks: no external font hosts anywhere ---
 const css = read('styles.css');
 const html = read('index.html');
+const demo = read('demo.html');
 const cdnRe = /fonts\.googleapis\.com|fonts\.gstatic\.com|api\.fontshare\.com|use\.typekit/i;
 assert('styles.css references no external font CDN', !cdnRe.test(css));
 assert('index.html references no external font CDN', !cdnRe.test(html));
+assert('demo.html references no external font CDN', !cdnRe.test(demo));
+// the demo shares the identity: mono self-hosted, no leftover old-blue accent
+assert('demo.html self-hosts JetBrains Mono', /@font-face[^}]*url\(["']?fonts\/jetbrains-mono/.test(demo));
+assert('demo.html dropped the old blue accent', !/#3b6ef5|#3160e0/i.test(demo));
+assert('demo.html is dual-theme (prefers-color-scheme)', /@media\s*\(prefers-color-scheme:\s*dark\)/.test(demo));
 assert('@font-face sources are local fonts/', /@font-face[^}]*url\(["']?fonts\//.test(css));
 assert('Fraunces, Switzer, JetBrains Mono all self-hosted',
   /font-family:\s*Fraunces/i.test(css) &&
