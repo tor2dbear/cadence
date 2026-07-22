@@ -17,6 +17,7 @@
 <!-- LANDING — the product demonstrating its own thesis. Shown first; "Start
      designing" morphs into the tool (same document) via a view transition. -->
 <main class="landing" id="landing" aria-label="Cadence — introduction">
+  <div class="lprogress" aria-hidden="true"></div>
   <nav class="lnav">
     <span class="lbrand"><img class="logomark" src="favicon.svg" alt="" width="20" height="20" />cadence</span>
     <a class="lnav__link" href="https://github.com/tor2dbear/cadence" target="_blank" rel="noopener">Source&nbsp;↗</a>
@@ -59,7 +60,48 @@
     </div>
   </section>
 
-  <p class="lauthor rise" style="--i:6">Built in the open by Torbjörn&nbsp;Hedberg. Output is copy-paste-ready — no runtime, no dependency.</p>
+  <!-- scroll montage: the two-layer model assembles as you scroll — each step
+       reveals via animation-timeline:view(), the bar up top scrubs on scroll().
+       The landing teaching scroll-driven motion by using it. -->
+  <section class="lmontage" aria-label="How Cadence works">
+    <h2 class="lm-title reveal-scroll">How it works — scroll to assemble the system</h2>
+    <ol class="lm-steps">
+      <li class="lm-step reveal-scroll">
+        <span class="lm-num">1</span>
+        <div class="lm-body">
+          <h3>Primitives — the vocabulary</h3>
+          <p>A duration ladder and an easing set. General and component-agnostic; everything else references these.</p>
+          <div class="lm-ladder"><span style="--w:28%"></span><span style="--w:40%"></span><span style="--w:58%"></span><span style="--w:82%"></span></div>
+        </div>
+      </li>
+      <li class="lm-step reveal-scroll">
+        <span class="lm-num">2</span>
+        <div class="lm-body">
+          <h3>Intents — meaning, composed</h3>
+          <p>Semantic tokens (enter, exit, move…) built <em>by reference</em> from the scales. This is your motion API.</p>
+          <div class="lm-chips"><span class="lm-chip"><b>enter</b> · base + emphasized</span><span class="lm-chip"><b>exit</b> · fast + accelerate</span><span class="lm-chip"><b>move</b> · slow + standard</span></div>
+        </div>
+      </li>
+      <li class="lm-step reveal-scroll">
+        <span class="lm-num">3</span>
+        <div class="lm-body">
+          <h3>The opinion layer — it critiques itself</h3>
+          <p>Cadence reads the system back to you: asymmetry, budgets, redundancy, velocity.</p>
+          <p class="opinion ok" style="padding-left:20px">“exit” (150ms) is quicker than “enter” (200ms) — leaving feels decisive.</p>
+        </div>
+      </li>
+      <li class="lm-step reveal-scroll">
+        <span class="lm-num">4</span>
+        <div class="lm-body">
+          <h3>Export — copy-paste-ready</h3>
+          <p>Out comes CSS, Tailwind, Style Dictionary, TS — plus scroll-driven &amp; view-transition recipes.</p>
+          <pre class="lm-code"><span class="tk">--motion-enter</span>: all <span class="v">var(--motion-enter-duration)</span> <span class="v">var(--motion-enter-ease)</span> 70ms;</pre>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <p class="lauthor reveal-scroll">Built in the open by Torbjörn&nbsp;Hedberg. Output is copy-paste-ready — no runtime, no dependency.</p>
 </main>
 
 <div id="toolview">
@@ -71,7 +113,7 @@
     <button class="demobtn" id="exportToggle" title="Open the export panel — CSS, JSON, Tailwind, Style Dictionary, TS">Export</button>
     <button class="demobtn" id="previewToggle" title="Preview the demo over the editor — it re-times live as you edit">Preview</button>
     <a class="demolink" id="demoLink" href="demo.html" target="_blank" rel="noopener" title="Open the live demo in a new tab — tile it beside the editor and it re-times live">▶ Live demo</a>
-    <a class="proto" href="https://github.com/tor2dbear/cadence/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="Changelog — what shipped, by version" id="proto">PROTOTYPE v0.7.2</a>
+    <a class="proto" href="https://github.com/tor2dbear/cadence/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="Changelog — what shipped, by version" id="proto">PROTOTYPE v0.7.3</a>
   </div>
 </header>
 

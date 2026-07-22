@@ -5,6 +5,18 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.7.3] — 2026-07-20
+
+### Added — landing scroll montage
+- **The landing now teaches the model by scrolling.** Below the hero, a
+  four-step montage assembles the two-layer system — primitives → intents →
+  the opinion layer → export — each step **revealing via
+  `animation-timeline: view()`** as it enters the viewport, with a
+  **reading-progress bar scrubbed by `animation-timeline: scroll()`** up top.
+  The landing dogfoods scroll-driven motion (reveal + scrub) by using it to
+  explain itself. IntersectionObserver / scroll-listener fallbacks for browsers
+  without native scroll timelines; reduced-motion shows everything statically.
+
 ## [0.7.2] — 2026-07-20
 
 ### Changed — the entrance
