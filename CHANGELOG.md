@@ -5,6 +5,22 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.0] — 2026-07-22
+
+### Added — discoverability & traffic
+- **SEO metadata.** Both pages now carry a canonical URL, Open Graph and
+  Twitter (`summary_large_image`) tags, light/dark `theme-color`, and the
+  landing carries JSON-LD (`WebApplication`) structured data. Titles and
+  descriptions were already there; this makes shares unfurl and crawlers
+  understand the page.
+- **A social share image** (`og.png`, 1200×630) rendered in the identity —
+  Fraunces headline, the sand palette, the ease curve as a background sweep.
+- **`robots.txt` + `sitemap.xml`** pointing crawlers at the landing and demo.
+- **Cloudflare Web Analytics** (privacy-first, cookieless). The beacon is
+  injected at **build time into `dist/` only** — never the source — so the
+  offline smoke tests don't trip over its external request. `build.sh` also
+  now copies `.txt`/`.xml` assets into the deploy.
+
 ## [0.8.5] — 2026-07-22
 
 ### Fixed
