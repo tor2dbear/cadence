@@ -5,6 +5,21 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.7.4] — 2026-07-20
+
+The redesign's finishing pass — trust and voice (the last of the UX review).
+
+### Changed
+- **The "PROTOTYPE" badge is now a clean version tag** (e.g. `v0.7.4`, still
+  linking to the changelog). "Prototype" undersold the copy-paste-ready output;
+  the version + changelog carry the same information without the caveat.
+- **The landing's author line grew into a colophon** — a short note on the
+  thesis and the fact that everything on the page is timed by Cadence's own
+  system, plus the tech facts (one static page, no framework/runtime/dependency)
+  and Source / Changelog links. Gives the visiting designer the "why & how"
+  without leaving the page.
+- Freshened the Preview button's tooltip to match the docked behaviour.
+
 ## [0.7.3] — 2026-07-20
 
 ### Added — landing scroll montage

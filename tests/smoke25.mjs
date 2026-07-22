@@ -13,6 +13,10 @@ await page.goto(BASE, { waitUntil: 'networkidle' });   // bare load → landing
 // --- structure ---
 assert('progress rail present', await page.locator('.lprogress').count() === 1);
 assert('montage has four steps', await page.locator('.lm-step').count() === 4);
+// colophon (author voice + trust) replaces the plain author line (P5)
+assert('colophon present, author line retired',
+  await page.locator('.lcolophon').count() === 1 && await page.locator('.lauthor').count() === 0);
+assert('colophon links to source + changelog', await page.locator('.lcolo-meta a').count() === 2);
 assert('native scroll timelines supported here', await page.evaluate(() => CSS.supports('animation-timeline: view()')));
 
 // --- scroll reveal: a below-fold montage step is hidden, then reveals ---

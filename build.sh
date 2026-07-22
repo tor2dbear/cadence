@@ -18,7 +18,7 @@ VERSION="$(node -p "require('./package.json').version" 2>/dev/null || echo 0.0.0
 SHA="${CF_PAGES_COMMIT_SHA:-$(git rev-parse HEAD 2>/dev/null || echo 0000000)}"
 STAMP="v${VERSION} · ${SHA:0:7}"
 if [ -f dist/index.html ]; then
-  sed -i "s|\(id=\"proto\">\)PROTOTYPE[^<]*|\1PROTOTYPE ${STAMP}|" dist/index.html
+  sed -i "s|\(id=\"proto\">\)[^<]*|\1${STAMP}|" dist/index.html
 fi
 
 echo "version: ${STAMP}"

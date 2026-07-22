@@ -370,7 +370,12 @@ html.boot-tool #landing{display:none}
 @keyframes ltSpring{0%,12%{transform:translateY(-50%) translateX(0)}56%,88%{transform:translateY(-50%) translateX(calc(100% + 90px))}100%{transform:translateY(-50%) translateX(0)}}
 @keyframes ltDraw{0%,10%{stroke-dashoffset:150}46%,80%{stroke-dashoffset:0}100%{stroke-dashoffset:150}}
 
-.lauthor{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);margin:0;border-top:1px solid var(--line);padding-top:16px}
+.lcolophon{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direction:column;gap:9px}
+.lcolo-note{margin:0;font-size:13.5px;line-height:1.6;color:var(--ink-dim);max-width:64ch}
+.lcolo-note strong{color:var(--ink);font-weight:600}
+.lcolo-meta{margin:0;font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+.lcolo-meta a{color:var(--ink-dim);text-decoration:none;border-bottom:1px solid var(--line)}
+.lcolo-meta a:hover{color:var(--ink);border-color:var(--accent)}
 
 /* ---- scroll montage: the two-layer model assembles on scroll ---- */
 /* a reading-progress bar scrubbed by scroll() (dogfooding the scrub mode) */

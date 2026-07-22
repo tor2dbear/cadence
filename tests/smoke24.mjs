@@ -14,6 +14,13 @@ await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
 assert('Intents header carries a plain-language title',
   (await page.locator('.col.mid h2.sec').first().getAttribute('title') || '').includes('Semantic tokens'));
 
+// --- version badge softened from "PROTOTYPE" to a clean version tag (P5) ---
+{
+  const badge = await page.locator('#proto').innerText();
+  assert('badge drops "PROTOTYPE"', !badge.includes('PROTOTYPE'));
+  assert('badge shows a version tag', /v0\.\d/.test(badge));
+}
+
 // --- System read badge (P3) ---
 assert('hint count badge present + filled', (await page.locator('#hintCount').innerText()).length > 0);
 // force a long-duration warning: point enter at the slowest step
