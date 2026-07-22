@@ -21,6 +21,11 @@ SHA="${CF_PAGES_COMMIT_SHA:-$(git rev-parse HEAD 2>/dev/null || echo 0000000)}"
 STAMP="v${VERSION} · ${SHA:0:7}"
 if [ -f dist/index.html ]; then
   sed -i "s|\(id=\"proto\">\)[^<]*|\1${STAMP}|" dist/index.html
+  # Cache-bust the stylesheet + script. Cloudflare caches these for 4h and the
+  # filenames are stable, so without this a fresh deploy isn't seen until the
+  # cache expires (or a hard refresh). index.html itself is always revalidated
+  # (max-age=0), so a per-deploy ?v=<commit> query is picked up immediately.
+  sed -i "s|href=\"styles.css\"|href=\"styles.css?v=${SHA:0:7}\"|; s|src=\"cadence.js\"|src=\"cadence.js?v=${SHA:0:7}\"|" dist/index.html
 fi
 
 echo "version: ${STAMP}"

@@ -5,6 +5,17 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.8.2] — 2026-07-22
+
+### Fixed
+- **Deploys are now visible immediately.** `styles.css` and `cadence.js` are
+  cached for 4h by the CDN and their filenames are stable, so a fresh deploy
+  wasn't seen until the cache expired (or a hard refresh) — the new v0.8.0/0.8.1
+  identity looked "not live" even though it was. `build.sh` now appends a
+  per-deploy `?v=<commit>` query to both references; since `index.html` itself
+  is always revalidated (`max-age=0`), the new query — and thus the new CSS/JS
+  — is picked up on the next load.
+
 ## [0.8.1] — 2026-07-22
 
 ### Changed — the live demo joins the identity
