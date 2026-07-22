@@ -28,6 +28,16 @@ assert('Fraunces, Switzer, JetBrains Mono all self-hosted',
   /font-family:\s*Fraunces/i.test(css) &&
   /font-family:\s*Switzer/i.test(css) &&
   /font-family:\s*["']?JetBrains Mono/i.test(css));
+// Fraunces must be the VARIABLE font (opsz axis) so display sizes get the
+// display cut — a weight *range* on the @font-face is the tell; a single-weight
+// static instance (the old bug) renders every size at one optical size.
+assert('Fraunces is the variable font (weight range, opsz)',
+  /@font-face[^}]*font-family:\s*Fraunces[^}]*font-weight:\s*\d+\s+\d+/is.test(css) &&
+  /url\(["']?fonts\/fraunces-var/.test(css));
+// the easing tile draws via a clip-path wipe, not a stroke-dash (which broke
+// into disconnected segments under non-scaling-stroke on a stretched path)
+assert('easing curve draws via clip-path, not a mismatched stroke-dash',
+  /@keyframes ltDraw\{[^}]*clip-path/i.test(css) && !/\.lt-curve path\{[^}]*stroke-dasharray/.test(css));
 
 // --- runtime checks: the fonts load and the identity is applied ---
 const browser = await chromium.launch();

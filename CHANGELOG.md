@@ -5,6 +5,24 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.6] — 2026-07-22
+
+### Fixed
+- **The right Fraunces now loads.** The self-hosted files were single-weight
+  *static* instances baked at a low optical size (~9, the "text" cut), so the
+  big display headings rendered in the sturdy text cut instead of the delicate,
+  high-contrast display cut — visible in glyphs like the "m". Replaced them with
+  the **variable** Fraunces (opsz 9–144, wght 400–600, roman + italic); with
+  `font-optical-sizing: auto` (the browser default) display sizes now get the
+  display cut and small labels the text cut, from one file per style. (~+95 KB;
+  three static files → two variable.)
+- **The easing tile draws its curve in one clean stroke.** The "draw" used
+  `stroke-dasharray` on a path with `vector-effect: non-scaling-stroke`, which
+  computes dashes in screen space — so on the stretched path the dash repeated
+  and the curve appeared in disconnected chunks. It now reveals via a
+  left-to-right `clip-path` wipe (which reads as drawing for the monotonic
+  curve) regardless of the rendered path length.
+
 ## [0.9.5] — 2026-07-22
 
 ### Fixed
