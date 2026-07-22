@@ -5,6 +5,28 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.5] — 2026-07-22
+
+### Fixed
+- **The guide's primary CTA text is visible again.** "Build your motion system"
+  inherited `--accent` from the `.guide a` prose-link rule (higher specificity),
+  so it rendered navy-on-navy and vanished. The CTA rules are now `a.<class>`
+  so they win, and use `--on-accent`.
+- **The travelling orb sits on its line, cross-browser.** Both the landing's
+  "emphasized" tile and the tool's orb lens now centre with `top/bottom:0 +
+  margin-block:auto` (constraint-based) instead of `top:50%` + a negative
+  margin, which iOS Safari could still nudge below the line for a composited,
+  animating element.
+
+### Changed
+- **The "naïve" toggle is explained.** A one-line note now says what flipping
+  to naïve does — linear easing, symmetric timings, no stagger — so the label
+  isn't a bare, unexplained term.
+- **The colophon credits the author with a link** to tor-bjorn.com.
+- **Added `BreadcrumbList` structured data** to the guide (Cadence › Guide),
+  completing the schema coverage (WebApplication + FAQPage on the landing,
+  TechArticle + BreadcrumbList on the guide).
+
 ## [0.9.4] — 2026-07-22
 
 ### Added

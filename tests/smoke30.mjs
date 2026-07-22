@@ -49,10 +49,12 @@ assert('sitemap omits the noindexed demo', !sitemap.includes('demo.html'));
 assert('guide has its own canonical', guide.includes(`rel="canonical" href="${HOST}/guide"`));
 assert('guide has exactly one h1', (guide.match(/<h1[ >]/g) || []).length === 1);
 assert('guide carries TechArticle structured data', /"@type":"TechArticle"/.test(guide));
+assert('guide carries BreadcrumbList structured data', /"@type":"BreadcrumbList"/.test(guide));
 assert('guide links back to the tool/home', /href="index\.html#tool"/.test(guide) && /href="index\.html"/.test(guide));
 
 // --- internal linking + demo kept out of the index ---
 assert('landing links to the guide', /href="guide\.html"/.test(index));
+assert('colophon credits the author with a link to their site', /built by <a href="https:\/\/tor-bjorn\.com"/.test(index));
 assert('demo is noindexed (thin, tool-dependent surface)', /name="robots" content="noindex/.test(demo));
 assert('build.sh cache-busts + beacons the guide too', /dist\/guide\.html/.test(build));
 
