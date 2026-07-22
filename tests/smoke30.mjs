@@ -30,6 +30,7 @@ for (const [name, html, url] of [['index', index, HOST + '/'], ['demo', demo, HO
   assert(`${name}: has a summary_large_image twitter card`, /name="twitter:card" content="summary_large_image"/.test(html));
   assert(`${name}: declares a theme-color`, /name="theme-color"/.test(html));
 }
+assert('index carries the Search Console verification meta', /name="google-site-verification" content="\w/.test(index));
 assert('index carries JSON-LD structured data', /application\/ld\+json/.test(index) && /"@type":"WebApplication"/.test(index));
 assert('index carries FAQPage structured data', /"@type":"FAQPage"/.test(index));
 

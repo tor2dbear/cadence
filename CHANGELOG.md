@@ -5,6 +5,14 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.4] — 2026-07-22
+
+### Added
+- **Google Search Console verification** meta tag on the landing, so the
+  `cadence.tor2dbear.com` property can be verified and the sitemap submitted
+  (SEO #3 — getting the site into Google's index). It's an inert meta tag (no
+  external request), so it lives in the source, not the build step.
+
 ## [0.9.3] — 2026-07-22
 
 ### Fixed
