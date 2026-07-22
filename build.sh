@@ -10,6 +10,8 @@ shopt -s nullglob
 for f in *.html *.css *.js *.svg *.png *.ico *.webmanifest; do
   cp "$f" dist/
 done
+# self-hosted fonts (woff2) — ship the whole dir so @font-face resolves on the CDN
+[ -d fonts ] && cp -r fonts dist/
 
 # stamp an automatic build version into the badge: v<semver> · <short commit>.
 # semver comes from package.json (bump it at milestones); the commit is filled
