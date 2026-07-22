@@ -5,6 +5,25 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.8.3] — 2026-07-22
+
+### Added
+- **The tool's wordmark is now a "home" link back to the intro.** Entering the
+  editor was one-way — the only way back to the landing was to hand-edit the
+  URL. Clicking the `cadence` wordmark now returns to the landing (the brand
+  wordmark morphs back via the same View Transition as the entrance), clears
+  the state hash so a reload stays on the intro, and keeps your system in
+  memory so "Start designing" drops you back into the same work. Modified
+  clicks (open-in-new-tab) fall through to a plain `index.html` link, and the
+  affordance carries an accessible label.
+
+### Fixed
+- **The tool header wordmark no longer sits high.** The header was
+  baseline-aligned, but the wordmark's icon-plus-text flexbox threw off its
+  baseline, so `cadence` rode ~8px above the tagline and controls next to it.
+  The header now centre-aligns its row (the convention for a control bar), so
+  the wordmark, tagline, selector, buttons and badge share one line.
+
 ## [0.8.2] — 2026-07-22
 
 ### Fixed
