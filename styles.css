@@ -280,6 +280,21 @@ pre.code{background:#0e1013;border:1px solid var(--line);border-radius:9px;paddi
 html.boot-landing #toolview{display:none}
 html.boot-tool #landing{display:none}
 
+/* the landing → tool entrance is itself a View Transition (dogfooding the
+   newest feature). The wordmark is a SHARED element: it morphs from the landing
+   nav into the editor header. Only one of the two is ever rendered (the other
+   is display:none), so the name is unique per snapshot. Timed by the system's
+   own tokens. */
+.lbrand,header.top h1{view-transition-name:brand}
+::view-transition-group(brand){
+  animation-duration:var(--motion-duration-slower,500ms);
+  animation-timing-function:var(--motion-ease-emphasized,cubic-bezier(.22,1,.36,1));
+}
+::view-transition-old(root),::view-transition-new(root){
+  animation-duration:var(--motion-duration-slow,300ms);
+  animation-timing-function:var(--motion-ease-standard,cubic-bezier(.2,0,.2,1));
+}
+
 .landing{
   /* the tasteful defaults — the same shape as the tool's starter system */
   --l-ease:cubic-bezier(.22,1,.36,1); --l-in:640ms; --l-stag:80ms;
