@@ -5,6 +5,16 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.3] — 2026-07-22
+
+### Fixed
+- **Canonical / OG / sitemap URLs now match what the CDN serves.** Cloudflare
+  Pages serves clean, extensionless URLs and 308-redirects the `.html` forms
+  (`/guide.html` → `/guide`), so pointing the canonical, `og:url` and sitemap
+  entries at the `.html` URLs sent crawlers through a redirect to reach the
+  real page. They now use the clean URLs (`/guide`, `/demo`). Internal `href`s
+  keep `.html` so the pages still open directly from disk and in the tests.
+
 ## [0.9.2] — 2026-07-22
 
 ### Added — a second indexable page (SEO #2, site architecture)
