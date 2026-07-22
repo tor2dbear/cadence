@@ -5,6 +5,24 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.1] — 2026-07-22
+
+### Changed — on-page SEO (relevance)
+- **The title and metadata now lead with what people search**, not the brand
+  ("Cadence" collides with a large EDA company and the plain word, so it can't
+  be the discovery vector). New `<title>`: *Motion design tokens & easing scale
+  generator — Cadence*, with a keyword-led description.
+- **Fixed the double `<h1>`.** The tool's wordmark was an `<h1>` (a second,
+  keyword-free top heading); it's now a plain element, leaving the landing's
+  hero as the single `<h1>`. The wordmark's home link and brand View Transition
+  are unchanged.
+- **Added a real, crawlable content section** — "what it is / how it works /
+  what it exports / who it's for" plus an FAQ — targeting the queries designers
+  actually type (motion design tokens, easing/duration scales, export to CSS /
+  Tailwind / Style Dictionary, scroll-driven animations, view transitions).
+  Roughly doubled the page's indexable text (~525 → ~1040 words) and added
+  **FAQ structured data** (`FAQPage` JSON-LD) for rich-result eligibility.
+
 ## [0.9.0] — 2026-07-22
 
 ### Added — discoverability & traffic

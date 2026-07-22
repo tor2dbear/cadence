@@ -28,6 +28,13 @@ for (const [name, html, url] of [['index', index, HOST + '/'], ['demo', demo, HO
   assert(`${name}: declares a theme-color`, /name="theme-color"/.test(html));
 }
 assert('index carries JSON-LD structured data', /application\/ld\+json/.test(index) && /"@type":"WebApplication"/.test(index));
+assert('index carries FAQPage structured data', /"@type":"FAQPage"/.test(index));
+
+// --- on-page relevance: keyword-led title, one h1, crawlable prose + FAQ ---
+assert('title leads with the descriptive category', /motion design tokens/i.test(index.match(/<title>([^<]*)<\/title>/)[1]));
+assert('exactly one <h1> in the document (tool wordmark demoted)', (index.match(/<h1[ >]/g) || []).length === 1);
+assert('has a crawlable prose/FAQ section', /class="lprose\b/.test(index) && /<dl class="lfaq"/.test(index));
+assert('FAQ answers are visible (match the JSON-LD)', /What are motion design tokens\?/.test(index) && /<dd>Named, reusable values/.test(index));
 
 // --- crawl files ---
 assert('robots.txt points at the sitemap', robots.includes(`Sitemap: ${HOST}/sitemap.xml`));

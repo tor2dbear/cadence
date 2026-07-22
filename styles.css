@@ -42,13 +42,13 @@ button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,[t
 input.stag:focus-visible,.drow__name:focus-visible,.ecard__name:focus-visible,.mode__name:focus-visible,.intent__name:focus-visible{outline-offset:1px}
 
 header.top{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(8px);z-index:20}
-header.top h1{font-family:var(--serif);font-size:19px;letter-spacing:-.01em;margin:0;font-weight:600;display:inline-flex;align-items:center;gap:8px}
-header.top h1 .logomark{display:block}
+header.top .brand{font-family:var(--serif);font-size:19px;letter-spacing:-.01em;margin:0;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+header.top .brand .logomark{display:block}
 /* the wordmark doubles as "home" — click it to return to the intro (mirrors
    the entrance, so the brand morphs back via the same View Transition) */
-header.top h1 a.brandhome{display:inline-flex;align-items:center;gap:8px;color:inherit;text-decoration:none;cursor:pointer;transition:opacity 150ms ease}
-header.top h1 a.brandhome:hover{opacity:.62}
-header.top h1 a.brandhome:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+header.top .brand a.brandhome{display:inline-flex;align-items:center;gap:8px;color:inherit;text-decoration:none;cursor:pointer;transition:opacity 150ms ease}
+header.top .brand a.brandhome:hover{opacity:.62}
+header.top .brand a.brandhome:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
 header.top .tag{color:var(--ink-dim);font-size:12px}
 header.top .header-actions{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 header.top .loadsys{background:var(--panel-2);color:var(--ink-dim);border:1px solid var(--line);border-radius:8px;font-family:var(--mono);font-size:11px;padding:5px 8px;cursor:pointer}
@@ -319,7 +319,7 @@ html.boot-tool #landing{display:none}
    nav into the editor header. Only one of the two is ever rendered (the other
    is display:none), so the name is unique per snapshot. Timed by the system's
    own tokens. */
-.lbrand,header.top h1{view-transition-name:brand}
+.lbrand,header.top .brand{view-transition-name:brand}
 ::view-transition-group(brand){
   animation-duration:var(--motion-duration-slower,500ms);
   animation-timing-function:var(--motion-ease-emphasized,cubic-bezier(.22,1,.36,1));
@@ -410,7 +410,25 @@ html.boot-tool #landing{display:none}
 @keyframes ltSpring{0%,12%{transform:translateX(0)}56%,88%{transform:translateX(calc(100% + 90px))}100%{transform:translateX(0)}}
 @keyframes ltDraw{0%,10%{stroke-dashoffset:150}46%,80%{stroke-dashoffset:0}100%{stroke-dashoffset:150}}
 
-.lcolophon{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direction:column;gap:9px}
+/* crawlable prose + FAQ: real, query-matching content so the page is eligible
+   to rank for what designers actually search (motion tokens, easing scales…) */
+.lprose{margin-top:6vh;border-top:1px solid var(--line);padding-top:34px;max-width:760px}
+.lprose__h{font-family:var(--serif);font-size:clamp(22px,3.4vw,30px);line-height:1.12;letter-spacing:-.015em;margin:0 0 14px;font-weight:600}
+.lprose__h + .lfaq,.lprose__grid + .lprose__h{margin-top:36px}
+.lprose__lead{font-size:15px;line-height:1.66;color:var(--ink-dim);margin:0 0 26px;max-width:68ch}
+.lprose__lead strong{color:var(--ink);font-weight:600}
+.lprose__lead code,.lfaq code{font-family:var(--mono);font-size:.86em;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--ink-dim)}
+.lprose__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+@media (max-width:720px){ .lprose__grid{grid-template-columns:1fr;gap:20px} }
+.lprose__grid h3{font-family:var(--serif);font-size:17px;letter-spacing:-.01em;margin:0 0 7px;font-weight:600}
+.lprose__grid p{margin:0;font-size:13.5px;line-height:1.6;color:var(--ink-dim)}
+.lprose__grid strong{color:var(--ink);font-weight:600}
+.lfaq{margin:0}
+.lfaq dt{font-family:var(--serif);font-size:16px;font-weight:600;letter-spacing:-.005em;color:var(--ink);margin-top:20px}
+.lfaq dt:first-child{margin-top:0}
+.lfaq dd{margin:7px 0 0;font-size:13.5px;line-height:1.62;color:var(--ink-dim);max-width:70ch}
+
+.lcolophon{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direction:column;gap:9px;margin-top:6vh}
 .lcolo-note{margin:0;font-size:13.5px;line-height:1.6;color:var(--ink-dim);max-width:64ch}
 .lcolo-note strong{color:var(--ink);font-weight:600}
 .lcolo-meta{margin:0;font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
