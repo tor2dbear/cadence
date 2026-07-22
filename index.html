@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="description" content="Cadence — a motion system designer. Editable duration and easing scales, composable intents, and a swappable component bench. Exports design tokens as CSS or JSON." />
-<title>Cadence — motion system designer</title>
+<meta name="description" content="Build a design system's motion layer: tune duration &amp; easing scales, compose semantic intents, and export motion tokens as CSS, Tailwind, Style Dictionary or JSON — with scroll-driven &amp; view-transition recipes." />
+<title>Motion design tokens &amp; easing scale generator — Cadence</title>
 <meta name="author" content="Torbjörn Hedberg" />
 <link rel="canonical" href="https://cadence.tor2dbear.com/" />
 <meta name="theme-color" content="#ece5d6" media="(prefers-color-scheme: light)" />
@@ -29,6 +29,14 @@
 <link rel="stylesheet" href="styles.css" />
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Cadence","url":"https://cadence.tor2dbear.com/","description":"A motion system designer: editable duration and easing scales, composable semantic intents, and a system that critiques its own motion. Exports design tokens as CSS, Tailwind, Style Dictionary and JSON.","applicationCategory":"DesignApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Torbjörn Hedberg","url":"https://tor-bjorn.com"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"What are motion design tokens?","acceptedAnswer":{"@type":"Answer","text":"Named, reusable values for animation — durations, easing curves, stagger and distance — stored as tokens (CSS variables, JSON, Style Dictionary) so an interface's motion stays consistent and is editable in one place instead of hard-coded per component."}},
+{"@type":"Question","name":"How do I export easing and duration to CSS, Tailwind or Style Dictionary?","acceptedAnswer":{"@type":"Answer","text":"Tune the scales and intents in Cadence and open the export panel. It emits ready-to-paste CSS custom properties, a Tailwind theme extension, Style Dictionary tokens, TypeScript and JSON — the code updates live as you edit the system."}},
+{"@type":"Question","name":"Does it support scroll-driven animations and view transitions?","acceptedAnswer":{"@type":"Answer","text":"Yes. Alongside the token exports, Cadence emits recipes for CSS scroll-driven animations (animation-timeline: scroll() and view()) and the View Transitions API, each with a graceful fallback where the feature isn't supported."}},
+{"@type":"Question","name":"Is Cadence free, and does it need an account?","acceptedAnswer":{"@type":"Answer","text":"Yes — it's free, runs entirely in your browser as a single static page, and needs no account or sign-up. Nothing you build is uploaded; systems are shared by URL."}}
+]}
 </script>
 <script>/* set the boot view before first paint — empty hash → landing, else tool */
 (function(){var h=location.hash.replace(/^#/,"");document.documentElement.className+=(h?" boot-tool":" boot-landing");})();</script>
@@ -122,6 +130,37 @@
     </ol>
   </section>
 
+  <section class="lprose reveal-scroll" aria-labelledby="about-h">
+    <h2 class="lprose__h" id="about-h">Motion design tokens, with a system behind them</h2>
+    <p class="lprose__lead">Cadence is a <strong>motion system designer</strong> — a browser tool for building the <strong>duration and easing tokens</strong> that time an interface's animation, then exporting them as <strong>design tokens</strong> your codebase can use. Instead of scattering one-off <code>transition: 0.3s ease</code> values across a project, you define a small, deliberate motion scale once and reference it everywhere.</p>
+    <div class="lprose__grid">
+      <div>
+        <h3>How it works</h3>
+        <p>Two layers. <strong>Primitives</strong> — a duration ladder and an easing set — are the raw vocabulary. <strong>Intents</strong> like <em>enter</em>, <em>exit</em> and <em>move</em> are composed from them by reference, so they stay in proportion. A built-in critique flags asymmetry, redundancy and budget problems as you go.</p>
+      </div>
+      <div>
+        <h3>What it exports</h3>
+        <p>Copy-paste-ready <strong>CSS custom properties</strong>, a <strong>Tailwind</strong> theme extension, <strong>Style Dictionary</strong> tokens, TypeScript and plain <strong>JSON</strong> — plus recipes for <strong>scroll-driven animations</strong> (<code>animation-timeline</code>) and the <strong>View Transitions</strong> API, with honest fallbacks.</p>
+      </div>
+      <div>
+        <h3>Who it's for</h3>
+        <p>Product designers and front-end engineers building the <strong>motion layer of a design system</strong> — anyone who wants animation timing to feel considered and consistent rather than guessed per component.</p>
+      </div>
+    </div>
+
+    <h2 class="lprose__h">FAQ</h2>
+    <dl class="lfaq">
+      <dt>What are motion design tokens?</dt>
+      <dd>Named, reusable values for animation — durations, easing curves, stagger and distance — stored as tokens (CSS variables, JSON, Style Dictionary) so an interface's motion stays consistent and is editable in one place instead of hard-coded per component.</dd>
+      <dt>How do I export easing and duration to CSS, Tailwind or Style Dictionary?</dt>
+      <dd>Tune the scales and intents in Cadence and open the export panel. It emits ready-to-paste CSS custom properties, a Tailwind theme extension, Style Dictionary tokens, TypeScript and JSON — the code updates live as you edit the system.</dd>
+      <dt>Does it support scroll-driven animations and view transitions?</dt>
+      <dd>Yes. Alongside the token exports, Cadence emits recipes for CSS scroll-driven animations (<code>animation-timeline: scroll()</code> and <code>view()</code>) and the View Transitions API, each with a graceful fallback where the feature isn't supported.</dd>
+      <dt>Is Cadence free, and does it need an account?</dt>
+      <dd>Yes and no — it's free, runs entirely in your browser as a single static page, and needs no account or sign-up. Nothing you build is uploaded; systems are shared by URL.</dd>
+    </dl>
+  </section>
+
   <footer class="lcolophon reveal-scroll">
     <p class="lcolo-note">A study in motion systems: the bet is that a design tool should ship <strong>structure and an opinion</strong>, not just more knobs. Everything you scrolled past is timed by Cadence's own default system.</p>
     <p class="lcolo-meta">One static page · no framework, no runtime, no dependency · <a href="https://github.com/tor2dbear/cadence" target="_blank" rel="noopener">Source</a> · <a href="https://github.com/tor2dbear/cadence/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a> · built by Torbjörn&nbsp;Hedberg · <a href="mailto:hi@tor-bjorn.com?subject=Cadence">Get&nbsp;in&nbsp;touch</a></p>
@@ -130,7 +169,7 @@
 
 <div id="toolview">
 <header class="top">
-  <h1><a class="brandhome" id="brandHome" href="index.html" title="Back to the intro" aria-label="Cadence — back to the intro"><img class="logomark" src="favicon.svg" alt="" width="22" height="22" />cadence</a></h1>
+  <div class="brand"><a class="brandhome" id="brandHome" href="index.html" title="Back to the intro" aria-label="Cadence — back to the intro"><img class="logomark" src="favicon.svg" alt="" width="22" height="22" />cadence</a></div>
   <span class="tag">a motion <em>system</em> designer — scales, intents, and a swappable bench</span>
   <div class="header-actions">
     <select class="loadsys" id="loadSystem" aria-label="Load a design system's motion palette"></select>

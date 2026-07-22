@@ -28,7 +28,7 @@ assert('opinion line back to ok', await page.locator('#opinionLine').evaluate(el
 assert('landing wordmark is the shared VT element',
   (await page.locator('.lbrand').evaluate(el => getComputedStyle(el).viewTransitionName)) === 'brand');
 assert('header wordmark shares the VT name (morph target)',
-  (await page.locator('#toolview header.top h1').evaluate(el => getComputedStyle(el).viewTransitionName)) === 'brand');
+  (await page.locator('#toolview header.top .brand').evaluate(el => getComputedStyle(el).viewTransitionName)) === 'brand');
 
 // --- "Start designing" enters the tool (same document) ---
 await page.locator('#startTool').click();
