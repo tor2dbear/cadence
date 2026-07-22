@@ -5,6 +5,24 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.7.1] — 2026-07-20
+
+In-tool UX, part of the redesign — making the editor↔demo loop and the opinion
+layer impossible to miss.
+
+### Changed — the tool
+- **The live preview docks beside the editor.** On wide screens it's a side
+  pane (not a full-screen overlay), and it **auto-opens when you enter from the
+  landing** — so the edit → see loop is felt at once, with the demo re-timing
+  as you edit. Narrow screens keep the overlay; the Preview button still
+  toggles it.
+- **System read, elevated.** It now reads as a panel (accent edge) with a
+  persistent **badge** in its header — "all clear" or "N to review" — so the
+  differentiator is legible without scrolling to it.
+- **Glossary titles** on the section headers map the vocabulary to familiar
+  terms (primitives = design tokens, intents = semantic tokens, bench = live
+  probes).
+
 ## [0.7.0] — 2026-07-20
 
 A landing page — the first slice of a UX redesign. The tool used to drop you
