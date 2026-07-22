@@ -1,9 +1,11 @@
 /* ---- self-hosted type (no external requests) ----
    Fraunces = display serif · Switzer = body/UI · JetBrains Mono = code/labels.
    Swedish å/ä/ö live in the latin subset, so a single face per weight covers it. */
-@font-face{font-family:Fraunces;src:url("fonts/fraunces-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:Fraunces;src:url("fonts/fraunces-600.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
-@font-face{font-family:Fraunces;src:url("fonts/fraunces-600-italic.woff2") format("woff2");font-weight:600;font-style:italic;font-display:swap}
+/* variable Fraunces (opsz 9..144, wght 400..600) — font-optical-sizing:auto
+   (the browser default) then gives display headings the high-contrast display
+   cut and small labels the sturdier text cut from one file per style */
+@font-face{font-family:Fraunces;src:url("fonts/fraunces-var.woff2") format("woff2");font-weight:400 600;font-style:normal;font-display:swap}
+@font-face{font-family:Fraunces;src:url("fonts/fraunces-var-italic.woff2") format("woff2");font-weight:400 600;font-style:italic;font-display:swap}
 @font-face{font-family:Switzer;src:url("fonts/switzer-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:Switzer;src:url("fonts/switzer-500.woff2") format("woff2");font-weight:500;font-style:normal;font-display:swap}
 @font-face{font-family:Switzer;src:url("fonts/switzer-600.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
@@ -399,7 +401,7 @@ html.boot-tool #landing{display:none}
 .lt-orb{position:absolute;top:0;bottom:0;margin-block:auto;left:16px;width:22px;height:22px;border-radius:50%;background:var(--accent);
   box-shadow:0 2px 10px rgba(0,0,0,.4)}
 .lt-curve svg{position:absolute;inset:16px;width:calc(100% - 32px);height:calc(100% - 32px);overflow:visible}
-.lt-curve path{fill:none;stroke:var(--accent);stroke-width:2.5;vector-effect:non-scaling-stroke;stroke-dasharray:150;stroke-dashoffset:150}
+.lt-curve path{fill:none;stroke:var(--accent);stroke-width:2.5;vector-effect:non-scaling-stroke}
 
 @media (prefers-reduced-motion:no-preference){
   .landing .rise{opacity:0;transform:translateY(18px);
@@ -407,11 +409,11 @@ html.boot-tool #landing{display:none}
   .landing.in .rise{opacity:1;transform:none}
   .lt-reveal span{animation:ltReveal 2.9s var(--l-ease) infinite;animation-delay:calc(var(--bi) * var(--l-stag))}
   .lt-orb{animation:ltSpring 2.6s infinite;animation-timing-function:var(--l-spring)}
-  .lt-curve path{animation:ltDraw 2.9s var(--l-curve) infinite}
+  .lt-curve svg{animation:ltDraw 2.9s var(--l-curve) infinite}
 }
 @keyframes ltReveal{0%,12%{opacity:0;transform:translateY(11px)}34%,72%{opacity:1;transform:none}92%,100%{opacity:0;transform:translateY(11px)}}
 @keyframes ltSpring{0%,12%{transform:translateX(0)}56%,88%{transform:translateX(calc(100% + 90px))}100%{transform:translateX(0)}}
-@keyframes ltDraw{0%,10%{stroke-dashoffset:150}46%,80%{stroke-dashoffset:0}100%{stroke-dashoffset:150}}
+@keyframes ltDraw{0%,10%{clip-path:inset(0 100% 0 0)}46%,80%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(0 100% 0 0)}}
 
 /* crawlable prose + FAQ: real, query-matching content so the page is eligible
    to rank for what designers actually search (motion tokens, easing scales…) */
@@ -485,5 +487,5 @@ html.boot-tool #landing{display:none}
   .landing .rise{opacity:1;transform:none}
   .lt-reveal span{opacity:1}
   .lt-orb{left:auto;right:16px}
-  .lt-curve path{stroke-dashoffset:0}
+  .lt-curve svg{clip-path:none}
 }
