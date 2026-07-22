@@ -5,6 +5,22 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.8.5] — 2026-07-22
+
+### Fixed
+- **The spring demo's orb no longer sits below its line on iOS Safari.** The
+  travelling orb (on the landing's "emphasized" tile and the tool's orb lens)
+  was centred with `top:50%` + `transform:translateY(-50%)`. Safari drops the
+  `-50%` when it composites the *animated* transform, so the orb dropped half
+  its height below the track. It's now centred with a negative margin, leaving
+  the transform free for the travel/scale — bulletproof across browsers.
+
+### Added
+- **A way to get in touch.** The landing colophon gains a "Get in touch" link
+  (`hi@tor-bjorn.com`, subject "Cadence"), and the standalone demo gains a slim
+  footer — a colophon line plus links to the designer, source and contact — so
+  a shared `demo.html` is no longer branding-only with no way onward.
+
 ## [0.8.4] — 2026-07-22
 
 ### Added

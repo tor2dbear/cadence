@@ -469,9 +469,9 @@ function play(i){
   if(p.kind==="orb"){
     // abstract lens: travel + fade + scale, purely showing the token's character
     const o=root.querySelector(".orb");
-    o.style.left="14px"; o.style.opacity=".3"; o.style.transform="translateY(-50%) scale(.5)";
-    anim(o,{left:"calc(100% - 40px)",opacity:"1",transform:"translateY(-50%) scale(1)"},r);
-    setTimeout(()=>anim(o,{left:"14px",opacity:".3",transform:"translateY(-50%) scale(.5)"},r),1400);
+    o.style.left="14px"; o.style.opacity=".3"; o.style.transform="scale(.5)";
+    anim(o,{left:"calc(100% - 40px)",opacity:"1",transform:"scale(1)"},r);
+    setTimeout(()=>anim(o,{left:"14px",opacity:".3",transform:"scale(.5)"},r),1400);
   }
   if(p.kind==="drawer"){
     const dr=root.querySelector(".drawer"),sc=root.querySelector(".scrim");
