@@ -13,6 +13,7 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 
 const index = read('index.html');
 const demo = read('demo.html');
+const guide = read('guide.html');
 const build = read('build.sh');
 const robots = read('robots.txt');
 const sitemap = read('sitemap.xml');
@@ -38,7 +39,19 @@ assert('FAQ answers are visible (match the JSON-LD)', /What are motion design to
 
 // --- crawl files ---
 assert('robots.txt points at the sitemap', robots.includes(`Sitemap: ${HOST}/sitemap.xml`));
-assert('sitemap lists the landing + demo', sitemap.includes(`${HOST}/</loc>`) && sitemap.includes(`${HOST}/demo.html</loc>`));
+assert('sitemap lists the landing + guide', sitemap.includes(`${HOST}/</loc>`) && sitemap.includes(`${HOST}/guide.html</loc>`));
+assert('sitemap omits the noindexed demo', !sitemap.includes('demo.html'));
+
+// --- the guide is a real, indexable second page ---
+assert('guide has its own canonical', guide.includes(`rel="canonical" href="${HOST}/guide.html"`));
+assert('guide has exactly one h1', (guide.match(/<h1[ >]/g) || []).length === 1);
+assert('guide carries TechArticle structured data', /"@type":"TechArticle"/.test(guide));
+assert('guide links back to the tool/home', /href="index\.html#tool"/.test(guide) && /href="index\.html"/.test(guide));
+
+// --- internal linking + demo kept out of the index ---
+assert('landing links to the guide', /href="guide\.html"/.test(index));
+assert('demo is noindexed (thin, tool-dependent surface)', /name="robots" content="noindex/.test(demo));
+assert('build.sh cache-busts + beacons the guide too', /dist\/guide\.html/.test(build));
 
 // --- analytics is a deploy concern, not in the tested source ---
 assert('beacon is NOT in the source pages', !/cloudflareinsights/.test(index) && !/cloudflareinsights/.test(demo));

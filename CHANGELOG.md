@@ -5,6 +5,26 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.2] — 2026-07-22
+
+### Added — a second indexable page (SEO #2, site architecture)
+- **A `/guide.html` page: "How to build a motion system".** A genuine,
+  long-form content page — primitives (duration ladder + easing set), composing
+  intents, stagger & distance, exporting to CSS/Tailwind/Style Dictionary/JSON,
+  and scroll-driven animations + view transitions — with code examples. It's a
+  real second rankable URL targeting more of the queries designers search, in
+  the site's identity (Fraunces, sand, the terminal code style), with its own
+  canonical, Open Graph, and `TechArticle` structured data.
+- **Internal linking:** the landing links to the guide (nav + "how it works"),
+  and the guide links back to the tool and home.
+
+### Changed
+- **The demo is now `noindex, follow`** and dropped from the sitemap. It's a
+  thin, tool-dependent surface; keeping it out of the index stops it competing
+  with the landing and guide while its links still flow.
+- `sitemap.xml` now lists the landing + guide; `build.sh` cache-busts and
+  injects the analytics beacon into `guide.html` too.
+
 ## [0.9.1] — 2026-07-22
 
 ### Changed — on-page SEO (relevance)

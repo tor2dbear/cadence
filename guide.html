@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="A practical guide to building a motion system: design a duration ladder and easing set, compose semantic intents, and export animation design tokens as CSS, Tailwind, Style Dictionary or JSON." />
+<title>How to build a motion system — duration, easing &amp; design tokens · Cadence</title>
+<meta name="author" content="Torbjörn Hedberg" />
+<link rel="canonical" href="https://cadence.tor2dbear.com/guide.html" />
+<meta name="theme-color" content="#ece5d6" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#191712" media="(prefers-color-scheme: dark)" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="Cadence" />
+<meta property="og:title" content="How to build a motion system — duration, easing & design tokens" />
+<meta property="og:description" content="Design a duration ladder and easing set, compose semantic intents, and export animation design tokens as CSS, Tailwind, Style Dictionary or JSON." />
+<meta property="og:url" content="https://cadence.tor2dbear.com/guide.html" />
+<meta property="og:image" content="https://cadence.tor2dbear.com/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Cadence — not more knobs; structure, and an opinion." />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="How to build a motion system — duration, easing & design tokens" />
+<meta name="twitter:description" content="Design a duration ladder and easing set, compose semantic intents, and export animation design tokens." />
+<meta name="twitter:image" content="https://cadence.tor2dbear.com/og.png" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+  /* the guide is a content page — it borrows the identity's tokens + fonts
+     from styles.css and lays out a single readable column */
+  body{background:var(--bg);color:var(--ink)}
+  .gwrap{max-width:760px;margin:0 auto;padding:26px 20px 96px}
+  .gnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8vh}
+  .gbrand{display:inline-flex;align-items:center;gap:9px;font-family:var(--serif);font-size:18px;font-weight:600;letter-spacing:-.01em;color:var(--ink);text-decoration:none}
+  .gbrand img{display:block}
+  .gbrand:hover{opacity:.62}
+  .gkicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  h1.gh1{font-family:var(--serif);font-size:clamp(28px,5.4vw,46px);line-height:1.06;letter-spacing:-.02em;margin:0 0 20px;font-weight:600;text-wrap:balance;font-optical-sizing:auto}
+  .glede{font-size:16px;line-height:1.66;color:var(--ink-dim);margin:0 0 10px;max-width:66ch}
+  .glede strong{color:var(--ink);font-weight:600}
+  .guide h2{font-family:var(--serif);font-size:clamp(21px,3vw,27px);line-height:1.14;letter-spacing:-.015em;margin:52px 0 12px;font-weight:600}
+  .guide h3{font-family:var(--serif);font-size:18px;margin:26px 0 8px;font-weight:600;letter-spacing:-.005em}
+  .guide p{font-size:14.5px;line-height:1.7;color:var(--ink-dim);margin:0 0 14px;max-width:68ch}
+  .guide p strong{color:var(--ink);font-weight:600}
+  .guide em{font-style:italic}
+  .guide a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+  .guide a:hover{border-color:var(--accent)}
+  .guide code{font-family:var(--mono);font-size:.86em;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--ink-dim)}
+  .guide ul{margin:0 0 14px;padding-left:20px;color:var(--ink-dim);font-size:14.5px;line-height:1.7;max-width:68ch}
+  .guide li{margin:4px 0}
+  .guide li strong{color:var(--ink);font-weight:600}
+  pre.gcode{font-family:var(--mono);font-size:12.5px;line-height:1.65;color:var(--code-ink);background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:15px 16px;overflow-x:auto;margin:0 0 16px}
+  pre.gcode .c{color:var(--code-cm)} pre.gcode .k{color:var(--code-tk)} pre.gcode .a{color:var(--code-tk2)}
+  .gcta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:44px 0 0;padding-top:28px;border-top:1px solid var(--line)}
+  .gcta__btn{font-family:var(--sans);font-size:14px;font-weight:600;border-radius:10px;padding:12px 20px;text-decoration:none;background:var(--accent);color:var(--on-accent);border:1px solid var(--accent)}
+  .gcta__btn:hover{filter:brightness(1.08)}
+  .gcta__alt{font-family:var(--sans);font-size:14px;font-weight:600;border-radius:10px;padding:12px 20px;text-decoration:none;color:var(--ink);border:1px solid var(--line)}
+  .gcta__alt:hover{border-color:var(--accent)}
+  .gfoot{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+  .gfoot a{color:var(--ink-dim);text-decoration:none;border-bottom:1px solid var(--line)}
+  .gfoot a:hover{color:var(--ink);border-color:var(--accent)}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"TechArticle","headline":"How to build a motion system: duration, easing and design tokens","description":"A practical guide to building a motion system: design a duration ladder and easing set, compose semantic intents, and export animation design tokens as CSS, Tailwind, Style Dictionary or JSON.","author":{"@type":"Person","name":"Torbjörn Hedberg","url":"https://tor-bjorn.com"},"mainEntityOfPage":"https://cadence.tor2dbear.com/guide.html","image":"https://cadence.tor2dbear.com/og.png","publisher":{"@type":"Person","name":"Torbjörn Hedberg"}}
+</script>
+</head>
+<body>
+<div class="gwrap">
+  <nav class="gnav">
+    <a class="gbrand" href="index.html"><img class="logomark" src="favicon.svg" alt="" width="20" height="20" />cadence</a>
+    <a class="lnav__link" href="index.html#tool">Open the tool&nbsp;→</a>
+  </nav>
+
+  <article class="guide">
+    <p class="gkicker">Guide</p>
+    <h1 class="gh1">How to build a motion system: duration, easing &amp; design tokens</h1>
+    <p class="glede">A <strong>motion system</strong> is the small set of timing decisions behind everything that moves in an interface — how long things take, how they accelerate, how a list staggers. This guide walks through building one as reusable <strong>design tokens</strong>, so animation stays consistent instead of being guessed per component. You can build every step of it in <a href="index.html#tool">Cadence</a>.</p>
+
+    <h2>1. Start with primitives: a duration ladder and an easing set</h2>
+    <p>Primitives are the raw vocabulary — <strong>general and component-agnostic</strong>. Define a short <strong>duration ladder</strong> (a handful of steps, not a dozen) and a small <strong>easing set</strong>. Everything else references these, so the whole system moves in proportion.</p>
+    <pre class="gcode"><span class="c">/* duration ladder — a lean, legible scale */</span>
+<span class="k">--dur-1</span>: <span class="a">100ms</span>;  <span class="k">--dur-2</span>: <span class="a">150ms</span>;  <span class="k">--dur-3</span>: <span class="a">200ms</span>;
+<span class="k">--dur-4</span>: <span class="a">300ms</span>;  <span class="k">--dur-5</span>: <span class="a">500ms</span>;
+
+<span class="c">/* easing set — one per job, no more */</span>
+<span class="k">--ease-standard</span>: <span class="a">cubic-bezier(.2, 0, 0, 1)</span>;
+<span class="k">--ease-accelerate</span>: <span class="a">cubic-bezier(.4, 0, 1, 1)</span>;
+<span class="k">--ease-decelerate</span>: <span class="a">cubic-bezier(0, 0, .2, 1)</span>;</pre>
+    <p>Keep both scales small. Four or five durations and three or four easings is usually enough; more than that and nobody can tell them apart, which defeats the point of a system.</p>
+
+    <h2>2. Compose semantic intents: enter, exit, move</h2>
+    <p>Primitives say <em>how much</em>; <strong>intents</strong> say <em>what for</em>. An intent like <code>enter</code>, <code>exit</code> or <code>move</code> is composed from the primitives <strong>by reference</strong> — so when you adjust a primitive, every intent that uses it stays in proportion. This is your motion API: components reference intents, never raw numbers.</p>
+    <pre class="gcode"><span class="k">--motion-enter</span>:  <span class="a">var(--dur-3)</span> <span class="a">var(--ease-decelerate)</span>;  <span class="c">/* things arriving */</span>
+<span class="k">--motion-exit</span>:   <span class="a">var(--dur-2)</span> <span class="a">var(--ease-accelerate)</span>;  <span class="c">/* things leaving */</span>
+<span class="k">--motion-move</span>:   <span class="a">var(--dur-4)</span> <span class="a">var(--ease-standard)</span>;    <span class="c">/* things repositioning */</span></pre>
+    <p>Notice the asymmetry: <strong>exit is quicker than enter</strong>. Leaving should feel decisive; arriving can afford to be gentle. Small, deliberate choices like this are what make motion read as designed rather than default.</p>
+
+    <h2>3. Add stagger and distance</h2>
+    <p>Two more primitives cover most list and transform work. <strong>Stagger</strong> is the delay between items in a sequence — a five-item list at a 70&nbsp;ms stagger cascades over ~280&nbsp;ms, brisk enough to read as one gesture. <strong>Distance</strong> is how far an element travels on enter; keep it a token too, so movement scales with the rest of the system.</p>
+
+    <h2>4. Export as design tokens (CSS, Tailwind, Style Dictionary, JSON)</h2>
+    <p>The point of tokens is that they live in code. The same system exports to whatever your stack reads:</p>
+    <ul>
+      <li><strong>CSS custom properties</strong> — drop-in <code>--motion-*</code> variables.</li>
+      <li><strong>Tailwind</strong> — a <code>theme.extend</code> block for <code>transitionDuration</code> and <code>transitionTimingFunction</code>.</li>
+      <li><strong>Style Dictionary</strong> — platform-agnostic token JSON for multi-platform design systems.</li>
+      <li><strong>JSON / TypeScript</strong> — for anything that consumes tokens programmatically.</li>
+    </ul>
+    <p>In Cadence the export panel emits all of these and updates live as you edit the scales, so the code always matches the system you are looking at.</p>
+
+    <h2>5. Go further: scroll-driven animations and view transitions</h2>
+    <p>A motion system isn't only transitions. The same duration and easing tokens drive newer CSS too:</p>
+    <ul>
+      <li><strong>Scroll-driven animations</strong> — <code>animation-timeline: scroll()</code> and <code>view()</code> tie an animation's progress to scroll position or an element entering the viewport, no JavaScript required.</li>
+      <li><strong>View Transitions</strong> — the <code>View Transitions API</code> animates between two states (or pages) using your <code>move</code> timing.</li>
+    </ul>
+    <p>Both should ship with an <strong>honest fallback</strong> for browsers that don't support them yet — Cadence emits the recipe and the fallback together.</p>
+
+    <h2>The opinion: a system should critique itself</h2>
+    <p>Structure is half the job; the other half is judgement. A good motion system flags its own problems — an easing set that's grown too large, an <code>exit</code> that's slower than its <code>enter</code>, a duration ladder with uneven steps. That built-in critique is the difference between a pile of tokens and a system with a point of view.</p>
+
+    <div class="gcta">
+      <a class="gcta__btn" href="index.html#tool">Build your motion system →</a>
+      <a class="gcta__alt" href="index.html">What is Cadence?</a>
+    </div>
+  </article>
+
+  <footer class="gfoot">
+    Cadence — a motion system designer · <a href="index.html">Home</a> · <a href="https://github.com/tor2dbear/cadence" target="_blank" rel="noopener">Source</a> · <a href="mailto:hi@tor-bjorn.com?subject=Cadence">hi@tor-bjorn.com</a>
+  </footer>
+</div>
+</body>
+</html>

@@ -343,6 +343,7 @@ html.boot-tool #landing{display:none}
 .lbrand__wm{display:inline-flex;flex-direction:column;gap:2px;line-height:1}
 .lbrand__curve{width:100%;height:5px;overflow:visible}
 .lbrand__curve path{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round}
+.lnav__links{display:flex;align-items:center;gap:9px}
 .lnav__link{font-family:var(--mono);font-size:11px;color:var(--ink-faint);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 11px}
 .lnav__link:hover{border-color:var(--accent);color:var(--ink)}
 
@@ -417,6 +418,8 @@ html.boot-tool #landing{display:none}
 .lprose__h + .lfaq,.lprose__grid + .lprose__h{margin-top:36px}
 .lprose__lead{font-size:15px;line-height:1.66;color:var(--ink-dim);margin:0 0 26px;max-width:68ch}
 .lprose__lead strong{color:var(--ink);font-weight:600}
+.lprose a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.lprose a:hover{border-color:var(--accent)}
 .lprose__lead code,.lfaq code{font-family:var(--mono);font-size:.86em;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--ink-dim)}
 .lprose__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
 @media (max-width:720px){ .lprose__grid{grid-template-columns:1fr;gap:20px} }
