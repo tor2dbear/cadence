@@ -9,8 +9,60 @@
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="stylesheet" href="styles.css" />
+<script>/* set the boot view before first paint — empty hash → landing, else tool */
+(function(){var h=location.hash.replace(/^#/,"");document.documentElement.className+=(h?" boot-tool":" boot-landing");})();</script>
 </head>
 <body>
+
+<!-- LANDING — the product demonstrating its own thesis. Shown first; "Start
+     designing" morphs into the tool (same document) via a view transition. -->
+<main class="landing" id="landing" aria-label="Cadence — introduction">
+  <nav class="lnav">
+    <span class="lbrand"><img class="logomark" src="favicon.svg" alt="" width="20" height="20" />cadence</span>
+    <a class="lnav__link" href="https://github.com/tor2dbear/cadence" target="_blank" rel="noopener">Source&nbsp;↗</a>
+  </nav>
+
+  <section class="lhero">
+    <p class="lkicker rise" style="--i:0">A motion&nbsp;system designer</p>
+    <h1 class="lhead rise" style="--i:1">Not more knobs —<br><em>structure, and an&nbsp;opinion.</em></h1>
+    <p class="lsub rise" style="--i:2">Tune duration &amp; easing scales, compose semantic <strong>intents</strong>, and get a system that <strong>critiques itself</strong> — exported as CSS, Tailwind, Style&nbsp;Dictionary, plus scroll-driven &amp; view-transition recipes.</p>
+
+    <div class="lcta rise" style="--i:3">
+      <button class="lbtn lbtn--primary" id="startTool">Start designing&nbsp;→</button>
+      <a class="lbtn" href="https://github.com/tor2dbear/cadence/blob/main/README.md" target="_blank" rel="noopener">How it's&nbsp;built</a>
+    </div>
+
+    <!-- signature: the page critiques its OWN motion — flip it to feel why taste matters -->
+    <div class="ltaste rise" style="--i:4">
+      <div class="ltaste__row">
+        <span class="ltaste__lbl">This page's motion</span>
+        <button class="ltoggle" id="tasteToggle" role="switch" aria-pressed="false" aria-label="Toggle this page's motion between tasteful and naïve"><span class="ltoggle__thumb"></span></button>
+        <span class="ltaste__state" id="tasteState">with taste</span>
+      </div>
+      <p class="opinion ok" id="opinionLine">exit (150ms) is quicker than enter (200ms) — leaving feels decisive.</p>
+    </div>
+  </section>
+
+  <!-- live proof: three tiles, each timed by Cadence's own default system -->
+  <section class="lproof rise" style="--i:5" aria-hidden="true">
+    <div class="ltile">
+      <div class="ltile__stage lt-reveal"><span></span><span></span><span></span><span></span></div>
+      <p class="ltile__cap"><b>enter</b> · stagger — a list cascades in</p>
+    </div>
+    <div class="ltile">
+      <div class="ltile__stage lt-spring"><i class="lt-orb"></i><span class="lt-base"></span></div>
+      <p class="ltile__cap"><b>emphasized</b> · spring — one lively overshoot</p>
+    </div>
+    <div class="ltile">
+      <div class="ltile__stage lt-curve"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,100 C22,100 34,4 100,4"/></svg></div>
+      <p class="ltile__cap"><b>easing</b> — the curve behind the motion</p>
+    </div>
+  </section>
+
+  <p class="lauthor rise" style="--i:6">Built in the open by Torbjörn&nbsp;Hedberg. Output is copy-paste-ready — no runtime, no dependency.</p>
+</main>
+
+<div id="toolview">
 <header class="top">
   <h1><img class="logomark" src="favicon.svg" alt="" width="22" height="22" />cadence</h1>
   <span class="tag">a motion <em>system</em> designer — scales, intents, and a swappable bench</span>
@@ -19,7 +71,7 @@
     <button class="demobtn" id="exportToggle" title="Open the export panel — CSS, JSON, Tailwind, Style Dictionary, TS">Export</button>
     <button class="demobtn" id="previewToggle" title="Preview the demo over the editor — it re-times live as you edit">Preview</button>
     <a class="demolink" id="demoLink" href="demo.html" target="_blank" rel="noopener" title="Open the live demo in a new tab — tile it beside the editor and it re-times live">▶ Live demo</a>
-    <a class="proto" href="https://github.com/tor2dbear/cadence/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="Changelog — what shipped, by version" id="proto">PROTOTYPE v0.6.1</a>
+    <a class="proto" href="https://github.com/tor2dbear/cadence/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="Changelog — what shipped, by version" id="proto">PROTOTYPE v0.7.0</a>
   </div>
 </header>
 
@@ -110,6 +162,7 @@
     </div>
   </aside>
 </div>
+</div><!-- /#toolview -->
 
 <script src="cadence.js"></script>
 </body>

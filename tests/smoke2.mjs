@@ -13,7 +13,7 @@ const assert = (name, cond) => console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}`)
 
 // --- author a system on page A ---
 const a = await newPage();
-await a.goto(BASE, { waitUntil: 'networkidle' });
+await a.goto(BASE + '#tool', { waitUntil: 'networkidle' });
 { const _x=a.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
 // hash should be written on load

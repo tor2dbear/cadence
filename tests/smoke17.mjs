@@ -8,7 +8,7 @@ page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 const out = (fmt) => page.click(`.tab[data-fmt="${fmt}"]`).then(()=>page.locator('#out').innerText());
 
-await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
 { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
 // distance block is collapsed by default, and default export has NO distance tokens

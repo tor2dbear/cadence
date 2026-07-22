@@ -8,7 +8,7 @@ const errors = [];
 page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 
-await page.goto(URL, { waitUntil: 'networkidle' });
+await page.goto(URL + '#tool', { waitUntil: 'networkidle' });
 { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
 const durCount = () => page.locator('#durations .drow').count();

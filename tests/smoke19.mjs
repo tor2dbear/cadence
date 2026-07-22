@@ -12,7 +12,7 @@ const revChk = page.locator('#intents .intent').first().locator('[data-scope="ir
 const revAt  = page.locator('#intents .intent').first().locator('[data-scope="irevat"]');
 const resolved = () => page.locator('#intents .intent').first().locator('.intent__resolved').innerText();
 
-await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
 { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 await enterMore().click();  // reveal the advanced panel
 

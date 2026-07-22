@@ -5,6 +5,29 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.7.0] — 2026-07-20
+
+A landing page — the first slice of a UX redesign. The tool used to drop you
+straight into a dense three-column cockpit; now there's a front door that leads
+with the thesis and *demonstrates it with motion*, then hands you into the
+editor.
+
+### Added — landing view
+- **Self-demonstrating hero.** Every animation on the landing is timed by
+  Cadence's own default system (staggered entrance, a spring, an easing curve
+  that draws itself), so the page *is* the proof.
+- **The signature toggle — "with taste / naïve".** One switch flips the page's
+  motion between the tasteful default and a naïve system (linear, symmetric, no
+  stagger); the whole page flattens and the live opinion line lights up red.
+  The thesis, provable in one gesture.
+- **Live opinion line** that rotates through real system-read observations —
+  the differentiator, on the front page.
+- **Two doors:** *Start designing* (dogfoods a View Transition into the editor)
+  and *How it's built*; plus an author note and a "copy-paste-ready" trust line.
+- **Boot gate:** an empty hash shows the landing; any hash (`#tool`, a share
+  link, or state) boots straight into the editor — so shared systems and
+  deep links skip the intro. Reduced-motion and mobile are first-class.
+
 ## [0.6.1] — 2026-07-20
 
 The live demo catches up to the tool: it now exercises all three scroll/state

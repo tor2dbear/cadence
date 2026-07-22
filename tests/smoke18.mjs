@@ -37,7 +37,7 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 {
   // build a hash from the editor after loading a spring template (Material 3 Expressive)
   const ed = await browser.newPage({ viewport: { width: 1280, height: 950 } });
-  await ed.goto(EDITOR, { waitUntil: 'networkidle' });
+  await ed.goto(EDITOR + '#tool', { waitUntil: 'networkidle' });
   { const _x=ed.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
   await ed.selectOption('#loadSystem', 'Material 3 Expressive · Google');
   await ed.waitForTimeout(50);
@@ -65,7 +65,7 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
   const errors = [];
   page.on('console', m => { if (m.type()==='error') errors.push(m.text()); });
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-  await page.goto(EDITOR, { waitUntil: 'networkidle' });
+  await page.goto(EDITOR + '#tool', { waitUntil: 'networkidle' });
   { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
   assert('preview overlay hidden initially', await page.locator('#preview').isHidden());
   await page.click('#previewToggle');
