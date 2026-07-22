@@ -5,6 +5,34 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.8.0] — 2026-07-22
+
+A visual identity of its own — the app stops looking like a generic dark-mode
+dev tool and gets a real point of view: warm sand, an ink-navy, and a display
+serif with an opinion.
+
+### Changed
+- **New palette — warm "Sand" light theme + a matching dark counterpart.**
+  A warm paper (`#ece5d6`) with ink-navy (`#22356e`) accent replaces the old
+  near-black/violet scheme. Both light and dark are first-class and follow
+  `prefers-color-scheme`; every surface, border, and state colour is a token,
+  so the two themes stay in lockstep. The export code block is its own
+  theme-independent warm-dark "terminal" (`--code-*` tokens).
+- **New type system — self-hosted, zero external requests.** Display is
+  **Fraunces** (a warm, opinionated old-style serif, used with its real
+  italic for emphasis), body is **Switzer**, mono is **JetBrains Mono** — all
+  shipped as local `woff2` (`fonts/`) via `@font-face`. No Google Fonts, no
+  Fontshare, no CDN: the "one static page, no dependency" thesis now covers
+  the fonts too. Body/mono are carried over from the author's portfolio so
+  Cadence ties back to a personal brand.
+- **Motion as a graphic sign.** The wordmark carries a small easing-curve
+  swash — the "Curve = easing" primitive rendered as identity, not decoration.
+
+### Added
+- `tests/smoke26.mjs` — an identity guard: no external font hosts in source,
+  `@font-face` stays local, Fraunces (incl. italic) actually paints, the sand
+  background is live, and the curve mark is present.
+
 ## [0.7.4] — 2026-07-20
 
 The redesign's finishing pass — trust and voice (the last of the UX review).
