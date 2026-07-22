@@ -7,7 +7,7 @@ set -euo pipefail
 rm -rf dist
 mkdir -p dist
 shopt -s nullglob
-for f in *.html *.css *.js *.svg *.png *.ico *.webmanifest; do
+for f in *.html *.css *.js *.svg *.png *.ico *.webmanifest *.txt *.xml; do
   cp "$f" dist/
 done
 # self-hosted fonts (woff2) — ship the whole dir so @font-face resolves on the CDN
@@ -27,6 +27,15 @@ if [ -f dist/index.html ]; then
   # (max-age=0), so a per-deploy ?v=<commit> query is picked up immediately.
   sed -i "s|href=\"styles.css\"|href=\"styles.css?v=${SHA:0:7}\"|; s|src=\"cadence.js\"|src=\"cadence.js?v=${SHA:0:7}\"|" dist/index.html
 fi
+
+# Inject Cloudflare Web Analytics into the deployed pages only. It loads an
+# external beacon, so keeping it out of the source means the offline Playwright
+# smoke tests (which open the source files) don't trip over a blocked request —
+# analytics is a deploy concern, like the version stamp and cache-bust above.
+BEACON='<!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='"'"'{"token": "b306d2ac08f646a399bf3d359b262463"}'"'"'></script>'
+for f in dist/index.html dist/demo.html; do
+  [ -f "$f" ] && sed -i "s|</body>|${BEACON}</body>|" "$f"
+done
 
 echo "version: ${STAMP}"
 echo "dist/ contains:" && ls -1 dist/

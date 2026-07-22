@@ -1,6 +1,6 @@
 {
   "name": "cadence",
-  "version": "0.8.5",
+  "version": "0.9.0",
   "private": true,
   "description": "A motion system designer. Static site — this manifest exists only for the Playwright smoke tests, which never ship to the deployed site.",
   "scripts": {
