@@ -5,6 +5,15 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.7.2] — 2026-07-20
+
+### Changed — the entrance
+- **The landing → tool transition is now a shared-element View Transition.** The
+  wordmark morphs from the landing nav into the editor header (a shared
+  `view-transition-name`), while the rest cross-fades — dogfooding the View
+  Transitions feature on the app's own entrance, timed by the system's own
+  duration/easing tokens. Reduced-motion still swaps instantly.
+
 ## [0.7.1] — 2026-07-20
 
 In-tool UX, part of the redesign — making the editor↔demo loop and the opinion

@@ -24,6 +24,12 @@ await page.locator('#tasteToggle').click();
 assert('toggle back removes naïve', !(await page.locator('#landing').evaluate(el => el.classList.contains('naive'))));
 assert('opinion line back to ok', await page.locator('#opinionLine').evaluate(el => el.classList.contains('ok')));
 
+// --- the entrance is a shared-element View Transition: the wordmark morphs ---
+assert('landing wordmark is the shared VT element',
+  (await page.locator('.lbrand').evaluate(el => getComputedStyle(el).viewTransitionName)) === 'brand');
+assert('header wordmark shares the VT name (morph target)',
+  (await page.locator('#toolview header.top h1').evaluate(el => getComputedStyle(el).viewTransitionName)) === 'brand');
+
 // --- "Start designing" enters the tool (same document) ---
 await page.locator('#startTool').click();
 await page.waitForTimeout(300);   // let the view transition settle
