@@ -5,6 +5,24 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.8.4] — 2026-07-22
+
+### Added
+- **The live demo carries a way home.** `demo.html` can be reached as a
+  standalone shared link, so it was a dead end — its only branding was the
+  fake "Northwind" product. It now shows a `cadence` home mark that opens the
+  designer (in a new tab, so it never disturbs the demo surface). Same
+  "click the wordmark → home" gesture as the tool, now consistent across all
+  three surfaces.
+
+### Fixed
+- **The landing's "system read" line no longer makes the page jump.** The
+  tasteful observation under the motion toggle rotates through strings of
+  different lengths (1–3 lines depending on the text and viewport), and the
+  line grew/shrank with each — shoving the cards below up and down. It now
+  reserves the tallest observation's height (measured across all of them at
+  the current width, recomputed on resize), so the text swaps in place.
+
 ## [0.8.3] — 2026-07-22
 
 ### Added
