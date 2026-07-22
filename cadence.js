@@ -1309,6 +1309,19 @@ function exitTool(){
   let naive=false, tick=0, timer=null;
   const stop=()=>{ if(timer){ clearInterval(timer); timer=null; } };
   const rotate=()=>{ if(!line) return; line.textContent=TASTE[tick%TASTE.length]; tick++; };
+  // reserve the tallest observation's height so the rotating text (1–3 lines,
+  // depending on the string and the viewport width) never reflows the cards
+  // below. Measured across every candidate at the current width; recomputed on
+  // resize since wrapping — and therefore the max — changes with it.
+  function reserveLine(){
+    if(!line) return;
+    const keep=line.textContent; line.style.minHeight="0px";
+    let max=0;
+    for(const s of TASTE){ line.textContent=s; if(line.offsetHeight>max) max=line.offsetHeight; }
+    line.textContent=NAIVE; if(line.offsetHeight>max) max=line.offsetHeight;
+    line.textContent=keep; line.style.minHeight=max+"px";
+  }
+  let rz; addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(reserveLine,150); },{passive:true});
   function sync(){
     if(land) land.classList.toggle("naive", naive);
     if(stateLbl) stateLbl.textContent = naive ? "naïve" : "with taste";
@@ -1320,6 +1333,10 @@ function exitTool(){
   }
   if(toggle) toggle.addEventListener("click",()=>{ naive=!naive; sync(); });
   sync();
+  reserveLine();
+  // re-measure once the self-hosted mono has actually loaded (it changes the
+  // wrapping, and thus the reserved height)
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(reserveLine);
 })();
 
 rerenderAll();
