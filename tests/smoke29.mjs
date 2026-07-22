@@ -46,4 +46,38 @@ const midY = (page, sel) => page.locator(sel).evaluate(el => { const b = el.getB
   await page.close();
 }
 
+// ---- the "naïve" toggle is explained (not just a bare label) ----
+{
+  const page = await browser.newPage({ viewport: { width: 900, height: 800 } });
+  await page.goto(BASE, { waitUntil: 'networkidle' });
+  const hint = page.locator('.ltaste__hint');
+  assert('the naïve toggle carries an explanation', await hint.count() === 1);
+  assert('the explanation defines what naïve means',
+    /naïve/.test(await hint.innerText()) && /stagger|linear|craft/i.test(await hint.innerText()));
+  await page.close();
+}
+
+// ---- the guide's primary CTA text is visible on its filled button ----
+// (it used to inherit --accent from `.guide a` and vanish, navy-on-navy)
+{
+  const page = await browser.newPage({ viewport: { width: 900, height: 700 } });
+  await page.goto(new URL('../guide.html', import.meta.url).href, { waitUntil: 'networkidle' });
+  const contrast = await page.locator('.gcta__btn').evaluate(el => {
+    const s = getComputedStyle(el);
+    return s.color !== s.backgroundColor;
+  });
+  assert('guide CTA text contrasts its button (not navy-on-navy)', contrast);
+  // the tool's orb also sits on its line (margin-centred, Safari-robust)
+  await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(400);
+  const orbDelta = await page.evaluate(() => {
+    const o = document.querySelector('.orb'), b = document.querySelector('.orb-base');
+    if (!o || !b) return 0;
+    const a = o.getBoundingClientRect(), c = b.getBoundingClientRect();
+    return Math.abs((a.top + a.bottom) / 2 - (c.top + c.bottom) / 2);
+  });
+  assert('tool orb is centred on its line', orbDelta < 1);
+  await page.close();
+}
+
 await browser.close();
