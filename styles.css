@@ -372,6 +372,42 @@ html.boot-tool #landing{display:none}
 
 .lauthor{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);margin:0;border-top:1px solid var(--line);padding-top:16px}
 
+/* ---- scroll montage: the two-layer model assembles on scroll ---- */
+/* a reading-progress bar scrubbed by scroll() (dogfooding the scrub mode) */
+.lprogress{position:fixed;top:0;left:0;right:0;height:3px;background:var(--accent);transform:scaleX(0);transform-origin:left;z-index:60;pointer-events:none}
+@keyframes lmProgress{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@supports (animation-timeline:scroll()){ .lprogress{animation:lmProgress auto linear both;animation-timeline:scroll(root)} }
+
+.lmontage{margin-top:6vh;border-top:1px solid var(--line);padding-top:34px}
+.lm-title{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 24px}
+.lm-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:20px;counter-reset:none}
+.lm-step{display:flex;gap:18px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.lm-num{flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:13px;font-weight:600;display:grid;place-items:center}
+.lm-body{min-width:0;flex:1}
+.lm-step h3{margin:0 0 5px;font-size:16px}
+.lm-step p{margin:0 0 12px;color:var(--ink-dim);font-size:13.5px;line-height:1.55;max-width:58ch}
+.lm-step p:last-child{margin-bottom:0}
+.lm-ladder{display:flex;flex-direction:column;gap:6px;max-width:340px}
+.lm-ladder span{height:9px;border-radius:4px;background:var(--panel-2);border:1px solid var(--line);width:var(--w)}
+.lm-chips{display:flex;flex-wrap:wrap;gap:8px}
+.lm-chip{font-family:var(--mono);font-size:11px;color:var(--ink-dim);background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+.lm-chip b{color:var(--accent);font-weight:600}
+.lm-code{font-family:var(--mono);font-size:11.5px;color:#cdd3da;background:#0e1013;border:1px solid var(--line);border-radius:9px;padding:11px 13px;overflow-x:auto;white-space:pre;margin:0}
+.lm-code .tk{color:var(--violet)} .lm-code .v{color:var(--accent)}
+
+/* each step reveals as it enters the viewport (native), with an IO fallback */
+@keyframes lmReveal{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline:view()){
+    .landing .reveal-scroll{opacity:0;animation:lmReveal linear both;animation-timeline:view();animation-range:entry 6% cover 32%}
+  }
+  @supports not (animation-timeline:view()){
+    .landing .reveal-scroll{opacity:0;transform:translateY(22px);transition:opacity .5s var(--l-ease),transform .5s var(--l-ease)}
+    .landing .reveal-scroll.in{opacity:1;transform:none}
+  }
+}
+@media (prefers-reduced-motion:reduce){ .landing .reveal-scroll{opacity:1;transform:none} .lprogress{display:none} }
+
 @media (max-width:720px){
   .lproof{grid-template-columns:1fr}
   .ltile__stage{height:96px}

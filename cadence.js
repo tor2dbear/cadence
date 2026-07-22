@@ -1260,6 +1260,18 @@ function enterTool(){
   const land=document.getElementById("landing");
   if(land) requestAnimationFrame(()=>requestAnimationFrame(()=>land.classList.add("in")));
 
+  // scroll-montage fallbacks — only where native scroll timelines are missing
+  // (Firefox today). The montage itself dogfoods reveal (view()) + scrub (scroll()).
+  if(!CSS.supports("animation-timeline: view()")){
+    const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } }),{threshold:0.18});
+    document.querySelectorAll(".landing .reveal-scroll").forEach(el=>io.observe(el));
+  }
+  if(!CSS.supports("animation-timeline: scroll()")){
+    const bar=document.querySelector(".lprogress"), de=document.documentElement;
+    if(bar){ const upd=()=>{ const max=de.scrollHeight-de.clientHeight; bar.style.transform="scaleX("+(max>0?de.scrollTop/max:0)+")"; };
+      addEventListener("scroll",upd,{passive:true}); addEventListener("resize",upd); upd(); }
+  }
+
   // signature: the page critiques its OWN motion. Flip "with taste → naïve" and
   // the whole page flattens while the opinion line lights up — the thesis in one
   // gesture. The tasteful read rotates through real system-read observations.
