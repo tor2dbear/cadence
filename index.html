@@ -71,7 +71,7 @@
     <button class="demobtn" id="exportToggle" title="Open the export panel — CSS, JSON, Tailwind, Style Dictionary, TS">Export</button>
     <button class="demobtn" id="previewToggle" title="Preview the demo over the editor — it re-times live as you edit">Preview</button>
     <a class="demolink" id="demoLink" href="demo.html" target="_blank" rel="noopener" title="Open the live demo in a new tab — tile it beside the editor and it re-times live">▶ Live demo</a>
-    <a class="proto" href="https://github.com/tor2dbear/cadence/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="Changelog — what shipped, by version" id="proto">PROTOTYPE v0.7.0</a>
+    <a class="proto" href="https://github.com/tor2dbear/cadence/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="Changelog — what shipped, by version" id="proto">PROTOTYPE v0.7.1</a>
   </div>
 </header>
 
@@ -92,7 +92,7 @@
 <div class="wrap">
   <!-- LAYER 1 -->
   <section class="col scales">
-    <h2 class="sec">Scales <span class="lyr">· primitives</span></h2>
+    <h2 class="sec" title="Primitives — your general duration &amp; easing vocabulary. The design tokens everything else references.">Scales <span class="lyr">· primitives</span></h2>
     <p class="sub">The general vocabulary. Component-agnostic — everything else references these.</p>
     <div class="block">
       <div class="block__hd">
@@ -119,13 +119,13 @@
 
   <!-- LAYER 2 + BENCH -->
   <section class="col mid">
-    <h2 class="sec">Intents <span class="lyr">· semantic</span></h2>
+    <h2 class="sec" title="Semantic tokens — meaning (enter / exit / move …) composed from the primitives. This is your motion API.">Intents <span class="lyr">· semantic</span></h2>
     <p class="sub">Meaning, composed from the scales. This is where art direction lives — add your own.</p>
     <div class="modes" id="modes"></div>
     <div id="intents"></div>
     <button class="addbtn" id="addIntent">+ Add intent</button>
 
-    <h2 class="sec" style="margin-top:24px">Test bench <span class="lyr">· swappable probes</span></h2>
+    <h2 class="sec" style="margin-top:24px" title="Live probes — each is a lens you point at one intent to preview its motion. Swap the lens or the intent freely.">Test bench <span class="lyr">· swappable probes</span></h2>
     <div class="toolbar">
       <button class="btn" id="playAll">▶ Play all</button>
       <span class="hint">Each probe is just a lens. Change the token driving it — any component, any intent.</span>
@@ -133,7 +133,7 @@
     <div class="bench" id="bench"></div>
 
     <div class="adnote">
-      <h2 class="sec">System read <span class="lyr">— the opinion layer</span></h2>
+      <h2 class="sec" title="The opinion layer — an automated critique of your system's motion (asymmetry, budgets, redundancy…)">System read <span class="lyr">— the opinion layer</span><span class="hintcount" id="hintCount"></span></h2>
       <div id="hints"></div>
     </div>
   </section>

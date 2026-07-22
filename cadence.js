@@ -599,6 +599,10 @@ function critique(){
     out.push(["ok","✓",`${vtIntents.length} view transition${vtIntents.length>1?"s":""} — same-document VT is Baseline (Chrome/Edge 111+, Safari 18+, Firefox 144+). The recipe feature-detects startViewTransition and honours reduced-motion, so unsupported browsers just swap instantly.`]);
   }
   document.getElementById("hints").innerHTML = out.map(h=>`<div class="rd ${h[0]}"><span class="ic">${h[1]}</span><span>${h[2]}</span></div>`).join("");
+  // a persistent read-at-a-glance badge in the section header (P3 visibility)
+  const warns=out.filter(h=>h[0]==="warn").length;
+  const badge=document.getElementById("hintCount");
+  if(badge){ badge.textContent = warns ? `${warns} to review` : "all clear"; badge.className = "hintcount"+(warns?" warn":""); }
 }
 
 // ---------- export ----------
@@ -1168,16 +1172,23 @@ document.getElementById("share").addEventListener("click",()=>{
   });
 })();
 
-// live-demo preview overlay: an iframe of demo.html seeded with the current
-// system; it stays live via the BroadcastChannel above (same origin).
+// live-demo preview: an iframe of demo.html seeded with the current system; it
+// stays live via the BroadcastChannel above (same origin). On wide screens it
+// docks beside the editor (body.previewing) so the edit→see loop is visible;
+// on narrow screens it's a full-screen overlay.
+let openPreview=()=>{};
 (function initPreview(){
   const pv=document.getElementById("preview"), tog=document.getElementById("previewToggle");
   const cl=document.getElementById("previewClose"), fr=document.getElementById("previewFrame"), pop=document.getElementById("previewPop");
   if(!pv||!tog||!fr) return;
-  const open=()=>{ const enc=encodeState(); fr.src="demo.html#"+enc; if(pop) pop.href="demo.html#"+enc; pv.hidden=false; };
-  tog.addEventListener("click",()=>{ if(pv.hidden) open(); else pv.hidden=true; });
-  if(cl) cl.addEventListener("click",()=>{ pv.hidden=true; });
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !pv.hidden) pv.hidden=true; });
+  const setP=on=>{
+    if(on && (pv.hidden || !fr.src)){ const enc=encodeState(); fr.src="demo.html#"+enc; if(pop) pop.href="demo.html#"+enc; }
+    pv.hidden=!on; document.body.classList.toggle("previewing", on);
+  };
+  openPreview=()=>setP(true);
+  tog.addEventListener("click",()=>setP(pv.hidden));
+  if(cl) cl.addEventListener("click",()=>setP(false));
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !pv.hidden) setP(false); });
 })();
 
 // export column: hidden by default so the editor is full-width; opening adds a
@@ -1235,7 +1246,9 @@ function setBootClass(){
 }
 function enterTool(){
   if(mode==="tool") return;
-  const go=()=>{ mode="tool"; setBootClass(); writeURL(); window.scrollTo(0,0); if(!reduce) setTimeout(playAll,120); };
+  const go=()=>{ mode="tool"; setBootClass(); writeURL(); window.scrollTo(0,0); if(!reduce) setTimeout(playAll,120);
+    // dock the live preview beside the editor so the edit→see loop is felt at once
+    if(matchMedia("(min-width:1001px)").matches) setTimeout(openPreview,80); };
   // the entrance itself is a View Transition — the newest feature, dogfooded
   if(document.startViewTransition && !reduce) document.startViewTransition(go); else go();
 }
