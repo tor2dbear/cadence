@@ -41,7 +41,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,[t
   outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 input.stag:focus-visible,.drow__name:focus-visible,.ecard__name:focus-visible,.mode__name:focus-visible,.intent__name:focus-visible{outline-offset:1px}
 
-header.top{display:flex;align-items:baseline;gap:8px 16px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(8px);z-index:20}
+header.top{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(8px);z-index:20}
 header.top h1{font-family:var(--serif);font-size:19px;letter-spacing:-.01em;margin:0;font-weight:600;display:inline-flex;align-items:center;gap:8px}
 header.top h1 .logomark{display:block}
 /* the wordmark doubles as "home" — click it to return to the intro (mirrors

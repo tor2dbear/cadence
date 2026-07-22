@@ -17,6 +17,13 @@ shows the deployed semver plus the commit it was built from, stamped at deploy.
   clicks (open-in-new-tab) fall through to a plain `index.html` link, and the
   affordance carries an accessible label.
 
+### Fixed
+- **The tool header wordmark no longer sits high.** The header was
+  baseline-aligned, but the wordmark's icon-plus-text flexbox threw off its
+  baseline, so `cadence` rode ~8px above the tagline and controls next to it.
+  The header now centre-aligns its row (the convention for a control bar), so
+  the wordmark, tagline, selector, buttons and badge share one line.
+
 ## [0.8.2] — 2026-07-22
 
 ### Fixed
