@@ -21,7 +21,9 @@ const sitemap = read('sitemap.xml');
 const HOST = 'https://cadence.tor2dbear.com';
 
 // --- discoverability meta on both pages ---
-for (const [name, html, url] of [['index', index, HOST + '/'], ['demo', demo, HOST + '/demo.html']]) {
+// Cloudflare Pages serves clean (extensionless) URLs and 308-redirects the
+// .html forms, so the indexed/canonical URLs must be the clean ones.
+for (const [name, html, url] of [['index', index, HOST + '/'], ['demo', demo, HOST + '/demo']]) {
   assert(`${name}: canonical points at the live URL`, html.includes(`rel="canonical" href="${url}"`));
   assert(`${name}: has an og:title + og:description`, /property="og:title"/.test(html) && /property="og:description"/.test(html));
   assert(`${name}: og:image is an absolute URL`, new RegExp(`property="og:image" content="${HOST}/og\\.png"`).test(html));
@@ -39,11 +41,11 @@ assert('FAQ answers are visible (match the JSON-LD)', /What are motion design to
 
 // --- crawl files ---
 assert('robots.txt points at the sitemap', robots.includes(`Sitemap: ${HOST}/sitemap.xml`));
-assert('sitemap lists the landing + guide', sitemap.includes(`${HOST}/</loc>`) && sitemap.includes(`${HOST}/guide.html</loc>`));
+assert('sitemap lists the landing + guide', sitemap.includes(`${HOST}/</loc>`) && sitemap.includes(`${HOST}/guide</loc>`));
 assert('sitemap omits the noindexed demo', !sitemap.includes('demo.html'));
 
 // --- the guide is a real, indexable second page ---
-assert('guide has its own canonical', guide.includes(`rel="canonical" href="${HOST}/guide.html"`));
+assert('guide has its own canonical', guide.includes(`rel="canonical" href="${HOST}/guide"`));
 assert('guide has exactly one h1', (guide.match(/<h1[ >]/g) || []).length === 1);
 assert('guide carries TechArticle structured data', /"@type":"TechArticle"/.test(guide));
 assert('guide links back to the tool/home', /href="index\.html#tool"/.test(guide) && /href="index\.html"/.test(guide));
