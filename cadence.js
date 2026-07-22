@@ -1252,10 +1252,31 @@ function enterTool(){
   // the entrance itself is a View Transition — the newest feature, dogfooded
   if(document.startViewTransition && !reduce) document.startViewTransition(go); else go();
 }
+function exitTool(){
+  if(mode==="tool"){
+    const go=()=>{ mode="landing"; setBootClass();
+      // drop the state hash so a reload stays on the intro; in-memory state is
+      // kept, so re-entering the tool restores the same system.
+      try{ history.replaceState(null,"",location.pathname+location.search); }catch(_){}
+      window.scrollTo(0,0);
+      const land=document.getElementById("landing");
+      if(land){ land.classList.remove("in"); requestAnimationFrame(()=>requestAnimationFrame(()=>land.classList.add("in"))); }
+    };
+    // reverse the entrance — the brand wordmark morphs back (shared v-t-name)
+    if(document.startViewTransition && !reduce) document.startViewTransition(go); else go();
+  }
+}
 (function initLanding(){
   setBootClass();
   const start=document.getElementById("startTool");
   if(start) start.addEventListener("click",enterTool);
+  // the tool's wordmark is a home link → back to the intro. Plain modified
+  // clicks (new tab / middle-click) fall through to the href.
+  const home=document.getElementById("brandHome");
+  if(home) home.addEventListener("click",e=>{
+    if(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||e.button!==0) return;
+    e.preventDefault(); exitTool();
+  });
   // trigger the staggered entrance once painted
   const land=document.getElementById("landing");
   if(land) requestAnimationFrame(()=>requestAnimationFrame(()=>land.classList.add("in")));
