@@ -10,7 +10,7 @@ const out = (fmt) => page.click(`.tab[data-fmt="${fmt}"]`).then(()=>page.locator
 const intent = () => page.locator('#intents .intent').first();
 const resolved = () => intent().locator('.intent__resolved').innerText();
 
-await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
 { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }
 await intent().locator('.intent__more').click();
 

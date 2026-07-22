@@ -8,7 +8,7 @@ page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 const out = (fmt) => page.click(`.tab[data-fmt="${fmt}"]`).then(()=>page.locator('#out').innerText());
 const fastMs = () => page.locator('#durations .drow__val').first().innerText();
-await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
 { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
 // tempo scales the whole ladder
@@ -21,7 +21,8 @@ const down = parseInt(await fastMs());
 assert('tempo − slows down (fast shrinks below the sped-up value)', down < up);
 
 // reduced-motion mode: one click adds a minimal mode
-await page.goto(BASE, { waitUntil: 'networkidle' });  // fresh load (no hash) resets tempo
+await page.goto('about:blank');                                 // force a real reload…
+await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });  // …fresh load resets tempo
 { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 assert('reduced-motion button present', (await page.locator('.mode--reduced').count()) === 1);
 await page.click('.mode--reduced');

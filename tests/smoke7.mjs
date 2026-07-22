@@ -9,7 +9,7 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 const easeOf = (p, i=0) => p.locator('#intents .intent').nth(i).locator('.intent__ref select').nth(1).inputValue();
 
 const page = await mk();
-await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
 { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
 // default: one mode named "default"

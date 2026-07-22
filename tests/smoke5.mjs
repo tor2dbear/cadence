@@ -10,7 +10,7 @@ const mk = async () => { const p = await browser.newPage({ viewport: { width: 12
 const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 
 const page = await mk();
-await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
 { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
 // default: 4 probes, all "orb" lens, each stage has an .orb

@@ -8,7 +8,7 @@ page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 const P0 = '.probe[data-i="0"]';
 const dotTr = (i) => page.locator(`${P0} .scope__dot`).nth(i).evaluate(el => el.style.transition);
-await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
 { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 await page.locator('#intents .intent').first().locator('.intent__more').click();  // reveal stagger/property
 

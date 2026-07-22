@@ -982,9 +982,13 @@ function applyState(o){
 }
 // a channel so an open live-demo (tab or preview iframe) re-times as you edit
 let bchan=null; try{ bchan=new BroadcastChannel("cadence"); }catch(_){}
+// "landing" (the intro/marketing view) vs "tool" (the editor). Resolved at boot
+// from the hash: empty → landing; anything else (state, "tool", or garbage) →
+// tool. Only the tool stamps its state into the hash, so the landing stays clean.
+let mode="tool";
 function writeURL(){
   const enc=encodeState();
-  try{ history.replaceState(null,"",location.pathname+location.search+"#"+enc); }catch(_){}
+  if(mode==="tool"){ try{ history.replaceState(null,"",location.pathname+location.search+"#"+enc); }catch(_){} }
   if(bchan){ try{ bchan.postMessage({hash:enc}); }catch(_){} }
   const dl=document.getElementById("demoLink"); if(dl) dl.href="demo.html#"+enc;
 }
@@ -1207,19 +1211,70 @@ document.getElementById("share").addEventListener("click",()=>{
   if(x) x.addEventListener("click",()=>{ el.hidden=true; try{ localStorage.setItem("cadence-intro","off"); }catch(_){} });
 })();
 
-// restore a shared system from the URL hash before the first render
+// restore a shared system from the URL hash + decide landing vs tool. Empty
+// hash → landing (first impression); any hash → straight into the tool (so
+// share links and #tool both skip the landing, and tests boot the editor).
 (function initFromURL(){
   const h=location.hash.replace(/^#/,"");
-  if(h){ try{ applyEncoded(h); }catch(_){ /* malformed link → keep defaults */ } }
+  if(h && h!=="tool"){ try{ applyEncoded(h); }catch(_){ /* malformed link → keep defaults */ } }
+  mode = h ? "tool" : "landing";
 })();
 // re-apply when the hash changes on an already-open page (pasting a shared
 // link into the address bar, or back/forward). Our own writes use
 // replaceState, which never fires hashchange — so this can't loop.
 window.addEventListener("hashchange", ()=>{
   const h=location.hash.replace(/^#/,"");
-  if(!h || h===encodeState()) return;
-  try{ applyEncoded(h); rerenderAll(); }catch(_){}
+  if(!h || h==="tool" || h===encodeState()) return;
+  try{ applyEncoded(h); mode="tool"; setBootClass(); rerenderAll(); }catch(_){}
 });
 
+// ---------- landing view: the product demonstrating its own thesis ----------
+function setBootClass(){
+  const r=document.documentElement.classList;
+  r.toggle("boot-landing", mode!=="tool"); r.toggle("boot-tool", mode==="tool");
+}
+function enterTool(){
+  if(mode==="tool") return;
+  const go=()=>{ mode="tool"; setBootClass(); writeURL(); window.scrollTo(0,0); if(!reduce) setTimeout(playAll,120); };
+  // the entrance itself is a View Transition — the newest feature, dogfooded
+  if(document.startViewTransition && !reduce) document.startViewTransition(go); else go();
+}
+(function initLanding(){
+  setBootClass();
+  const start=document.getElementById("startTool");
+  if(start) start.addEventListener("click",enterTool);
+  // trigger the staggered entrance once painted
+  const land=document.getElementById("landing");
+  if(land) requestAnimationFrame(()=>requestAnimationFrame(()=>land.classList.add("in")));
+
+  // signature: the page critiques its OWN motion. Flip "with taste → naïve" and
+  // the whole page flattens while the opinion line lights up — the thesis in one
+  // gesture. The tasteful read rotates through real system-read observations.
+  const TASTE=[
+    "exit (150ms) is quicker than enter (200ms) — leaving feels decisive.",
+    "4 distinct easings — a lean, legible set.",
+    "enter staggers 70ms — a 5-item list cascades over 280ms, brisk enough to read as one gesture.",
+    "the ladder grows at an even rate — it reads as one considered scale.",
+  ];
+  const NAIVE="exit as slow as enter, everything linear, no stagger — the motion reads as sluggish and undesigned.";
+  const line=document.getElementById("opinionLine");
+  const toggle=document.getElementById("tasteToggle");
+  const stateLbl=document.getElementById("tasteState");
+  let naive=false, tick=0, timer=null;
+  const stop=()=>{ if(timer){ clearInterval(timer); timer=null; } };
+  const rotate=()=>{ if(!line) return; line.textContent=TASTE[tick%TASTE.length]; tick++; };
+  function sync(){
+    if(land) land.classList.toggle("naive", naive);
+    if(stateLbl) stateLbl.textContent = naive ? "naïve" : "with taste";
+    if(toggle) toggle.setAttribute("aria-pressed", naive?"true":"false");
+    if(!line) return;
+    stop();
+    if(naive){ line.textContent=NAIVE; line.className="opinion warn"; }
+    else { line.className="opinion ok"; rotate(); if(!reduce) timer=setInterval(rotate,3600); }
+  }
+  if(toggle) toggle.addEventListener("click",()=>{ naive=!naive; sync(); });
+  sync();
+})();
+
 rerenderAll();
-if(!reduce) setTimeout(playAll,500);
+if(mode==="tool" && !reduce) setTimeout(playAll,500);

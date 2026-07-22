@@ -11,7 +11,7 @@ const intent = () => page.locator('#intents .intent').first();
 const mode   = () => intent().locator('[data-scope="iscrollmode"]');
 const resolved = () => intent().locator('.intent__resolved').innerText();
 
-await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
 { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel
 await intent().locator('.intent__more').click();  // reveal the advanced panel
 
