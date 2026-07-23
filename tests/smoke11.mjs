@@ -22,10 +22,11 @@ const orb1 = await page.locator('.probe[data-i="1"] .orb').evaluate(el => getCom
 assert('probe 1 (exit) orb red', orb1 === 'rgb(224, 139, 127)');
 const orb2 = await page.locator('.probe[data-i="2"] .orb').evaluate(el => getComputedStyle(el).backgroundColor);
 assert('probe 2 (move) orb amber', orb2 === 'rgb(233, 184, 114)');
-// changing a probe's intent recolours it
+// changing a probe's intent recolours it (and follows exit's default lens —
+// read the probe's --accent directly so the check is lens-agnostic)
 await page.locator('.probe[data-i="2"] .probe__sel').selectOption({ label: 'exit' });
-const orb2b = await page.locator('.probe[data-i="2"] .orb').evaluate(el => getComputedStyle(el).backgroundColor);
-assert('repoint probe → recolours to exit red', orb2b === 'rgb(224, 139, 127)');
+const acc2b = await page.locator('.probe[data-i="2"]').evaluate(el => getComputedStyle(el).getPropertyValue('--accent').trim());
+assert('repoint probe → recolours to exit red', acc2b === '#e08b7f');
 
 // intro strip: visible, dismissible, remembered across reload
 assert('intro visible initially', !(await page.locator('#intro').getAttribute('hidden') !== null));

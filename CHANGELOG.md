@@ -5,6 +5,28 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.13] — 2026-07-23
+
+### Changed — the default lens now fits the intent
+- **Each probe opens in the lens that actually previews its intent.** The bench
+  used to seed `scope + 3× orb` regardless of what each intent did — so a hover
+  intent, a scroll-scrub intent and a spring all showed as identical travelling
+  orbs, and three of those *can't even show* what the intent does (an orb has no
+  press, no scroll mechanic, no state swap). A new `defaultLensFor()` picks the
+  lens by the intent's **defining trait**: structural mechanics win first
+  (`scroll·scrub` → scrub, `view transition` → vt, in-view reveal → `scroll·in-view`,
+  a height/width reflow → `accordion·reflow`), then a named press/hover gesture →
+  `button·press`, then an explicit travel token → `orb`, else the flagship
+  **scope** (which already carries the curve, the ride-dot, spring overshoot,
+  the animated property *and* the stagger).
+- **Re-pointing a probe follows the new intent** — so enabling e.g. scroll-scrub
+  on an intent and pointing a probe at it *shows it in the scrub lens*, instead
+  of leaving you to hunt for the right lens. An **explicit** lens choice is
+  respected: once you pick a lens for a probe, re-pointing keeps it.
+- The default bench now opens `scope · orb · orb · button` (enter / exit / move /
+  hover) — `hover → button·press` in particular is finally honest. Old share
+  links are unaffected (they carry their own saved lenses).
+
 ## [0.9.12] — 2026-07-23
 
 ### Changed — the scope lens rides the curve, and springs preview honestly

@@ -16,11 +16,15 @@ const page = await mk();
 await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
 { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
-// default: 4 probes, all "orb" lens, each stage has an .orb
+// default: 4 probes, each seeded with the lens that fits its intent —
+// scope (enter, flagship) · orb (exit) · orb (move) · button (hover)
 assert('4 probes', await page.locator('.probe').count() === 4);
 const kinds = await page.locator('.probe__kind').evaluateAll(els => els.map(e => e.value));
-assert('default lenses: scope + 3 orbs', kinds[0] === 'scope' && kinds.slice(1).every(k => k === 'orb'));
-assert('3 orb stages + 1 scope stage', await page.locator('.probe .orb').count() === 3 && await page.locator('.probe .scope').count() === 1);
+assert('default lenses fit the intents (scope · orb · orb · button)',
+  JSON.stringify(kinds) === JSON.stringify(['scope', 'orb', 'orb', 'button']));
+assert('2 orb stages + 1 scope + 1 button stage',
+  await page.locator('.probe .orb').count() === 2 && await page.locator('.probe .scope').count() === 1
+  && await page.locator('.probe .btnpad').count() === 1);
 // default intents spread enter/exit/move/hover
 const intentSel = await page.locator('.probe__sel').evaluateAll(els => els.map(e => e.selectedOptions[0].textContent));
 assert('default intents spread', JSON.stringify(intentSel) === JSON.stringify(['enter','exit','move','hover']));
@@ -46,13 +50,27 @@ await p2.goto(url, { waitUntil: 'networkidle' });
 assert('restored: probe 0 lens = button', (await p2.locator('.probe__kind').first().inputValue()) === 'button');
 assert('restored: probe 1 lens = orb', (await p2.locator('.probe__kind').nth(1).inputValue()) === 'orb');
 
-// legacy link (bare intent indices, no kind) still loads: intents restored, kinds default to orb
+// legacy link (bare intent indices, no kind) still loads: intents restored,
+// kinds fall back to the seeded defaults (scope · orb · orb · button)
 const p3 = await mk();
 await p3.goto(LEGACY, { waitUntil: 'networkidle' });
 { const _x=p3.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 assert('legacy link: 5 easings restored', await p3.locator('#easings .ecard').count() === 5);
 const lk = await p3.locator('.probe__kind').evaluateAll(els => els.map(e => e.value));
-assert('legacy link: kinds fall back to defaults (scope + orbs)', lk[0] === 'scope' && lk.slice(1).every(k => k === 'orb'));
+assert('legacy link: kinds fall back to the seeded defaults',
+  JSON.stringify(lk) === JSON.stringify(['scope', 'orb', 'orb', 'button']));
+
+// re-pointing a probe follows the new intent's character (unless the lens was
+// chosen explicitly). probe 1 is seeded orb (unlocked).
+const kindOf = i => page.locator('.probe__kind').nth(i).inputValue();
+await page.locator('.probe__sel').nth(1).selectOption({ label: 'hover' });
+assert('re-point → hover picks the button (press) lens', (await kindOf(1)) === 'button');
+await page.locator('.probe__sel').nth(1).selectOption({ label: 'enter' });
+assert('re-point → enter falls back to scope (stagger shows there)', (await kindOf(1)) === 'scope');
+// an explicit lens choice locks: re-pointing afterwards keeps it
+await page.locator('.probe__kind').nth(2).selectOption('cascade');
+await page.locator('.probe__sel').nth(2).selectOption({ label: 'hover' });
+assert('explicit lens choice survives a re-point', (await kindOf(2)) === 'cascade');
 
 // the bench stays alive (idle-loop) and signposts replay (static guards, robust)
 {

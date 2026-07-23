@@ -100,12 +100,9 @@ const SCOPE_ANIM = {
   height:   {props:["transform"], before:{transform:"scaleY(.18)"}, after:{transform:"scaleY(1)"}},
   width:    {props:["transform"], before:{transform:"scaleX(.18)"}, after:{transform:"scaleX(1)"}},
 };
-let probes = [
-  {kind:"scope",intent:null},   // opens on the unified "everything" lens (pointed at enter)
-  {kind:"orb",intent:null},
-  {kind:"orb",intent:null},
-  {kind:"orb",intent:null},
-];
+// the bench probes — seeded below (see SEED_INTENTS) once resolve()/defaultLensFor
+// exist, so each opens in the lens that fits its intent's character
+let probes = [];
 // token names double as CSS custom-property suffixes, so keep them slug-safe
 const slug = s => (s||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
 function uniqueName(base, arr, skipIdx){
@@ -153,9 +150,33 @@ const resolve = it => { const b=bindOf(it); const e=easeObj(b.ease);
   const dpx = b.distance ? distPx(b.distance) : null;
   return { d: durMs(b.dur)+"ms", e: easeCSS(e), eLabel: easeLabel(e), eEff: easeCSS(eff), split, s: +b.stagger||0, prop: b.prop||"all", distName: b.distance||"", distPx: dpx, reveal: (typeof b.reveal==="number") ? b.reveal : null, scrub: b.scrub ? {tl:b.scrub.tl||"view",range:b.scrub.range||"cover",fx:b.scrub.fx||"progress"} : null, vt: b.vt ? {type:b.vt.type||"root"} : null }; };
 const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
-// default probe intents: enter / exit / move / hover, one abstract orb each
-probes[0].intent = intents[0].id; probes[1].intent = intents[1].id;
-probes[2].intent = intents[2].id; probes[3].intent = intents[4].id;
+// pick the lens that best previews an intent's *defining* trait. Structural
+// mechanics win first (only their lens can show them at all), then a named
+// press/hover gesture, then sequence rhythm — else the flagship "everything"
+// scope, which already carries the curve, the ride-dot (+ spring overshoot),
+// the animated property and the stagger. Used for the *default* only; an
+// explicit lens choice (probes[i].lensSet) always wins.
+function defaultLensFor(it){
+  const r=resolve(it);
+  if(r.scrub) return "scrub";                                   // scroll-linked → progress, not a clock
+  if(r.vt) return "viewtransition";                             // DOM state swap
+  if(r.reveal!=null) return "scrollreveal";                     // in-view reveal threshold
+  if(r.prop==="height"||r.prop==="width") return "acc";         // layout reflow
+  if(/\b(hover|press|tap|click|focus|toggle|button|ripple)\b/i.test(`${it.name||""} ${it.purpose||""}`)) return "button";
+  if(r.distName) return "orb";                                  // an explicit travel token → the comet reads it best
+  return "scope";                                               // plain / spring / staggered — scope shows the curve, ride-dot & the cascade
+}
+// seed the bench: each probe previews its intent in the lens that fits its
+// character (enter → scope leads on the flagship). A second intent that also
+// resolves to scope falls to orb, so the bench opens with variety, not a wall
+// of identical scope tiles. cascade stays a one-click manual reach.
+const SEED_INTENTS=[intents[0].id, intents[1].id, intents[2].id, intents[4].id];
+let seedUsedScope=false;
+probes = SEED_INTENTS.map(id=>{
+  let k = defaultLensFor(findIntent(id));
+  if(k==="scope"){ if(seedUsedScope) k="orb"; else seedUsedScope=true; }
+  return {kind:k, intent:id};
+});
 
 // ---------- render: duration ladder ----------
 const maxMs = () => Math.max(...durations.map(d=>d.ms));
@@ -1083,8 +1104,10 @@ document.addEventListener("change", e=>{
   if(sc==="ivt"){ const bb=bindOf(intents[i]); if(t.checked) bb.vt={...VT_DEFAULT}; else delete bb.vt; rerenderAll(); }
   if(sc==="ivttype"){ const bb=bindOf(intents[i]); if(bb.vt) bb.vt.type=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="ieff"){ bindOf(intents[i]).effectsEase=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
-  if(sc==="probe"){ probes[i].intent=t.value; renderBench(); writeURL(); }
-  if(sc==="pkind"){ probes[i].kind=t.value; renderBench(); writeURL(); }
+  // re-point a probe: follow the new intent's best lens, unless the user has
+  // explicitly chosen a lens for this probe (explicit choice always wins)
+  if(sc==="probe"){ probes[i].intent=t.value; if(!probes[i].lensSet) probes[i].kind=defaultLensFor(findIntent(t.value)); renderBench(); writeURL(); }
+  if(sc==="pkind"){ probes[i].kind=t.value; probes[i].lensSet=true; renderBench(); writeURL(); }
   if(sc==="mname"){ const s=(t.value.trim())||modes[i].name; modes[i].name=uniqueName(s,modes,i); rerenderAll(); }
 });
 document.addEventListener("click", e=>{

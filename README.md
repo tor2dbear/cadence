@@ -71,8 +71,11 @@ Prototype (v0.3). Rough edges expected.
   (curve + time playhead + property-driven demo elements that cascade by
   stagger), an **orb** comet (travel + easing as motion blur), a **cascade**
   stagger timeline, **press** / **reflow** gestures, and **scroll-driven** &
-  **view-transition** lenses. Real, integrated components live on the demo
-  page — not the bench.
+  **view-transition** lenses. Each probe opens in the lens that fits its
+  intent's character (a press gesture in `button·press`, a scroll-scrub in
+  `scroll·scrub`, a spring in `scope`), and re-pointing a probe follows the new
+  intent — so the preview always matches what the token does. Real, integrated
+  components live on the demo page — not the bench.
 - A **live demo** (`demo.html`) — a real product surface where the system is
   applied to actual components; it re-times live as you edit (BroadcastChannel +
   the URL hash), openable in a tab or as an in-editor preview overlay.
