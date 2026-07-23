@@ -23,10 +23,13 @@ Mirrors how design systems encode color (primitives → semantic):
    from the primitives (`enter = duration.base + emphasized`). Extensible: users
    add their own. This is where art direction lives.
 
-**Components are demoted to a swappable "bench."** Each probe is just a lens you
-point at one intent. This was a deliberate pivot: an earlier version hardwired 4
-roles to 4 demo components, which didn't scale — any new component "fell
-outside." Organizing around the *token architecture* instead means nothing can.
+**Components are demoted to a swappable "bench" of abstract instruments.** Each
+probe is a lens you point at one intent — it isolates one *measurable quality*
+of a token (the easing curve, the stagger, the travel), rather than re-staging a
+component. This was a deliberate pivot: an earlier version hardwired 4 roles to 4
+demo components, which didn't scale — any new component "fell outside."
+Organizing around the *token architecture* instead means nothing can. Real,
+integrated components live on the `demo.html` surface, not the bench.
 
 **The opinion layer ("System read")** critiques the whole system, not one
 component: ladder evenness, redundant easings, enter/exit asymmetry, duration
@@ -51,8 +54,8 @@ checks is the differentiator — tools generate, they don't judge.
 - ✅ Draggable bézier editor (author curves directly, not just presets).
 - ✅ Editable ladder — add/remove/rename duration steps and easings.
 - Custom probes — "bring your own component" into the bench. *(Partly there: a
-  swappable UI-component library in the bench + a full `demo.html` surface;
-  "bring your **own** markup" is still open.)*
+  swappable set of abstract instruments in the bench + a full `demo.html`
+  surface of real components; "bring your **own** markup" is still open.)*
 - ✅ Shareable system via URL state (encode the whole token set in the link).
 - ✅ More export targets: Tailwind config, Style Dictionary, JS/TS objects.
 - Optional: import an existing palette of motion (a framework's tokens) and

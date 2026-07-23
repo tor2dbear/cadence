@@ -66,10 +66,13 @@ Prototype (v0.3). Rough edges expected.
   spatial · effects **easing split**, and a **distance** reference.
 
 **Seeing it**
-- A lens-based bench: each probe is a lens on one intent — a unified **scope**
+- A lens-based bench of **abstract instruments**: each probe is a lens on one
+  intent that isolates one measurable quality of a token — a unified **scope**
   (curve + time playhead + property-driven demo elements that cascade by
-  stagger), an abstract **orb**, a **cascade** stagger timeline, or a UI
-  component (drawer, button, accordion, list reveal).
+  stagger), an **orb** comet (travel + easing as motion blur), a **cascade**
+  stagger timeline, **press** / **reflow** gestures, and **scroll-driven** &
+  **view-transition** lenses. Real, integrated components live on the demo
+  page — not the bench.
 - A **live demo** (`demo.html`) — a real product surface where the system is
   applied to actual components; it re-times live as you edit (BroadcastChannel +
   the URL hash), openable in a tab or as an in-editor preview overlay.
