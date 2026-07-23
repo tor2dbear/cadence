@@ -13,6 +13,11 @@ done
 # self-hosted fonts (woff2) — ship the whole dir so @font-face resolves on the CDN
 [ -d fonts ] && cp -r fonts dist/
 
+# generate the /changelog page from CHANGELOG.md (single source of truth)
+if [ -f scripts/gen-changelog.mjs ]; then
+  node scripts/gen-changelog.mjs > dist/changelog.html && echo "generated dist/changelog.html"
+fi
+
 # stamp an automatic build version into the badge: v<semver> · <short commit>.
 # semver comes from package.json (bump it at milestones); the commit is filled
 # in by Cloudflare Pages' env (CF_PAGES_COMMIT_SHA), or git locally.
@@ -29,13 +34,14 @@ if [ -f dist/index.html ]; then
 fi
 # the guide shares styles.css (no cadence.js) — cache-bust its stylesheet too
 [ -f dist/guide.html ] && sed -i "s|href=\"styles.css\"|href=\"styles.css?v=${SHA:0:7}\"|" dist/guide.html
+[ -f dist/changelog.html ] && sed -i "s|href=\"styles.css\"|href=\"styles.css?v=${SHA:0:7}\"|" dist/changelog.html
 
 # Inject Cloudflare Web Analytics into the deployed pages only. It loads an
 # external beacon, so keeping it out of the source means the offline Playwright
 # smoke tests (which open the source files) don't trip over a blocked request —
 # analytics is a deploy concern, like the version stamp and cache-bust above.
 BEACON='<!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='"'"'{"token": "b306d2ac08f646a399bf3d359b262463"}'"'"'></script>'
-for f in dist/index.html dist/demo.html dist/guide.html; do
+for f in dist/index.html dist/demo.html dist/guide.html dist/changelog.html; do
   [ -f "$f" ] && sed -i "s|</body>|${BEACON}</body>|" "$f"
 done
 

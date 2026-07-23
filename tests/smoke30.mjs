@@ -6,6 +6,7 @@
  *    source — otherwise its external load would trip the offline smoke tests;
  *  - build.sh copies the new .txt/.xml assets. */
 import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const root = new URL('../', import.meta.url);
 const read = p => readFileSync(fileURLToPath(new URL(p, root)), 'utf8');
@@ -44,6 +45,22 @@ assert('FAQ answers are visible (match the JSON-LD)', /What are motion design to
 assert('robots.txt points at the sitemap', robots.includes(`Sitemap: ${HOST}/sitemap.xml`));
 assert('sitemap lists the landing + guide', sitemap.includes(`${HOST}/</loc>`) && sitemap.includes(`${HOST}/guide</loc>`));
 assert('sitemap omits the noindexed demo', !sitemap.includes('demo.html'));
+assert('sitemap lists the changelog', sitemap.includes(`${HOST}/changelog</loc>`));
+
+// --- the changelog is self-hosted (on-domain), generated from CHANGELOG.md ---
+assert('the version badge links to the on-site changelog, not GitHub',
+  /id="proto"[^>]*href="changelog\.html"|href="changelog\.html"[^>]*id="proto"/.test(index));
+assert('the colophon changelog link is on-site', /<a href="changelog\.html">Changelog<\/a>/.test(index));
+assert('build.sh generates the changelog from CHANGELOG.md', /gen-changelog\.mjs > dist\/changelog\.html/.test(build));
+{
+  const clHtml = execFileSync('node', [fileURLToPath(new URL('../scripts/gen-changelog.mjs', import.meta.url))], { encoding: 'utf8' });
+  assert('changelog generator emits a titled, canonical page',
+    /<title>Changelog — Cadence<\/title>/.test(clHtml) && new RegExp(`canonical" href="${HOST}/changelog"`).test(clHtml));
+  assert('changelog generator renders the latest version entry',
+    /<h2 class="cl-ver"[^>]*><span class="cl-num">0\.9\.7<\/span>/.test(clHtml));
+  assert('changelog generator carries BreadcrumbList', /"@type":"BreadcrumbList"/.test(clHtml));
+  assert('changelog generator leaves no raw markdown bold', !/\*\*/.test(clHtml.replace(/<[^>]+>/g, '')));
+}
 
 // --- the guide is a real, indexable second page ---
 assert('guide has its own canonical', guide.includes(`rel="canonical" href="${HOST}/guide"`));

@@ -5,6 +5,17 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.8] — 2026-07-22
+
+### Added
+- **A self-hosted `/changelog` page**, generated from `CHANGELOG.md` at build
+  time (this file stays the single source of truth — a small `scripts/
+  gen-changelog.mjs` converts it, no dependency). Styled in the identity like
+  the guide, with its own canonical, Open Graph, and `BreadcrumbList`. The
+  version badge and the colophon now link there instead of the raw file on
+  GitHub — keeping visitors on-domain, adding an indexable page and a
+  freshness signal, and reading as a finished product rather than a repo file.
+
 ## [0.9.7] — 2026-07-22
 
 ### Fixed
