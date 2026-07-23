@@ -389,11 +389,13 @@ html.boot-tool #landing{display:none}
   58% {stroke-dashoffset:0;opacity:0}
   100%{stroke-dashoffset:1000;opacity:0}
 }
-/* the coloured head glides start→end once, then vanishes */
+/* the coloured head glides start→end once — and its own colour fades from the
+   accent to the faint grey as it goes, so the colour dissolves into the trail */
 @keyframes ltrHead{
-  0%  {stroke-dashoffset:130;opacity:0}
-  4%  {opacity:.85}
-  24% {stroke-dashoffset:-1000;opacity:.85}
+  0%  {stroke-dashoffset:130;opacity:0;stroke:var(--accent)}
+  4%  {opacity:.85;stroke:var(--accent)}
+  12% {stroke:var(--accent)}
+  24% {stroke-dashoffset:-1000;opacity:.62;stroke:color-mix(in srgb,var(--ink) 14%,transparent)}
   28% {stroke-dashoffset:-1000;opacity:0}
   100%{stroke-dashoffset:-1000;opacity:0}
 }
