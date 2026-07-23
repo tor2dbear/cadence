@@ -359,26 +359,28 @@ html.boot-tool #landing{display:none}
 .lnav__link:hover{border-color:var(--accent);color:var(--ink)}
 
 .lhero{max-width:720px;margin-top:6vh;position:relative;isolation:isolate;overflow:clip}
-/* ambient bezier-editor motif behind the hero: one easing at a time fades in —
-   complete with its control-point handles — like the curve editor cycling
-   through the set. Faint, upper-right, below the copy (hero's isolated context). */
+/* ambient easing traces behind the hero: a short segment glides along each
+   (otherwise-invisible) easing curve, so you read the shape from the motion —
+   the whole curve is never shown. Faint, below the copy (isolated context). */
 .lherobg{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:clip}
-.lce-svg{position:absolute;top:-6%;right:-8%;width:min(74%,540px);height:auto;overflow:visible}
-.lce-base{fill:none;stroke:color-mix(in srgb,var(--ink) 7%,transparent);stroke-width:1;stroke-dasharray:2 3.5;vector-effect:non-scaling-stroke}
-.lce-curve{fill:none;stroke:color-mix(in srgb,var(--ink) 17%,transparent);stroke-width:2.2;stroke-linecap:round;vector-effect:non-scaling-stroke}
-.lce-handle{stroke:color-mix(in srgb,var(--accent) 26%,transparent);stroke-width:1.1;vector-effect:non-scaling-stroke}
-.lce-anchor{fill:color-mix(in srgb,var(--ink) 22%,transparent)}
-.lce-ctrl{fill:color-mix(in srgb,var(--accent) 42%,transparent)}
-.lce{opacity:0}
-.lce--1{opacity:1}   /* reduced-motion / no-animation fallback: first easing stays visible */
+.ltr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.ltr-guide,.ltr-seg{fill:none}
+.ltr-guide{stroke:color-mix(in srgb,var(--ink) 6%,transparent);stroke-width:2}
+/* pathLength=1000 normalises the dash, so "300 700" is exactly one 30% arc per
+   curve regardless of size/stretch — the moving piece, tracing the easing. */
+.ltr-seg{stroke:color-mix(in srgb,var(--accent) 52%,transparent);stroke-width:3;stroke-linecap:round;
+  stroke-dasharray:300 700;opacity:0}
 @media (prefers-reduced-motion:no-preference){
-  /* one easing at a time. rides --l-ease, so the crossfade eases in "crafted"
-     and goes linear in "plain". */
-  .lce{animation:lceCycle 16.5s var(--l-ease) infinite}
-  .lce--2{animation-delay:-5.5s}
-  .lce--3{animation-delay:-11s}
+  /* the arc travels; the full guide curve hides, so only the moving piece is
+     seen. Linear travel = a steady glide, and its visual speed already tells the
+     easing (the path is steep in the fast part). */
+  .ltr-guide{opacity:0}
+  .ltr-seg{opacity:1}
+  .ltr-seg.ltr--1{animation:ltrMove 8s linear infinite}
+  .ltr-seg.ltr--2{animation:ltrMove 10.5s linear infinite;animation-delay:-3.5s}
+  .ltr-seg.ltr--3{animation:ltrMove 13s linear infinite;animation-delay:-7s}
 }
-@keyframes lceCycle{0%{opacity:0}6%{opacity:1}30%{opacity:1}40%{opacity:0}100%{opacity:0}}
+@keyframes ltrMove{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}
 .lkicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
 .lhead{font-family:var(--serif);font-size:clamp(30px,6.2vw,54px);line-height:1.05;letter-spacing:-.015em;margin:0 0 18px;font-weight:600;font-optical-sizing:auto}
 .lhead em{font-style:italic;color:var(--accent)}

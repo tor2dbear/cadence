@@ -7,15 +7,14 @@ shows the deployed semver plus the commit it was built from, stamped at deploy.
 
 ## [0.9.20] — 2026-07-23
 
-### Changed — the hero background is now the curve editor, cycling
-- **Reworked the hero backdrop into a bezier-editor motif.** Instead of curves
-  drifting together, one easing at a time now **fades in complete with its
-  control-point handles** — the anchors, the handle lines, the control dots —
-  like watching Cadence's own curve editor page through the set (ease-out →
-  ease-in-out → a back/overshoot), then fade to the next. Ties the backdrop
-  straight to the product's core interaction. Faint, upper-right, below the
-  copy; the crossfade rides `--l-ease` (linear in **plain**); reduced-motion
-  holds the first easing still.
+### Changed — the hero backdrop traces easing curves
+- **Reworked the hero backdrop into travelling easing traces.** A short **arc
+  glides along each of three (otherwise-invisible) easing curves** — the whole
+  curve is never shown; you read its shape from the moving piece, and its visual
+  speed tells the easing (fast where the curve is steep). Three arcs at
+  different speeds, faint, below the copy. Reduced-motion shows the faint full
+  curves, still. (Earlier passes this session — a drifting field, then a
+  fade-in bezier-editor motif with handles — were folded into this cleaner one.)
 
 ## [0.9.19] — 2026-07-23
 

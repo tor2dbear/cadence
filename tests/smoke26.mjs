@@ -43,14 +43,13 @@ assert('easing curve draws via clip-path, not a mismatched stroke-dash',
 const springKf = (css.match(/@keyframes ltSpring\{[^\n]*/) || [''])[0];
 assert('spring tile travels the full track via left, not a fixed translateX',
   /left:calc\(100% - 22px\)/.test(springKf) && !/translateX/.test(springKf));
-// the hero's ambient bezier-editor motif: 3 easing groups (each with handles),
-// cycling one at a time, reduced-motion-gated and riding --l-ease so the
-// crossfade degrades with the "plain" motion switch
-assert('hero has the ambient bezier-editor motif (3 easings + handles)',
-  /class="lherobg"/.test(html) && (html.match(/class="lce lce--/g) || []).length === 3
-  && /lce-handle/.test(html) && /lce-ctrl/.test(html));
-assert('the easing cycle is reduced-motion-gated and rides --l-ease',
-  /@media \(prefers-reduced-motion:no-preference\)\{[^}]*\.lce\{animation:lceCycle[^}]*var\(--l-ease\)/.test(css.replace(/\n/g,'')));
+// the hero's ambient easing traces: a segment glides along each (invisible)
+// easing curve — 3 traces, reduced-motion-gated (the segment travel only runs
+// with motion; the faint full guide is the reduced-motion fallback)
+assert('hero has the ambient easing traces (3 traveling segments)',
+  /class="lherobg"/.test(html) && (html.match(/class="ltr-seg ltr--/g) || []).length === 3);
+assert('the segment travel is reduced-motion-gated',
+  /@media \(prefers-reduced-motion:no-preference\)\{[\s\S]*?\.ltr-seg\.ltr--1\{animation:ltrMove/.test(css));
 
 // --- runtime checks: the fonts load and the identity is applied ---
 const browser = await chromium.launch();

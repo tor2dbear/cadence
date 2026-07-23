@@ -61,26 +61,15 @@
          object, drifting. It rides --l-curve, so it eases in "crafted" and
          goes linear in "plain" (dogfooding the motion switch). -->
     <div class="lherobg" aria-hidden="true">
-      <svg class="lce-svg" viewBox="0 0 128 100">
-        <line class="lce-base" x1="8" y1="86" x2="120" y2="14" />
-        <g class="lce lce--1"><!-- ease-out .22,1,.36,1 -->
-          <path class="lce-curve" d="M8,86 C32.6,14 48.3,14 120,14" />
-          <line class="lce-handle" x1="8" y1="86" x2="32.6" y2="14" /><line class="lce-handle" x1="120" y1="14" x2="48.3" y2="14" />
-          <circle class="lce-anchor" cx="8" cy="86" r="2.4" /><circle class="lce-anchor" cx="120" cy="14" r="2.4" />
-          <circle class="lce-ctrl" cx="32.6" cy="14" r="2.2" /><circle class="lce-ctrl" cx="48.3" cy="14" r="2.2" />
-        </g>
-        <g class="lce lce--2"><!-- ease-in-out .65,0,.35,1 -->
-          <path class="lce-curve" d="M8,86 C80.8,86 47.2,14 120,14" />
-          <line class="lce-handle" x1="8" y1="86" x2="80.8" y2="86" /><line class="lce-handle" x1="120" y1="14" x2="47.2" y2="14" />
-          <circle class="lce-anchor" cx="8" cy="86" r="2.4" /><circle class="lce-anchor" cx="120" cy="14" r="2.4" />
-          <circle class="lce-ctrl" cx="80.8" cy="86" r="2.2" /><circle class="lce-ctrl" cx="47.2" cy="14" r="2.2" />
-        </g>
-        <g class="lce lce--3"><!-- back / overshoot .34,1.56,.64,1 -->
-          <path class="lce-curve" d="M8,86 C46.1,-26.3 79.7,14 120,14" />
-          <line class="lce-handle" x1="8" y1="86" x2="46.1" y2="-26.3" /><line class="lce-handle" x1="120" y1="14" x2="79.7" y2="14" />
-          <circle class="lce-anchor" cx="8" cy="86" r="2.4" /><circle class="lce-anchor" cx="120" cy="14" r="2.4" />
-          <circle class="lce-ctrl" cx="46.1" cy="-26.3" r="2.2" /><circle class="lce-ctrl" cx="79.7" cy="14" r="2.2" />
-        </g>
+      <!-- a segment glides along each (invisible) easing curve, tracing its
+           shape as it goes — the whole curve is never shown at once. -->
+      <svg class="ltr-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice">
+        <path class="ltr-guide ltr--1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
+        <path class="ltr-seg ltr--1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
+        <path class="ltr-guide ltr--2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
+        <path class="ltr-seg ltr--2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
+        <path class="ltr-guide ltr--3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
+        <path class="ltr-seg ltr--3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
       </svg>
     </div>
     <p class="lkicker rise" style="--i:0">A motion&nbsp;system designer</p>
