@@ -371,16 +371,22 @@ html.boot-tool #landing{display:none}
 .ltr-seg{stroke:color-mix(in srgb,var(--accent) 52%,transparent);stroke-width:3;stroke-linecap:round;
   stroke-dasharray:300 700;opacity:0}
 @media (prefers-reduced-motion:no-preference){
-  /* the arc travels; the full guide curve hides, so only the moving piece is
-     seen. Linear travel = a steady glide, and its visual speed already tells the
-     easing (the path is steep in the fast part). */
+  /* one arc at a time: each travels its whole curve in its third of the cycle,
+     then hides while the next takes over. The full guide curves stay hidden, so
+     only the single moving piece is seen; its visual speed tells the easing
+     (the path is steep in the fast part). */
   .ltr-guide{opacity:0}
-  .ltr-seg{opacity:1}
-  .ltr-seg.ltr--1{animation:ltrMove 8s linear infinite}
-  .ltr-seg.ltr--2{animation:ltrMove 10.5s linear infinite;animation-delay:-3.5s}
-  .ltr-seg.ltr--3{animation:ltrMove 13s linear infinite;animation-delay:-7s}
+  .ltr-seg{animation:ltrSeq 15s linear infinite}
+  .ltr-seg.ltr--2{animation-delay:-10s}
+  .ltr-seg.ltr--3{animation-delay:-5s}
 }
-@keyframes ltrMove{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}
+@keyframes ltrSeq{
+  0%{stroke-dashoffset:1000;opacity:0}
+  2%{opacity:1}
+  30%{opacity:1}
+  33%{stroke-dashoffset:0;opacity:0}
+  100%{stroke-dashoffset:0;opacity:0}
+}
 .lkicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
 .lhead{font-family:var(--serif);font-size:clamp(30px,6.2vw,54px);line-height:1.05;letter-spacing:-.015em;margin:0 0 18px;font-weight:600;font-optical-sizing:auto}
 .lhead em{font-style:italic;color:var(--accent)}
