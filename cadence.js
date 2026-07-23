@@ -1040,7 +1040,11 @@ let bchan=null; try{ bchan=new BroadcastChannel("cadence"); }catch(_){}
 let mode="tool";
 function writeURL(){
   const enc=encodeState();
-  if(mode==="tool"){ try{ history.replaceState(null,"",location.pathname+location.search+"#"+enc); }catch(_){} }
+  // keep a clean `#tool` until the system diverges from the default; only then
+  // stamp the full shareable state into the address bar. The demo link and the
+  // live-preview channel always get the full encode, so they stay in sync.
+  const hash = enc===DEFAULT_ENC ? "tool" : enc;
+  if(mode==="tool"){ try{ history.replaceState(null,"",location.pathname+location.search+"#"+hash); }catch(_){} }
   if(bchan){ try{ bchan.postMessage({hash:enc}); }catch(_){} }
   const dl=document.getElementById("demoLink"); if(dl) dl.href="demo.html#"+enc;
 }
@@ -1277,6 +1281,11 @@ let openPreview=()=>{};
   if(x) x.addEventListener("click",()=>{ el.hidden=true; try{ localStorage.setItem("cadence-intro","off"); }catch(_){} });
 })();
 
+// the pristine default system, encoded once before any shared link is applied.
+// While the state still matches this, the tool keeps a clean `#tool` in the URL
+// instead of a wall of base64 — the long shareable hash only appears once you
+// actually diverge from the default (see writeURL).
+const DEFAULT_ENC = encodeState();
 // restore a shared system from the URL hash + decide landing vs tool. Empty
 // hash → landing (first impression); any hash → straight into the tool (so
 // share links and #tool both skip the landing, and tests boot the editor).

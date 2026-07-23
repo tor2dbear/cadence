@@ -36,7 +36,13 @@ await page.waitForTimeout(300);   // let the view transition settle
 assert('tool visible after Start', await page.locator('#toolview').isVisible());
 assert('landing hidden after Start', !(await page.locator('#landing').isVisible()));
 assert('editor is live (durations rendered)', await page.locator('#durations .drow').count() > 0);
-assert('hash now carries tool state', await page.evaluate(() => location.hash.length > 1));
+// entering the tool at defaults keeps a clean #tool — no wall of base64 until
+// you actually diverge from the default system
+assert('entering the tool keeps a clean #tool', (await page.evaluate(() => location.hash)) === '#tool');
+// an edit then stamps the full shareable state into the address bar
+await page.locator('#durations .drow input[type=range]').first().evaluate(el => { el.value = Number(el.value) + 40; el.dispatchEvent(new Event('input', { bubbles: true })); });
+await page.waitForTimeout(80);
+assert('an edit stamps the full state hash', await page.evaluate(() => location.hash !== '#tool' && location.hash.length > 20));
 assert('no console/page errors (landing→tool)', errors.length === 0);
 
 // --- #tool boots straight into the tool, skipping the landing ---

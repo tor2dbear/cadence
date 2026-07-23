@@ -5,6 +5,17 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.14] — 2026-07-23
+
+### Changed — the URL stays clean until you diverge
+- **Entering the tool no longer dumps a wall of base64 into the address bar.**
+  It used to stamp the full encoded state on entry even when nothing had changed
+  from the default system. Now the URL keeps a clean `#tool` while the system
+  still matches the default, and the long **shareable** state hash only appears
+  once you actually edit something (and drops back to `#tool` if you revert). The
+  live-demo channel and the demo link always get the full state, so they stay in
+  sync regardless.
+
 ## [0.9.13] — 2026-07-23
 
 ### Changed — the default lens now fits the intent (without collapsing the bench)
