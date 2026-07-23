@@ -373,28 +373,26 @@ html.boot-tool #landing{display:none}
 .lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,64vw,820px);
   z-index:-1;pointer-events:none;overflow:hidden}
 .ltr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-/* the comet: a bright accent head (e1) with fainter segments trailing behind,
-   easing accent → grey → gone. Each segment is the same short dash; the tail
-   ones LAG (a later animation-delay = further back along the curve), so the
-   taper direction is unambiguous. Swept by CSS stroke-dashoffset (animates in
-   every browser, unlike the old SMIL gradient that froze solid). A big dash gap
-   parks the comet off the path end for most of the cycle → sparse, and nothing
-   is shown permanently (no always-on guide). */
-.ltr-echo{fill:none;stroke-linecap:round;stroke-width:1.5;stroke-dasharray:44 3000}
-.ltr-e1{stroke:var(--accent);opacity:.85}                                 /* bright head */
-.ltr-e2{stroke:var(--accent);opacity:.5}
-.ltr-e3{stroke:var(--accent);opacity:.3}
-.ltr-e4{stroke:color-mix(in srgb,var(--ink) 30%,transparent);opacity:.55}  /* easing to grey */
-.ltr-e5{stroke:color-mix(in srgb,var(--ink) 20%,transparent);opacity:.4}   /* faint grey tail */
+/* the comet: a bright accent head (e1) with two fainter segments trailing
+   behind (a later animation-delay = further back along the curve). The group's
+   feGaussianBlur smears them into one soft motion-blur streak — bright head
+   dissolving into the sand, no visible steps or gradient. Swept by CSS
+   stroke-dashoffset (animates in every browser, unlike the old SMIL gradient
+   that froze solid); a big dash gap parks it off the path end most of the
+   cycle, and nothing is shown permanently. */
+.ltr-echo{fill:none;stroke-linecap:round;stroke-width:2;stroke-dasharray:40 3000;stroke:var(--accent)}
+.ltr-e1{opacity:.95}   /* bright head */
+.ltr-e2{opacity:.55}
+.ltr-e3{opacity:.28}   /* faintest, furthest back */
 @media (prefers-reduced-motion:no-preference){
-  /* one keyframe drives every curve (pathLength normalises them); tail layers
-     lag e1 by a beat each (sit further back), curves desync via dur + phase */
+  /* one keyframe drives every curve (pathLength normalises them); the two tail
+     layers lag e1 by a beat each (sit further back), curves desync via dur + phase */
   .ltr-echo{animation:ltrSweep 24s linear infinite}
-  .ltr-e2{animation-delay:.16s}.ltr-e3{animation-delay:.32s}.ltr-e4{animation-delay:.48s}.ltr-e5{animation-delay:.64s}
+  .ltr-e2{animation-delay:.15s}.ltr-e3{animation-delay:.3s}
   .ltr--2.ltr-echo{animation-duration:29s}
-  .ltr--2.ltr-e1{animation-delay:-13s}.ltr--2.ltr-e2{animation-delay:-12.84s}.ltr--2.ltr-e3{animation-delay:-12.68s}.ltr--2.ltr-e4{animation-delay:-12.52s}.ltr--2.ltr-e5{animation-delay:-12.36s}
+  .ltr--2.ltr-e1{animation-delay:-13s}.ltr--2.ltr-e2{animation-delay:-12.85s}.ltr--2.ltr-e3{animation-delay:-12.7s}
   .ltr--3.ltr-echo{animation-duration:26s}
-  .ltr--3.ltr-e1{animation-delay:-19s}.ltr--3.ltr-e2{animation-delay:-18.84s}.ltr--3.ltr-e3{animation-delay:-18.68s}.ltr--3.ltr-e4{animation-delay:-18.52s}.ltr--3.ltr-e5{animation-delay:-18.36s}
+  .ltr--3.ltr-e1{animation-delay:-19s}.ltr--3.ltr-e2{animation-delay:-18.85s}.ltr--3.ltr-e3{animation-delay:-18.7s}
 }
 /* the comet sweeps across in the first quarter, then parks off the end (huge
    gap → invisible) for the rest of the cycle */
@@ -405,9 +403,9 @@ html.boot-tool #landing{display:none}
 }
 /* reduced motion: no sweep, so hide the comet (else a static chunk parks at the
    path start) — nothing is drawn */
-@media (prefers-reduced-motion:reduce){ .ltr-echo{opacity:0} }
+@media (prefers-reduced-motion:reduce){ .ltr-mb{opacity:0} }
 /* mobile: the height cap already keeps it a band; thin it a touch */
-@media (max-width:720px){ .ltr-echo{stroke-width:1.2} }
+@media (max-width:720px){ .ltr-echo{stroke-width:1.5} }
 /* variant B — a live bezier editor: the curve morphs with its handles (SMIL in
    the markup) while the whole thing slowly zooms + pans (CSS). It sits in the
    open space to the RIGHT of the copy (desktop only), preserveAspectRatio=meet

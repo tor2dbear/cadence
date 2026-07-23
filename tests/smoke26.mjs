@@ -46,16 +46,17 @@ assert('spring tile travels the full track via left, not a fixed translateX',
 // variant A — traces: each of 3 curves is a 5-segment CSS comet (bright accent
 // head → grey tail), swept by CSS (NOT SMIL, which froze in some browsers), and
 // nothing is drawn permanently (no always-on grey guide)
-assert('traces: 3 curves, each a 5-segment accent→grey comet, no permanent guide',
+assert('traces: 3 curves, each a lagging-segment comet, no permanent guide',
   /class="lherobg"/.test(html)
-  && (html.match(/class="ltr-echo ltr-e\d ltr--/g) || []).length === 15
+  && (html.match(/class="ltr-echo ltr-e\d ltr--/g) || []).length === 9
   && !/ltr-trail/.test(html));
-assert('the comet is CSS-driven (no SMIL anywhere → animates in every browser)',
+assert('the comet is a CSS-swept streak blurred into motion-blur (no SMIL, no gradient)',
   !/<animateTransform/.test(html) && !/url\(#ltg/.test(html)
+  && /<feGaussianBlur/.test(html) && /filter="url\(#ltrmb\)"/.test(html)
   && /@keyframes ltrSweep\{[\s\S]*?stroke-dashoffset/.test(css)
-  && /\.ltr-e1\{stroke:var\(--accent\)/.test(css));
+  && /\.ltr-echo\{[^}]*stroke:var\(--accent\)/.test(css));
 assert('the comet is reduced-motion-gated (no sweep → nothing is drawn)',
-  /@media \(prefers-reduced-motion:reduce\)\{\s*\.ltr-echo\{opacity:0\}/.test(css)
+  /@media \(prefers-reduced-motion:reduce\)\{\s*\.ltr-mb\{opacity:0\}/.test(css)
   && /@media \(prefers-reduced-motion:no-preference\)\{[\s\S]*?\.ltr-echo\{animation:ltrSweep/.test(css));
 // variant B — a live editor that morphs (SMIL) + zoom/pans (CSS); temporary A/B
 // switch (?hero) coexists with the traces
