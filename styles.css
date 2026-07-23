@@ -368,20 +368,23 @@ html.boot-tool #landing{display:none}
 .lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,820px);
   z-index:-1;pointer-events:none;overflow:hidden}
 .ltr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-/* each easing curve is traced by a short COLOURED head (~the width of a word)
-   that glides along it, leaving a faint grey trail behind that fades into the
-   bg — the whole curve is never shown solid. Sparse, desynced intervals. */
-.ltr-trail,.ltr-head{fill:none;stroke-width:1.3;stroke-linecap:round}
+/* each easing curve is traced by a comet — a bright accent head that fades back
+   through fainter accent echoes; laid over a faint grey trail, so the colour
+   dissolves smoothly toward grey along the tail (a real fade, not a solid
+   line). The whole curve is never shown. Sparse, desynced intervals. */
+.ltr-trail,.ltr-hd{fill:none;stroke-width:1.3;stroke-linecap:round}
 .ltr-trail{stroke:color-mix(in srgb,var(--ink) 12%,transparent);stroke-dasharray:1000;stroke-dashoffset:0}
-.ltr-head{stroke:var(--accent);stroke-dasharray:130 1000;stroke-dashoffset:130;opacity:0}
+.ltr-hd{stroke:var(--accent);stroke-dasharray:70 2000;opacity:0}   /* one short segment each */
 @media (prefers-reduced-motion:no-preference){
-  .ltr-trail,.ltr-head{animation-duration:24s;animation-iteration-count:infinite;animation-timing-function:linear}
+  .ltr-trail,.ltr-hd{animation-duration:24s;animation-iteration-count:infinite;animation-timing-function:linear}
   .ltr-trail{animation-name:ltrTrail;opacity:0}   /* the fading grey trail */
-  .ltr-head{animation-name:ltrHead}               /* the coloured leading piece */
+  .ltr-hA{animation-name:ltrHeadA}                /* bright leading head */
+  .ltr-hB{animation-name:ltrHeadB}                /* echo: fainter, lags a little */
+  .ltr-hC{animation-name:ltrHeadC}                /* echo: fainter still */
   .ltr--2{animation-duration:29s;animation-delay:-11s}
   .ltr--3{animation-duration:26s;animation-delay:-19s}
 }
-/* the trail reveals behind the head, then fades to nothing */
+/* the grey trail reveals behind the comet, then fades to nothing */
 @keyframes ltrTrail{
   0%  {stroke-dashoffset:1000;opacity:0}
   3%  {opacity:.42}
@@ -389,16 +392,11 @@ html.boot-tool #landing{display:none}
   58% {stroke-dashoffset:0;opacity:0}
   100%{stroke-dashoffset:1000;opacity:0}
 }
-/* the coloured head glides start→end once — and its own colour fades from the
-   accent to the faint grey as it goes, so the colour dissolves into the trail */
-@keyframes ltrHead{
-  0%  {stroke-dashoffset:130;opacity:0;stroke:var(--accent)}
-  4%  {opacity:.85;stroke:var(--accent)}
-  12% {stroke:var(--accent)}
-  24% {stroke-dashoffset:-1000;opacity:.62;stroke:color-mix(in srgb,var(--ink) 14%,transparent)}
-  28% {stroke-dashoffset:-1000;opacity:0}
-  100%{stroke-dashoffset:-1000;opacity:0}
-}
+/* three accent segments glide together, each lagging + fainter than the last,
+   so the head reads bright and the tail dissolves toward the grey trail */
+@keyframes ltrHeadA{0%{stroke-dashoffset:70;opacity:0}4%{opacity:.85}24%{stroke-dashoffset:-1000;opacity:.85}28%{opacity:0}100%{stroke-dashoffset:-1000;opacity:0}}
+@keyframes ltrHeadB{0%{stroke-dashoffset:118;opacity:0}5%{opacity:.45}25%{stroke-dashoffset:-952;opacity:.45}29%{opacity:0}100%{stroke-dashoffset:-952;opacity:0}}
+@keyframes ltrHeadC{0%{stroke-dashoffset:166;opacity:0}6%{opacity:.22}26%{stroke-dashoffset:-904;opacity:.22}30%{opacity:0}100%{stroke-dashoffset:-904;opacity:0}}
 /* variant B — a live bezier editor: the curve morphs with its handles (SMIL in
    the markup) while the whole thing slowly zooms + pans. Fills the layer with
    preserveAspectRatio=meet, so it always fits (no clipping off-screen).

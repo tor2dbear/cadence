@@ -44,10 +44,11 @@ const springKf = (css.match(/@keyframes ltSpring\{[^\n]*/) || [''])[0];
 assert('spring tile travels the full track via left, not a fixed translateX',
   /left:calc\(100% - 22px\)/.test(springKf) && !/translateX/.test(springKf));
 // variant A — traces: each of 3 curves has a coloured head + a fading grey trail
-assert('traces: 3 curves, each a coloured head + grey trail',
+assert('traces: 3 curves, each a grey trail + a fading accent comet (head + echoes)',
   /class="lherobg"/.test(html)
-  && (html.match(/class="ltr-head ltr--/g) || []).length === 3
-  && (html.match(/class="ltr-trail ltr--/g) || []).length === 3);
+  && (html.match(/class="ltr-trail ltr--/g) || []).length === 3
+  && (html.match(/class="ltr-hd ltr-hA ltr--/g) || []).length === 3
+  && (html.match(/class="ltr-hd ltr-h[BC] ltr--/g) || []).length === 6);
 assert('the trace head/trail is reduced-motion-gated',
   /@media \(prefers-reduced-motion:no-preference\)\{[\s\S]*?\.ltr-trail\{animation-name:ltrTrail/.test(css));
 // variant B — a live editor that morphs (SMIL) + zoom/pans (CSS); temporary A/B
