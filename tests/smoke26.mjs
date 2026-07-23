@@ -43,6 +43,12 @@ assert('easing curve draws via clip-path, not a mismatched stroke-dash',
 const springKf = (css.match(/@keyframes ltSpring\{[^\n]*/) || [''])[0];
 assert('spring tile travels the full track via left, not a fixed translateX',
   /left:calc\(100% - 22px\)/.test(springKf) && !/translateX/.test(springKf));
+// the hero's ambient easing-curve field: present, reduced-motion-gated, and its
+// drift rides --l-curve so it degrades with the "plain" motion switch
+assert('hero has the ambient easing-curve field (3 layers)',
+  /class="lherobg"/.test(html) && (html.match(/lherobg__l lherobg__l--/g) || []).length === 3);
+assert('the curve drift is reduced-motion-gated and rides --l-curve',
+  /@media \(prefers-reduced-motion:no-preference\)\{[^}]*lherobg__l--1\{animation:lbgDrift1[^}]*var\(--l-curve\)/.test(css.replace(/\n/g,'')));
 
 // --- runtime checks: the fonts load and the identity is applied ---
 const browser = await chromium.launch();

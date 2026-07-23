@@ -57,6 +57,14 @@
   </nav>
 
   <section class="lhero">
+    <!-- ambient field of easing curves behind the hero — the product's own
+         object, drifting. It rides --l-curve, so it eases in "crafted" and
+         goes linear in "plain" (dogfooding the motion switch). -->
+    <div class="lherobg" aria-hidden="true">
+      <div class="lherobg__l lherobg__l--1"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M-4,90 C30,90 44,20 104,12" /></svg></div>
+      <div class="lherobg__l lherobg__l--2"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M-4,66 C40,66 52,10 104,4" /></svg></div>
+      <div class="lherobg__l lherobg__l--3"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M-4,98 C26,98 60,52 104,40" /></svg></div>
+    </div>
     <p class="lkicker rise" style="--i:0">A motion&nbsp;system designer</p>
     <h1 class="lhead rise" style="--i:1">Not more knobs —<br><em>structure, and an&nbsp;opinion.</em></h1>
     <p class="lsub rise" style="--i:2">Tune duration &amp; easing scales, compose semantic <strong>intents</strong>, and get a system that <strong>critiques itself</strong> — exported as CSS, Tailwind, Style&nbsp;Dictionary, plus scroll-driven &amp; view-transition recipes.</p>

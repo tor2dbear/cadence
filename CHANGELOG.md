@@ -5,6 +5,15 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.18] — 2026-07-23
+
+### Added
+- **An ambient easing-curve field behind the hero.** A few whisper-faint curves
+  — the product's own object — drift slowly behind the headline. The drift rides
+  `--l-curve`, so it eases in **crafted** and goes linear in **plain** (the motion
+  switch reaches the background too). Sits below the copy, and holds still under
+  `prefers-reduced-motion`.
+
 ## [0.9.17] — 2026-07-23
 
 ### Fixed

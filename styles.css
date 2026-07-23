@@ -358,7 +358,25 @@ html.boot-tool #landing{display:none}
 .lnav__link{font-family:var(--mono);font-size:11px;color:var(--ink-faint);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 11px}
 .lnav__link:hover{border-color:var(--accent);color:var(--ink)}
 
-.lhero{max-width:720px;margin-top:6vh}
+.lhero{max-width:720px;margin-top:6vh;position:relative;isolation:isolate;overflow:clip}
+/* ambient easing-curve field behind the hero. Each layer is one faint curve on
+   its own slow drift; the copy sits above (z-index:-1 in the hero's isolated
+   stacking context). Whisper-faint so it never competes with the text. */
+.lherobg{position:absolute;inset:-14% -10%;z-index:-1;pointer-events:none}
+.lherobg__l{position:absolute;inset:0}
+.lherobg__l svg{width:100%;height:100%;overflow:visible;display:block}
+.lherobg__l path{fill:none;stroke-width:2;stroke-linecap:round;vector-effect:non-scaling-stroke;
+  stroke:color-mix(in srgb,var(--ink) 7%,transparent)}
+.lherobg__l--2 path{stroke:color-mix(in srgb,var(--accent) 16%,transparent)}
+@media (prefers-reduced-motion:no-preference){
+  /* the drift rides --l-curve, so it eases in "crafted", goes linear in "plain" */
+  .lherobg__l--1{animation:lbgDrift1 27s var(--l-curve) infinite alternate}
+  .lherobg__l--2{animation:lbgDrift2 34s var(--l-curve) infinite alternate}
+  .lherobg__l--3{animation:lbgDrift3 41s var(--l-curve) infinite alternate}
+}
+@keyframes lbgDrift1{from{transform:translate(-1.6%,1.2%) scale(1.02)}to{transform:translate(2.2%,-1.4%) scale(1.06)}}
+@keyframes lbgDrift2{from{transform:translate(1.4%,-1%) scale(1.05)}to{transform:translate(-2%,1.6%) scale(1.01)}}
+@keyframes lbgDrift3{from{transform:translate(-1%,-1.4%) scale(1.03)}to{transform:translate(1.8%,1.2%) scale(1.07)}}
 .lkicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
 .lhead{font-family:var(--serif);font-size:clamp(30px,6.2vw,54px);line-height:1.05;letter-spacing:-.015em;margin:0 0 18px;font-weight:600;font-optical-sizing:auto}
 .lhead em{font-style:italic;color:var(--accent)}
