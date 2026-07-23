@@ -70,9 +70,13 @@ assert('the comet is reduced-motion-gated (parked → nothing is drawn)',
 // temporary A/B switch (?hero) coexists with the traces
 assert('editor morphs + zoom/pans as one synced SMIL timeline (no CSS lcePan drift)',
   /class="lce-live"/.test(html) && /<animate attributeName="d"/.test(html)
-  && /<animate attributeName="viewBox"[\s\S]*?keyTimes="0;0.34;0.365;0.38;0.67;0.695;0.71;0.98;0.99;1"/.test(html)
+  && /<animate attributeName="viewBox"[\s\S]*?keyTimes="0;0.19;0.25;0.44;0.5;0.69;0.75;0.94;1"/.test(html)
   && !/@keyframes lcePan/.test(css)
   && /\.lherobg\[data-hero="editor"\] \.ltr-svg\{display:none\}/.test(css));
+// the loop runs three DISTINCT easing shapes (ease-out / ease-in / overshoot),
+// with the recurring ease-out framed at two different zooms
+assert('editor loop has 3 distinct easing shapes (ease-in dips low, overshoot goes above)',
+  /C84,100 150,86/.test(html) && /C68,-18 150,42/.test(html) && /C50,28 122,24/.test(html));
 // the editor sits in the open right-hand space, sways about its Y axis between
 // morphs, and is a desktop-only flourish
 assert('editor is confined to the right + sways on the Y axis, desktop-only',
