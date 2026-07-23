@@ -1378,6 +1378,18 @@ function exitTool(){
     // the editor morphs via SMIL, so honour reduced-motion by pausing it at its
     // initial frame (its CSS zoom/pan + the CSS trace comet are already gated)
     if(reduce){ const es=document.querySelector(".lce-svg"); if(es&&es.pauseAnimations) es.pauseAnimations(); }
+    // give each trace comet a slightly random speed each pass, and tie its
+    // length to that speed (faster → longer streak, like a real comet). Pure
+    // CSS can't vary per-iteration, so re-roll at each animationiteration; the
+    // taper/shape stays CSS (--k scales all five segment lengths together).
+    if(!reduce){ [["1",24],["2",29],["3",26]].forEach(([n,base])=>{
+      const segs=[...document.querySelectorAll(".ltr--"+n+".ltr-echo")];
+      if(!segs.length) return;
+      const roll=()=>{ const sp=0.7+Math.random()*0.75;              // speed factor 0.70–1.45
+        const dur=(base/sp).toFixed(2)+"s";                          // faster ⇒ shorter cycle
+        segs.forEach(el=>{ el.style.animationDuration=dur; el.style.setProperty("--k",sp.toFixed(3)); }); }; // faster ⇒ larger --k ⇒ longer
+      segs[0].addEventListener("animationiteration",roll); roll();
+    }); }
   }catch(_){}
   const start=document.getElementById("startTool");
   if(start) start.addEventListener("click",enterTool);

@@ -59,9 +59,14 @@ assert('the comet is CSS-swept (no SMIL, no gradient) and the trace tones out sl
 // the five segments share one leading edge (offset by their own length) so the
 // taper is monotonic — no beading / "not lined up" look
 assert('comet segments share a leading edge (dashoffset = length − head), a clean taper',
-  /\.ltr-e1\{--Li:\d+px/.test(css) && /\.ltr-e5\{--Li:\d+px/.test(css)
-  && /stroke-dashoffset:calc\(var\(--Li\) \+ 60px\)/.test(css)
-  && /stroke-dashoffset:calc\(var\(--Li\) - 1100px\)/.test(css));
+  /\.ltr-e1\{--Lb:\d+\}/.test(css) && /\.ltr-e5\{--Lb:\d+\}/.test(css)
+  && /stroke-dashoffset:calc\(var\(--Lb\) \* var\(--k\) \* 1px \+ 60px\)/.test(css)
+  && /stroke-dashoffset:calc\(var\(--Lb\) \* var\(--k\) \* 1px - 1100px\)/.test(css));
+// each pass gets a randomised speed (animationDuration) with length tied to it (--k)
+const js = read('cadence.js');
+assert('the comet re-rolls a random speed + length each pass (JS, reduced-motion-safe)',
+  /animationiteration/.test(js) && /animationDuration/.test(js)
+  && /setProperty\("--k"/.test(js) && /Math\.random\(\)/.test(js));
 assert('the comet is reduced-motion-gated (parked → nothing is drawn)',
   /@media \(prefers-reduced-motion:reduce\)\{\s*\.ltr-echo,\.ltr-trail\{opacity:0\}/.test(css)
   && /@media \(prefers-reduced-motion:no-preference\)\{[\s\S]*?\.ltr-echo\{animation:ltrHead/.test(css));
