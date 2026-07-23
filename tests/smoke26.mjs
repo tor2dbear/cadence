@@ -76,8 +76,8 @@ assert('editor loop has 3 distinct easing shapes (ease-in dips low, overshoot go
   /C84,100 150,86/.test(html) && /C68,-18 150,42/.test(html) && /C50,28 122,24/.test(html));
 // each morph overshoots past its target then settles (a bounce) via extra
 // value-frames — e.g. the ease-in P1 overshoots to 114 before settling to 100
-assert('editor morphs bounce (overshoot value-frames past the target)',
-  /C91,114 156,98/.test(html) && /values="[^"]*;114;100;/.test(html));
+assert('editor morphs bounce (a subtle overshoot value-frame past the target)',
+  /C87,107 153,92/.test(html) && /values="[^"]*;107;100;/.test(html));
 // the editor sits in the open right-hand space, sways about its Y axis between
 // morphs, and is a desktop-only flourish
 assert('editor is confined to the right + sways on the Y axis, desktop-only',

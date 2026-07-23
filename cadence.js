@@ -1391,13 +1391,17 @@ function exitTool(){
       const randPath=()=>{ const y0=R(30,H-30),y3=R(20,H-70),x1=R(120,430),y1=R(0,H),x2=R(540,830),y2=R(0,H);
         return "M-40,"+(y0|0)+" C"+(x1|0)+","+(y1|0)+" "+(x2|0)+","+(y2|0)+" "+(W+40)+","+(y3|0); };
       const spawn=()=>{ const d=randPath(),sp=R(0.7,1.5),sweep=3400/sp,k=sp;   // faster ⇒ shorter sweep + longer comet
+        // trail strength varies for dynamism: faster comets leave a stronger
+        // mark, plus a random jitter; stronger trails also linger a touch longer
+        const op=Math.min(.55,Math.max(.16,.34+(sp-1)*.26+(Math.random()-.5)*.26));
+        const life=LIFE*(.7+op);
         // the lingering grey trail: drawn on behind the head, then a long fade
         const tr=document.createElementNS(NS,"path");
         tr.setAttribute("d",d); tr.setAttribute("pathLength","1000"); tr.setAttribute("class","ltr-gtrail");
         tr.style.strokeDashoffset="1000"; field.appendChild(tr); trails.push(tr);
         while(trails.length>CAP){ const o=trails.shift(); if(o){ o.getAnimations&&o.getAnimations().forEach(a=>a.cancel()); o.remove(); } }
-        const reveal=tr.animate([{strokeDashoffset:1000,opacity:.3},{strokeDashoffset:0,opacity:.3}],{duration:sweep,easing:"linear",fill:"forwards"});
-        reveal.onfinish=()=>{ const f=tr.animate([{opacity:.3},{opacity:0}],{duration:LIFE,easing:"linear",fill:"forwards"});
+        const reveal=tr.animate([{strokeDashoffset:1000,opacity:op},{strokeDashoffset:0,opacity:op}],{duration:sweep,easing:"linear",fill:"forwards"});
+        reveal.onfinish=()=>{ const f=tr.animate([{opacity:op},{opacity:0}],{duration:life,easing:"linear",fill:"forwards"});
           f.onfinish=()=>{ tr.remove(); const i=trails.indexOf(tr); if(i>=0) trails.splice(i,1); }; };
         // the comet: five accent segments sharing one leading edge (overlap → taper)
         const g=document.createElementNS(NS,"g");
