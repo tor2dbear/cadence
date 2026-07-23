@@ -73,13 +73,16 @@ assert('the comet is reduced-motion-gated (parked → nothing is drawn)',
 // variant B — a live editor that morphs + zoom/pans, BOTH SMIL on one timeline
 // (the viewBox animation shares the morph's keyTimes), so they stay in sync;
 // temporary A/B switch (?hero) coexists with the traces
-assert('editor morphs + zoom/pans as one synced SMIL timeline (no CSS lcePan drift)',
-  /class="lce-live"/.test(html) && /<animate attributeName="d"/.test(html)
-  && /<animate attributeName="viewBox"[\s\S]*?keyTimes="0;0.19;0.25;0.44;0.5;0.69;0.75;0.94;1"/.test(html)
+// shape morph (21s = 3 beats) and viewBox zoom (28s = 4 beats) are separate SMIL
+// on a shared 7s beat, so transitions coincide (synced) but the shape↔zoom
+// pairing keeps shifting (3 and 4 coprime) — no CSS lcePan drift
+assert('editor: shape (21s) + zoom (28s) are beat-synced SMIL with coprime periods',
+  /class="lce-live"/.test(html)
+  && /<animate attributeName="d" dur="21s"/.test(html)
+  && /<animate attributeName="viewBox" dur="28s"[\s\S]*?keyTimes="0;0.1964;0.25;0.4464;0.5;0.6964;0.75;0.9464;1"/.test(html)
   && !/@keyframes lcePan/.test(css)
   && /\.lherobg\[data-hero="editor"\] \.ltr-svg\{display:none\}/.test(css));
-// the loop runs three DISTINCT easing shapes (ease-out / ease-in / overshoot),
-// with the recurring ease-out framed at two different zooms
+// the loop runs three DISTINCT easing shapes (ease-out / ease-in / overshoot)
 assert('editor loop has 3 distinct easing shapes (ease-in dips low, overshoot goes above)',
   /C84,100 150,86/.test(html) && /C68,-18 150,42/.test(html) && /C50,28 122,24/.test(html));
 // the editor sits in the open right-hand space, sways about its Y axis between

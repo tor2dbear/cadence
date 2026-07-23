@@ -78,40 +78,41 @@
          its handles fading in. Both show with ?hero=both. -->
     <svg class="lce-svg" viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet">
       <!-- a single easing being tuned: the control points slide + the curve
-           morphs with them, and the "camera" zooms/pans by animating the viewBox
-           — all SMIL on ONE timeline (shared keyTimes/keySplines), so the zoom
-           stays locked to the morph. A 4-step loop through THREE distinct shapes
-           — ease-out → ease-in → overshoot → ease-out — where the recurring
-           ease-out is framed at a different size each time, so a given curve
-           isn't tied to one zoom. JS pauses it for reduced-motion. -->
+           morphs, and the "camera" zooms/pans (viewBox). Both are SMIL sharing
+           the same 7s "beat" (5.5s hold + 1.5s morph), so their transitions
+           coincide (zoom snaps WITH the morph). But the SHAPE loops over 3 forms
+           (21s = 3 beats) while the ZOOM loops over 4 levels (28s = 4 beats):
+           3 and 4 are coprime, so the shape↔zoom pairing keeps shifting — 12
+           beats before it repeats, and a given curve is never the same size
+           twice in a row. JS pauses it all for reduced-motion. -->
       <animate attributeName="viewBox" dur="28s" repeatCount="indefinite" calcMode="spline"
-        keyTimes="0;0.19;0.25;0.44;0.5;0.69;0.75;0.94;1"
+        keyTimes="0;0.1964;0.25;0.4464;0.5;0.6964;0.75;0.9464;1"
         keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1"
-        values="8 2 200 118;8 2 200 118;-20 -12 260 154;-20 -12 260 154;36 -24 168 99;36 -24 168 99;-14 -8 250 148;-14 -8 250 148;8 2 200 118" />
+        values="0 -21 220 130;0 -21 220 130;-27.5 -37 275 163;-27.5 -37 275 163;31 -3 158 93;31 -3 158 93;13 -14 194 115;13 -14 194 115;0 -21 220 130" />
       <g class="lce-live">
         <line class="lce-base" x1="24" y1="106" x2="196" y2="24" />
         <path class="lce-curve" d="M24,106 C50,28 122,24 196,24">
-          <animate attributeName="d" dur="28s" repeatCount="indefinite" calcMode="spline"
-            keyTimes="0;0.19;0.25;0.44;0.5;0.69;0.75;0.94;1"
-            keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1"
-            values="M24,106 C50,28 122,24 196,24;M24,106 C50,28 122,24 196,24;M24,106 C84,100 150,86 196,24;M24,106 C84,100 150,86 196,24;M24,106 C68,-18 150,42 196,24;M24,106 C68,-18 150,42 196,24;M24,106 C50,28 122,24 196,24;M24,106 C50,28 122,24 196,24;M24,106 C50,28 122,24 196,24" />
+          <animate attributeName="d" dur="21s" repeatCount="indefinite" calcMode="spline"
+            keyTimes="0;0.2619;0.3333;0.5952;0.6667;0.9286;1"
+            keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1"
+            values="M24,106 C50,28 122,24 196,24;M24,106 C50,28 122,24 196,24;M24,106 C84,100 150,86 196,24;M24,106 C84,100 150,86 196,24;M24,106 C68,-18 150,42 196,24;M24,106 C68,-18 150,42 196,24;M24,106 C50,28 122,24 196,24" />
         </path>
         <line class="lce-handle" x1="24" y1="106" x2="50" y2="28">
-          <animate attributeName="x2" dur="28s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.19;0.25;0.44;0.5;0.69;0.75;0.94;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="50;50;84;84;68;68;50;50;50" />
-          <animate attributeName="y2" dur="28s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.19;0.25;0.44;0.5;0.69;0.75;0.94;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="28;28;100;100;-18;-18;28;28;28" />
+          <animate attributeName="x2" dur="21s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.2619;0.3333;0.5952;0.6667;0.9286;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="50;50;84;84;68;68;50" />
+          <animate attributeName="y2" dur="21s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.2619;0.3333;0.5952;0.6667;0.9286;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="28;28;100;100;-18;-18;28" />
         </line>
         <line class="lce-handle" x1="196" y1="24" x2="122" y2="24">
-          <animate attributeName="x2" dur="28s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.19;0.25;0.44;0.5;0.69;0.75;0.94;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="122;122;150;150;150;150;122;122;122" />
-          <animate attributeName="y2" dur="28s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.19;0.25;0.44;0.5;0.69;0.75;0.94;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="24;24;86;86;42;42;24;24;24" />
+          <animate attributeName="x2" dur="21s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.2619;0.3333;0.5952;0.6667;0.9286;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="122;122;150;150;150;150;122" />
+          <animate attributeName="y2" dur="21s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.2619;0.3333;0.5952;0.6667;0.9286;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="24;24;86;86;42;42;24" />
         </line>
         <circle class="lce-anchor" cx="24" cy="106" r="0.9" /><circle class="lce-anchor" cx="196" cy="24" r="0.9" />
         <circle class="lce-ctrl" cx="50" cy="28" r="1.05">
-          <animate attributeName="cx" dur="28s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.19;0.25;0.44;0.5;0.69;0.75;0.94;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="50;50;84;84;68;68;50;50;50" />
-          <animate attributeName="cy" dur="28s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.19;0.25;0.44;0.5;0.69;0.75;0.94;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="28;28;100;100;-18;-18;28;28;28" />
+          <animate attributeName="cx" dur="21s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.2619;0.3333;0.5952;0.6667;0.9286;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="50;50;84;84;68;68;50" />
+          <animate attributeName="cy" dur="21s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.2619;0.3333;0.5952;0.6667;0.9286;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="28;28;100;100;-18;-18;28" />
         </circle>
         <circle class="lce-ctrl" cx="122" cy="24" r="1.05">
-          <animate attributeName="cx" dur="28s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.19;0.25;0.44;0.5;0.69;0.75;0.94;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="122;122;150;150;150;150;122;122;122" />
-          <animate attributeName="cy" dur="28s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.19;0.25;0.44;0.5;0.69;0.75;0.94;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="24;24;86;86;42;42;24;24;24" />
+          <animate attributeName="cx" dur="21s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.2619;0.3333;0.5952;0.6667;0.9286;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="122;122;150;150;150;150;122" />
+          <animate attributeName="cy" dur="21s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.2619;0.3333;0.5952;0.6667;0.9286;1" keySplines="0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1;0 0 1 1;.3 0 .3 1" values="24;24;86;86;42;42;24" />
         </circle>
       </g>
     </svg>
