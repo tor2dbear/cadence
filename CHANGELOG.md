@@ -5,6 +5,17 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.7] — 2026-07-22
+
+### Fixed
+- **The spring orb finally sits on its line (iOS Safari).** Two earlier
+  attempts (margin-centring, then constraint-based `margin-block:auto`) still
+  let Safari drop the composited, animating orb a few pixels below the track.
+  The orb is now a **flex item in a `display:flex; align-items:center` track**,
+  so the layout engine places it and the compositor respects that — the
+  centering no longer lives in a `top`/`margin` the GPU layer can round. Both
+  the landing "emphasized" tile and the tool's orb lens; travel is unchanged.
+
 ## [0.9.6] — 2026-07-22
 
 ### Fixed
