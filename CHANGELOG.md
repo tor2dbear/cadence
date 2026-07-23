@@ -5,6 +5,18 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.20] — 2026-07-23
+
+### Changed — the hero background is now the curve editor, cycling
+- **Reworked the hero backdrop into a bezier-editor motif.** Instead of curves
+  drifting together, one easing at a time now **fades in complete with its
+  control-point handles** — the anchors, the handle lines, the control dots —
+  like watching Cadence's own curve editor page through the set (ease-out →
+  ease-in-out → a back/overshoot), then fade to the next. Ties the backdrop
+  straight to the product's core interaction. Faint, upper-right, below the
+  copy; the crossfade rides `--l-ease` (linear in **plain**); reduced-motion
+  holds the first easing still.
+
 ## [0.9.19] — 2026-07-23
 
 ### Changed

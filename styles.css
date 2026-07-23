@@ -359,26 +359,26 @@ html.boot-tool #landing{display:none}
 .lnav__link:hover{border-color:var(--accent);color:var(--ink)}
 
 .lhero{max-width:720px;margin-top:6vh;position:relative;isolation:isolate;overflow:clip}
-/* ambient easing-curve field behind the hero. Each layer is one faint curve on
-   its own slow drift; the copy sits above (z-index:-1 in the hero's isolated
-   stacking context). Whisper-faint so it never competes with the text. */
-.lherobg{position:absolute;inset:-14% -10%;z-index:-1;pointer-events:none}
-.lherobg__l{position:absolute;inset:0}
-.lherobg__l svg{width:100%;height:100%;overflow:visible;display:block}
-.lherobg__l path{fill:none;stroke-width:2;stroke-linecap:round;vector-effect:non-scaling-stroke;
-  stroke:color-mix(in srgb,var(--ink) 7%,transparent)}
-.lherobg__l--2 path{stroke:color-mix(in srgb,var(--accent) 16%,transparent)}
+/* ambient bezier-editor motif behind the hero: one easing at a time fades in —
+   complete with its control-point handles — like the curve editor cycling
+   through the set. Faint, upper-right, below the copy (hero's isolated context). */
+.lherobg{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:clip}
+.lce-svg{position:absolute;top:-6%;right:-8%;width:min(74%,540px);height:auto;overflow:visible}
+.lce-base{fill:none;stroke:color-mix(in srgb,var(--ink) 7%,transparent);stroke-width:1;stroke-dasharray:2 3.5;vector-effect:non-scaling-stroke}
+.lce-curve{fill:none;stroke:color-mix(in srgb,var(--ink) 17%,transparent);stroke-width:2.2;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.lce-handle{stroke:color-mix(in srgb,var(--accent) 26%,transparent);stroke-width:1.1;vector-effect:non-scaling-stroke}
+.lce-anchor{fill:color-mix(in srgb,var(--ink) 22%,transparent)}
+.lce-ctrl{fill:color-mix(in srgb,var(--accent) 42%,transparent)}
+.lce{opacity:0}
+.lce--1{opacity:1}   /* reduced-motion / no-animation fallback: first easing stays visible */
 @media (prefers-reduced-motion:no-preference){
-  /* the drift rides --l-curve, so it eases in "crafted", goes linear in "plain".
-     magnitudes are big enough to actually read as motion (a faint line sweeping
-     ~1%/s) while staying subtle behind the copy. */
-  .lherobg__l--1{animation:lbgDrift1 15s var(--l-curve) infinite alternate}
-  .lherobg__l--2{animation:lbgDrift2 19s var(--l-curve) infinite alternate}
-  .lherobg__l--3{animation:lbgDrift3 23s var(--l-curve) infinite alternate}
+  /* one easing at a time. rides --l-ease, so the crossfade eases in "crafted"
+     and goes linear in "plain". */
+  .lce{animation:lceCycle 16.5s var(--l-ease) infinite}
+  .lce--2{animation-delay:-5.5s}
+  .lce--3{animation-delay:-11s}
 }
-@keyframes lbgDrift1{from{transform:translate(-9%,5%) rotate(-3deg) scale(1.02)}to{transform:translate(11%,-6%) rotate(4deg) scale(1.12)}}
-@keyframes lbgDrift2{from{transform:translate(8%,-5%) rotate(3.5deg) scale(1.1)}to{transform:translate(-10%,6%) rotate(-3deg) scale(1)}}
-@keyframes lbgDrift3{from{transform:translate(-7%,-6%) rotate(-2.5deg) scale(1.04)}to{transform:translate(10%,5%) rotate(4deg) scale(1.13)}}
+@keyframes lceCycle{0%{opacity:0}6%{opacity:1}30%{opacity:1}40%{opacity:0}100%{opacity:0}}
 .lkicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
 .lhead{font-family:var(--serif);font-size:clamp(30px,6.2vw,54px);line-height:1.05;letter-spacing:-.015em;margin:0 0 18px;font-weight:600;font-optical-sizing:auto}
 .lhead em{font-style:italic;color:var(--accent)}

@@ -61,9 +61,27 @@
          object, drifting. It rides --l-curve, so it eases in "crafted" and
          goes linear in "plain" (dogfooding the motion switch). -->
     <div class="lherobg" aria-hidden="true">
-      <div class="lherobg__l lherobg__l--1"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M-4,90 C30,90 44,20 104,12" /></svg></div>
-      <div class="lherobg__l lherobg__l--2"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M-4,66 C40,66 52,10 104,4" /></svg></div>
-      <div class="lherobg__l lherobg__l--3"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M-4,98 C26,98 60,52 104,40" /></svg></div>
+      <svg class="lce-svg" viewBox="0 0 128 100">
+        <line class="lce-base" x1="8" y1="86" x2="120" y2="14" />
+        <g class="lce lce--1"><!-- ease-out .22,1,.36,1 -->
+          <path class="lce-curve" d="M8,86 C32.6,14 48.3,14 120,14" />
+          <line class="lce-handle" x1="8" y1="86" x2="32.6" y2="14" /><line class="lce-handle" x1="120" y1="14" x2="48.3" y2="14" />
+          <circle class="lce-anchor" cx="8" cy="86" r="2.4" /><circle class="lce-anchor" cx="120" cy="14" r="2.4" />
+          <circle class="lce-ctrl" cx="32.6" cy="14" r="2.2" /><circle class="lce-ctrl" cx="48.3" cy="14" r="2.2" />
+        </g>
+        <g class="lce lce--2"><!-- ease-in-out .65,0,.35,1 -->
+          <path class="lce-curve" d="M8,86 C80.8,86 47.2,14 120,14" />
+          <line class="lce-handle" x1="8" y1="86" x2="80.8" y2="86" /><line class="lce-handle" x1="120" y1="14" x2="47.2" y2="14" />
+          <circle class="lce-anchor" cx="8" cy="86" r="2.4" /><circle class="lce-anchor" cx="120" cy="14" r="2.4" />
+          <circle class="lce-ctrl" cx="80.8" cy="86" r="2.2" /><circle class="lce-ctrl" cx="47.2" cy="14" r="2.2" />
+        </g>
+        <g class="lce lce--3"><!-- back / overshoot .34,1.56,.64,1 -->
+          <path class="lce-curve" d="M8,86 C46.1,-26.3 79.7,14 120,14" />
+          <line class="lce-handle" x1="8" y1="86" x2="46.1" y2="-26.3" /><line class="lce-handle" x1="120" y1="14" x2="79.7" y2="14" />
+          <circle class="lce-anchor" cx="8" cy="86" r="2.4" /><circle class="lce-anchor" cx="120" cy="14" r="2.4" />
+          <circle class="lce-ctrl" cx="46.1" cy="-26.3" r="2.2" /><circle class="lce-ctrl" cx="79.7" cy="14" r="2.2" />
+        </g>
+      </svg>
     </div>
     <p class="lkicker rise" style="--i:0">A motion&nbsp;system designer</p>
     <h1 class="lhead rise" style="--i:1">Not more knobs —<br><em>structure, and an&nbsp;opinion.</em></h1>
