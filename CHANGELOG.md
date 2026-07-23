@@ -11,10 +11,12 @@ shows the deployed semver plus the commit it was built from, stamped at deploy.
 - **Reworked the hero backdrop into travelling easing traces.** A short **arc
   glides along each of three (otherwise-invisible) easing curves** — the whole
   curve is never shown; you read its shape from the moving piece, and its visual
-  speed tells the easing (fast where the curve is steep). One arc at a time —
-  it travels its whole curve, then the next takes over — faint, below the copy,
-  and **full-bleed**: it breaks out of the centred column to span the whole
-  viewport width. Reduced-motion shows the faint full curves, still. (Earlier passes this session — a drifting field, then a
+  speed tells the easing (fast where the curve is steep). Each thin (~1.7px)
+  curve is **drawn on** in soft accent, then **desaturates to a faint beige
+  trace and fades into the background** — a mark left behind. They arrive at
+  long, desynced intervals, so it reads as incidental rather than metronomic;
+  **full-bleed**, spanning the whole viewport, below the copy. Reduced-motion
+  shows the faint full curves, still. (Earlier passes this session — a drifting field, then a
   fade-in bezier-editor motif with handles — were folded into this cleaner one.)
 
 ## [0.9.19] — 2026-07-23

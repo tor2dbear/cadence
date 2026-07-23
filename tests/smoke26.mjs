@@ -46,10 +46,10 @@ assert('spring tile travels the full track via left, not a fixed translateX',
 // the hero's ambient easing traces: a segment glides along each (invisible)
 // easing curve — 3 traces, reduced-motion-gated (the segment travel only runs
 // with motion; the faint full guide is the reduced-motion fallback)
-assert('hero has the ambient easing traces (3 traveling segments)',
-  /class="lherobg"/.test(html) && (html.match(/class="ltr-seg ltr--/g) || []).length === 3);
-assert('the segment travel is reduced-motion-gated (one at a time)',
-  /@media \(prefers-reduced-motion:no-preference\)\{[\s\S]*?\.ltr-seg\{animation:ltrSeq/.test(css));
+assert('hero has the ambient easing traces (3 curves)',
+  /class="lherobg"/.test(html) && (html.match(/class="ltr ltr--/g) || []).length === 3);
+assert('the trace draw/fade is reduced-motion-gated',
+  /@media \(prefers-reduced-motion:no-preference\)\{[\s\S]*?\.ltr\{[\s\S]*?animation:ltrTrail/.test(css));
 
 // --- runtime checks: the fonts load and the identity is applied ---
 const browser = await chromium.launch();

@@ -368,28 +368,24 @@ html.boot-tool #landing{display:none}
 .lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,820px);
   z-index:-1;pointer-events:none;overflow:hidden}
 .ltr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.ltr-guide,.ltr-seg{fill:none}
-.ltr-guide{stroke:color-mix(in srgb,var(--ink) 6%,transparent);stroke-width:2}
-/* pathLength=1000 normalises the dash, so "300 700" is exactly one 30% arc per
-   curve regardless of size/stretch — the moving piece, tracing the easing. */
-.ltr-seg{stroke:color-mix(in srgb,var(--accent) 52%,transparent);stroke-width:3;stroke-linecap:round;
-  stroke-dasharray:300 700;opacity:0}
+/* a thin easing curve is drawn on (its leading edge tracing the shape), in soft
+   accent, then desaturates to a faint beige trace and fades into the bg — like a
+   mark left behind. Curves come at long, desynced intervals so it reads as
+   incidental. pathLength=1000 + dasharray:1000 makes one clean draw-on reveal. */
+.ltr{fill:none;stroke-width:1.2;stroke-linecap:round;stroke-dasharray:1000;stroke-dashoffset:0;
+  stroke:color-mix(in srgb,var(--ink) 9%,transparent)}   /* reduced-motion: faint static curves */
 @media (prefers-reduced-motion:no-preference){
-  /* one arc at a time: each travels its whole curve in its third of the cycle,
-     then hides while the next takes over. The full guide curves stay hidden, so
-     only the single moving piece is seen; its visual speed tells the easing
-     (the path is steep in the fast part). */
-  .ltr-guide{opacity:0}
-  .ltr-seg{animation:ltrSeq 15s linear infinite}
-  .ltr-seg.ltr--2{animation-delay:-10s}
-  .ltr-seg.ltr--3{animation-delay:-5s}
+  .ltr{stroke-dashoffset:1000;opacity:0;animation:ltrTrail 24s var(--l-ease) infinite}
+  .ltr--2{animation-duration:29s;animation-delay:-11s}
+  .ltr--3{animation-duration:26s;animation-delay:-19s}
 }
-@keyframes ltrSeq{
-  0%{stroke-dashoffset:1000;opacity:0}
-  2%{opacity:1}
-  30%{opacity:1}
-  33%{stroke-dashoffset:0;opacity:0}
-  100%{stroke-dashoffset:0;opacity:0}
+@keyframes ltrTrail{
+  0%  {stroke-dashoffset:1000;opacity:0;stroke:var(--accent)}
+  3%  {opacity:.8}
+  18% {stroke-dashoffset:0;opacity:.8;stroke:var(--accent)}                        /* drawn, in colour */
+  45% {stroke:color-mix(in srgb,var(--ink) 15%,transparent);opacity:.4}           /* desaturating trace */
+  62% {stroke-dashoffset:0;opacity:0;stroke:color-mix(in srgb,var(--ink) 12%,transparent)} /* faded away */
+  100%{stroke-dashoffset:1000;opacity:0}
 }
 .lkicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
 .lhead{font-family:var(--serif);font-size:clamp(30px,6.2vw,54px);line-height:1.05;letter-spacing:-.015em;margin:0 0 18px;font-weight:600;font-optical-sizing:auto}
