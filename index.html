@@ -53,18 +53,33 @@
   <div class="lherobg" aria-hidden="true">
     <!-- variant A (default): thin easing curves drawn on + fading away -->
     <svg class="ltr-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice">
+      <!-- each head is a moving gradient band: a bright accent front fading back
+           to transparent, translated along by animateTransform so it chases the
+           head. Laid over the grey trail → colour dissolves to grey. -->
+      <!-- each head is one moving gradient band chased along the curve by
+           animateTransform: the leading edge is a bright accent head, fading
+           back through faint grey to nothing — the colour dissolves to grey
+           within the band itself (a real fade, not a solid stroke). -->
+      <defs>
+        <linearGradient class="ltg" id="ltg1" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="240" y2="0">
+          <stop class="ltgs-tail" offset="0" /><stop class="ltgs-mid" offset=".6" /><stop class="ltgs-glow" offset=".9" /><stop class="ltgs-head" offset="1" />
+          <animateTransform attributeName="gradientTransform" type="translate" dur="24s" repeatCount="indefinite" keyTimes="0;.28;1" values="-300 0;1100 0;1100 0" />
+        </linearGradient>
+        <linearGradient class="ltg" id="ltg2" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="240" y2="0">
+          <stop class="ltgs-tail" offset="0" /><stop class="ltgs-mid" offset=".6" /><stop class="ltgs-glow" offset=".9" /><stop class="ltgs-head" offset="1" />
+          <animateTransform attributeName="gradientTransform" type="translate" dur="29s" begin="-13s" repeatCount="indefinite" keyTimes="0;.28;1" values="-300 0;1100 0;1100 0" />
+        </linearGradient>
+        <linearGradient class="ltg" id="ltg3" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="240" y2="0">
+          <stop class="ltgs-tail" offset="0" /><stop class="ltgs-mid" offset=".6" /><stop class="ltgs-glow" offset=".9" /><stop class="ltgs-head" offset="1" />
+          <animateTransform attributeName="gradientTransform" type="translate" dur="26s" begin="-19s" repeatCount="indefinite" keyTimes="0;.28;1" values="-300 0;1100 0;1100 0" />
+        </linearGradient>
+      </defs>
       <path class="ltr-trail ltr--1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
-      <path class="ltr-hd ltr-hA ltr--1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
-      <path class="ltr-hd ltr-hB ltr--1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
-      <path class="ltr-hd ltr-hC ltr--1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
+      <path class="ltr-head ltr--1" stroke="url(#ltg1)" d="M-50,210 C250,210 400,50 1050,25" />
       <path class="ltr-trail ltr--2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
-      <path class="ltr-hd ltr-hA ltr--2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
-      <path class="ltr-hd ltr-hB ltr--2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
-      <path class="ltr-hd ltr-hC ltr--2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
+      <path class="ltr-head ltr--2" stroke="url(#ltg2)" d="M-50,370 C350,370 450,150 1050,110" />
       <path class="ltr-trail ltr--3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
-      <path class="ltr-hd ltr-hA ltr--3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
-      <path class="ltr-hd ltr-hB ltr--3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
-      <path class="ltr-hd ltr-hC ltr--3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
+      <path class="ltr-head ltr--3" stroke="url(#ltg3)" d="M-50,494 C200,494 560,320 1050,270" />
     </svg>
     <!-- variant B (?hero=editor): the bezier editor, one easing at a time with
          its handles fading in. Both show with ?hero=both. -->
