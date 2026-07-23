@@ -1408,7 +1408,6 @@ function exitTool(){
   const NAIVE="exit as slow as enter, everything linear, no stagger — the motion reads as sluggish and undesigned.";
   const line=document.getElementById("opinionLine");
   const toggle=document.getElementById("tasteToggle");
-  const stateLbl=document.getElementById("tasteState");
   let naive=false, tick=0, timer=null;
   const stop=()=>{ if(timer){ clearInterval(timer); timer=null; } };
   const rotate=()=>{ if(!line) return; line.textContent=TASTE[tick%TASTE.length]; tick++; };
@@ -1426,8 +1425,7 @@ function exitTool(){
   }
   let rz; addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(reserveLine,150); },{passive:true});
   function sync(){
-    if(land) land.classList.toggle("naive", naive);
-    if(stateLbl) stateLbl.textContent = naive ? "naïve" : "with taste";
+    if(land) land.classList.toggle("naive", naive);   // drives the active label + curve/stagger vars
     if(toggle) toggle.setAttribute("aria-pressed", naive?"true":"false");
     if(!line) return;
     stop();

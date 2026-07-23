@@ -19,7 +19,13 @@ assert('three proof tiles', await page.locator('.ltile').count() === 3);
 await page.locator('#tasteToggle').click();
 assert('toggle adds the naïve class', await page.locator('#landing').evaluate(el => el.classList.contains('naive')));
 assert('opinion line flips to warn', await page.locator('#opinionLine').evaluate(el => el.classList.contains('warn')));
-assert('state label shows naïve', (await page.locator('#tasteState').innerText()).includes('na'));
+// both states are labelled either side of the switch; the active one lights up
+assert('switch shows both labels (crafted / plain)',
+  (await page.locator('.ltaste__opt--crafted').innerText()).toLowerCase() === 'crafted' &&
+  (await page.locator('.ltaste__opt--plain').innerText()).toLowerCase() === 'plain');
+assert('the active (plain) label is highlighted vs the other',
+  await page.evaluate(() => getComputedStyle(document.querySelector('.ltaste__opt--plain')).color
+    !== getComputedStyle(document.querySelector('.ltaste__opt--crafted')).color));
 await page.locator('#tasteToggle').click();
 assert('toggle back removes naïve', !(await page.locator('#landing').evaluate(el => el.classList.contains('naive'))));
 assert('opinion line back to ok', await page.locator('#opinionLine').evaluate(el => el.classList.contains('ok')));

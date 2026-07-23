@@ -78,6 +78,18 @@ const page = `<!doctype html>
   .clbrand{display:inline-flex;align-items:center;gap:9px;font-family:var(--serif);font-size:18px;font-weight:600;letter-spacing:-.01em;color:var(--ink);text-decoration:none}
   .clbrand img{display:block}
   .clbrand:hover{opacity:.62}
+  /* the wordmark's signature easing-curve underline, matching the landing */
+  .clbrand__wm{display:inline-flex;flex-direction:column;gap:2px;line-height:1}
+  .clbrand__curve{width:100%;height:5px;overflow:visible}
+  .clbrand__curve path{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round}
+  /* a quiet staggered entrance for the header block — the site dogfooding its
+     own motion; disabled under reduced-motion (elements visible by default) */
+  @keyframes clrise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:no-preference){
+    .clnav,.changelog .cl-h1,.changelog > p:first-of-type{opacity:0;animation:clrise .6s cubic-bezier(.22,1,.36,1) both}
+    .changelog .cl-h1{animation-delay:70ms}
+    .changelog > p:first-of-type{animation-delay:140ms}
+  }
   .cl-kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 12px}
   .cl-h1{font-family:var(--serif);font-size:clamp(30px,6vw,46px);line-height:1.05;letter-spacing:-.02em;margin:0 0 14px;font-weight:600;font-optical-sizing:auto}
   .changelog > p{font-size:15px;line-height:1.66;color:var(--ink-dim);margin:0 0 8px;max-width:66ch}
@@ -103,7 +115,7 @@ const page = `<!doctype html>
 <body>
 <div class="clwrap">
   <nav class="clnav">
-    <a class="clbrand" href="index.html"><img class="logomark" src="favicon.svg" alt="" width="20" height="20" />cadence</a>
+    <a class="clbrand" href="index.html"><img class="logomark" src="favicon.svg" alt="" width="20" height="20" /><span class="clbrand__wm">cadence<svg class="clbrand__curve" viewBox="0 0 96 8" preserveAspectRatio="none" aria-hidden="true"><path d="M1,6.5 C34,6.5 46,2 95,1.5" /></svg></span></a>
     <a class="lnav__link" href="index.html#tool">Open the tool&nbsp;→</a>
   </nav>
   <article class="changelog">

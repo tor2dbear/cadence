@@ -5,6 +5,23 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.16] — 2026-07-23
+
+### Changed — clearer motion switch, and the sub-pages move + get the mark
+- **The landing's motion switch reads at rest now.** It showed only the current
+  state ("with taste") with the alternative buried in a sentence, so the choice
+  wasn't legible until you flipped it. Both states are now labelled either side
+  of the toggle — **crafted ⟷ plain** — with the active side lit (plain glows
+  warn, echoing the opinion line). The blurb is plain-language too: *"Flip to
+  plain motion — one speed, straight lines, everything at once — and feel the
+  difference the system makes"* (no more "naïve / symmetric timings" jargon).
+- **The guide and changelog carry the wordmark's easing-curve mark.** The little
+  curve under "cadence" (an easing curve — the brand signature) was landing-only;
+  the sub-pages had a bare wordmark. They match now.
+- **The guide and changelog animate in.** Both were dead-static — ironic for a
+  motion tool. They get a quiet staggered fade-up on load (reduced-motion-safe),
+  so the site keeps dogfooding its own motion.
+
 ## [0.9.15] — 2026-07-23
 
 ### Changed — the shareable URL is now a short diff, not the whole system
