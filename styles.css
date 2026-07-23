@@ -369,14 +369,16 @@ html.boot-tool #landing{display:none}
   stroke:color-mix(in srgb,var(--ink) 7%,transparent)}
 .lherobg__l--2 path{stroke:color-mix(in srgb,var(--accent) 16%,transparent)}
 @media (prefers-reduced-motion:no-preference){
-  /* the drift rides --l-curve, so it eases in "crafted", goes linear in "plain" */
-  .lherobg__l--1{animation:lbgDrift1 27s var(--l-curve) infinite alternate}
-  .lherobg__l--2{animation:lbgDrift2 34s var(--l-curve) infinite alternate}
-  .lherobg__l--3{animation:lbgDrift3 41s var(--l-curve) infinite alternate}
+  /* the drift rides --l-curve, so it eases in "crafted", goes linear in "plain".
+     magnitudes are big enough to actually read as motion (a faint line sweeping
+     ~1%/s) while staying subtle behind the copy. */
+  .lherobg__l--1{animation:lbgDrift1 15s var(--l-curve) infinite alternate}
+  .lherobg__l--2{animation:lbgDrift2 19s var(--l-curve) infinite alternate}
+  .lherobg__l--3{animation:lbgDrift3 23s var(--l-curve) infinite alternate}
 }
-@keyframes lbgDrift1{from{transform:translate(-1.6%,1.2%) scale(1.02)}to{transform:translate(2.2%,-1.4%) scale(1.06)}}
-@keyframes lbgDrift2{from{transform:translate(1.4%,-1%) scale(1.05)}to{transform:translate(-2%,1.6%) scale(1.01)}}
-@keyframes lbgDrift3{from{transform:translate(-1%,-1.4%) scale(1.03)}to{transform:translate(1.8%,1.2%) scale(1.07)}}
+@keyframes lbgDrift1{from{transform:translate(-9%,5%) rotate(-3deg) scale(1.02)}to{transform:translate(11%,-6%) rotate(4deg) scale(1.12)}}
+@keyframes lbgDrift2{from{transform:translate(8%,-5%) rotate(3.5deg) scale(1.1)}to{transform:translate(-10%,6%) rotate(-3deg) scale(1)}}
+@keyframes lbgDrift3{from{transform:translate(-7%,-6%) rotate(-2.5deg) scale(1.04)}to{transform:translate(10%,5%) rotate(4deg) scale(1.13)}}
 .lkicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
 .lhead{font-family:var(--serif);font-size:clamp(30px,6.2vw,54px);line-height:1.05;letter-spacing:-.015em;margin:0 0 18px;font-weight:600;font-optical-sizing:auto}
 .lhead em{font-style:italic;color:var(--accent)}

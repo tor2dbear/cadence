@@ -5,6 +5,14 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.19] — 2026-07-23
+
+### Changed
+- **Made the hero's curve drift actually visible.** The first pass drifted ~2–4%
+  over 27–41s — mathematically animating but imperceptible (~3px/s). Bigger,
+  quicker motion now (translate + a little rotation, 15–23s), so the curves read
+  as slowly sweeping while staying faint behind the copy.
+
 ## [0.9.18] — 2026-07-23
 
 ### Added
