@@ -77,9 +77,15 @@
     <!-- variant B (?hero=editor): the bezier editor, one easing at a time with
          its handles fading in. Both show with ?hero=both. -->
     <svg class="lce-svg" viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet">
-      <!-- a single easing being tuned: the control points slide, the curve
-           morphs with them (SMIL, so it works everywhere; JS pauses it for
-           reduced-motion), and the whole editor slowly zooms + pans (CSS). -->
+      <!-- a single easing being tuned: the control points slide + the curve
+           morphs with them, and the "camera" zooms/pans by animating the viewBox
+           — all SMIL on ONE timeline with identical keyTimes/keySplines, so the
+           zoom stays locked to the morph (a CSS zoom drifted out of sync). JS
+           pauses it for reduced-motion. -->
+      <animate attributeName="viewBox" dur="26s" repeatCount="indefinite" calcMode="spline"
+        keyTimes="0;0.34;0.365;0.38;0.67;0.695;0.71;0.98;0.99;1"
+        keySplines="0 0 1 1;.3 0 .3 1;.2 0 .4 1;0 0 1 1;.3 0 .3 1;.2 0 .4 1;0 0 1 1;.3 0 .3 1;.2 0 .4 1"
+        values="0 0 220 130;0 0 220 130;31 17 159 94;26 14 168 99;26 14 168 99;-20 -12 260 154;-15 -9 250 148;-15 -9 250 148;-4 -3 228 135;0 0 220 130" />
       <g class="lce-live">
         <line class="lce-base" x1="24" y1="106" x2="196" y2="24" />
         <path class="lce-curve" d="M24,106 C61.8,24 85.9,24 196,24">

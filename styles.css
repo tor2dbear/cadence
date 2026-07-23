@@ -421,10 +421,10 @@ html.boot-tool #landing{display:none}
 @media (prefers-reduced-motion:reduce){ .ltr-echo{stroke-dashoffset:-1120} }
 /* mobile: the height cap already keeps it a band; thin it a touch */
 @media (max-width:720px){ .ltr-echo{stroke-width:1.2} }
-/* variant B — a live bezier editor: the curve morphs with its handles (SMIL in
-   the markup) while the whole thing slowly zooms + pans (CSS). It sits in the
-   open space to the RIGHT of the copy (desktop only), preserveAspectRatio=meet
-   so it fits its box. Toggled via ?hero= on the landing (JS sets data-hero). */
+/* variant B — a live bezier editor: the curve morphs with its handles and the
+   camera zooms + pans, both SMIL on one timeline (markup) so they stay in sync.
+   It sits in the open space to the RIGHT of the copy (desktop only),
+   preserveAspectRatio=meet so it fits its box. Toggled via ?hero= (data-hero). */
 .lce-svg{position:absolute;top:4%;right:2%;left:auto;width:44%;height:68%;overflow:visible}
 /* lighter + thinner than before, so the editor recedes behind the copy */
 .lce-base{fill:none;stroke:color-mix(in srgb,var(--ink) 6%,transparent);stroke-width:.9;stroke-dasharray:2 3.5}
@@ -434,25 +434,8 @@ html.boot-tool #landing{display:none}
 /* control points are ring knobs filled with the bg, so the handle line tucks
    cleanly under them instead of running through the dot */
 .lce-ctrl{fill:var(--bg);stroke:color-mix(in srgb,var(--accent) 40%,transparent);stroke-width:.5}
-.lce-live{transform-box:fill-box;transform-origin:center}
-@media (prefers-reduced-motion:no-preference){
-  /* the zoom/pan is timed to the SMIL morph (same 26s): it snaps to a new
-     framing DURING each morph window, then only drifts a hair while the curve
-     holds. A little overshoot easing matches the morph's bounce. */
-  .lce-live{animation:lcePan 26s cubic-bezier(.28,1.3,.5,1) infinite}
-}
-@keyframes lcePan{
-  0%    {transform:translate(0,0) scale(1)}
-  32%   {transform:translate(-1.2%,.8%) scale(1.02)}    /* hold A — a hair of drift */
-  34%   {transform:translate(-1.2%,.8%) scale(1.02)}
-  38%   {transform:translate(-6.5%,4.5%) scale(1.2)}    /* morph A→B: snap the framing */
-  65%   {transform:translate(-7.4%,5%) scale(1.21)}     /* hold B — a hair of drift */
-  67%   {transform:translate(-7.4%,5%) scale(1.21)}
-  71%   {transform:translate(7.5%,-3.5%) scale(.88)}    /* morph B→C: snap */
-  96%   {transform:translate(8.3%,-4%) scale(.87)}      /* hold C — a hair of drift */
-  98%   {transform:translate(8.3%,-4%) scale(.87)}
-  100%  {transform:translate(0,0) scale(1)}             /* morph C→A: snap back */
-}
+/* the zoom/pan is now an SMIL viewBox animation in the markup (same timeline +
+   keyTimes as the morph), so it stays locked to the curve — no CSS lcePan. */
 /* between morphs the editor drifts with a subtle rotation about its Y axis, so
    the held frame isn't dead-still; timed slower than the morph so it reads as
    an idle sway, not a spin. (Perspective on the same element gives the 3D.) */

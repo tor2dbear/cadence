@@ -59,11 +59,13 @@ assert('the comet is CSS-swept (no SMIL, no gradient) and the trace tones out sl
 assert('the comet is reduced-motion-gated (parked → nothing is drawn)',
   /@media \(prefers-reduced-motion:reduce\)\{\s*\.ltr-echo\{stroke-dashoffset:-1120\}/.test(css)
   && /@media \(prefers-reduced-motion:no-preference\)\{[\s\S]*?\.ltr-echo\{animation:ltrSweep/.test(css));
-// variant B — a live editor that morphs (SMIL) + zoom/pans (CSS); temporary A/B
-// switch (?hero) coexists with the traces
-assert('editor variant morphs (SMIL) + zoom/pans, behind the ?hero switch',
+// variant B — a live editor that morphs + zoom/pans, BOTH SMIL on one timeline
+// (the viewBox animation shares the morph's keyTimes), so they stay in sync;
+// temporary A/B switch (?hero) coexists with the traces
+assert('editor morphs + zoom/pans as one synced SMIL timeline (no CSS lcePan drift)',
   /class="lce-live"/.test(html) && /<animate attributeName="d"/.test(html)
-  && /@keyframes lcePan/.test(css)
+  && /<animate attributeName="viewBox"[\s\S]*?keyTimes="0;0.34;0.365;0.38;0.67;0.695;0.71;0.98;0.99;1"/.test(html)
+  && !/@keyframes lcePan/.test(css)
   && /\.lherobg\[data-hero="editor"\] \.ltr-svg\{display:none\}/.test(css));
 // the editor sits in the open right-hand space, sways about its Y axis between
 // morphs, and is a desktop-only flourish
