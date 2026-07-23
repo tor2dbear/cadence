@@ -373,32 +373,39 @@ html.boot-tool #landing{display:none}
 .lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,64vw,820px);
   z-index:-1;pointer-events:none;overflow:hidden}
 .ltr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-/* each easing curve is traced by a single moving gradient band (SMIL, in the
-   markup): a bright accent head fading back through faint grey to nothing, so
-   the colour dissolves along the band itself — a real fade, not a solid line.
-   A very faint grey guide sits under it for continuity; the band parks
-   off-screen most of the cycle, so the traces stay sparse + desynced. */
-.ltr-trail,.ltr-head{fill:none;stroke-linecap:round}
+/* a faint grey guide under each curve, then the comet: five accent segments
+   that share a leading edge (dash lengths grow e1→e5). Where all five overlap
+   it's brightest; further back fewer reach, so the overlap COUNT tapers the
+   opacity into a smooth fade — the "gradient" without a real gradient, so it
+   can be swept by CSS stroke-dashoffset (animates in every browser, unlike the
+   old SMIL gradient which sat frozen + solid where SMIL wasn't supported). */
+.ltr-trail,.ltr-echo{fill:none;stroke-linecap:round}
 .ltr-trail{stroke:color-mix(in srgb,var(--ink) 6%,transparent);stroke-width:1.1}
-.ltr-head{stroke-width:1.6}
-/* the gradient stops: one smooth accent ramp, brightest at the head and fading
-   to nothing along the band — as it thins out the faint grey guide underneath
-   shows through, so the colour dissolves to grey (a continuous gradient, no
-   solid block and no hard accent→grey seam) */
-.ltgs-tail{stop-color:var(--accent);stop-opacity:0}
-.ltgs-mid{stop-color:var(--accent);stop-opacity:.16}
-.ltgs-glow{stop-color:var(--accent);stop-opacity:.48}
-.ltgs-head{stop-color:var(--accent);stop-opacity:.9}
-/* reduced motion: the SMIL band is paused in JS; hide the heads so only the
-   faint grey guides remain (no stray parked band) */
-@media (prefers-reduced-motion:reduce){ .ltr-head{opacity:0} }
-/* mobile: the height cap already keeps the band a band; just ease the accent a
-   touch more so it stays a quiet texture behind the headline */
-@media (max-width:720px){
-  .ltr-head{stroke-width:1.1}
-  .ltgs-head{stop-opacity:.62}
-  .ltgs-glow{stop-opacity:.3}
+.ltr-echo{stroke:var(--accent);stroke-width:1.5;opacity:0}   /* invisible until swept */
+.ltr-e1{stroke-dasharray:46 3000}    /* short bright tip — all 5 overlap here */
+.ltr-e2{stroke-dasharray:94 3000}
+.ltr-e3{stroke-dasharray:148 3000}
+.ltr-e4{stroke-dasharray:204 3000}
+.ltr-e5{stroke-dasharray:262 3000}   /* longest, faintest — the tail */
+@media (prefers-reduced-motion:no-preference){
+  /* one keyframe drives all curves (pathLength normalises them); per-curve dur
+     + negative delay desync them so ~one comet shows at a time, sparse. */
+  .ltr-echo{animation:ltrComet 24s linear infinite}
+  .ltr--2.ltr-echo{animation-duration:29s;animation-delay:-13s}
+  .ltr--3.ltr-echo{animation-duration:26s;animation-delay:-19s}
 }
+/* the segment stack sweeps across (leading edge first), fades in briefly, then
+   parks off the end invisible for the rest of the cycle → sparse traces */
+@keyframes ltrComet{
+  0%   {stroke-dashoffset:262;opacity:0}
+  3%   {opacity:.26}
+  25%  {stroke-dashoffset:-1000;opacity:.26}
+  29%  {opacity:0}
+  100% {stroke-dashoffset:-1000;opacity:0}
+}
+/* mobile: the height cap already keeps it a band; thin + ease it a touch so it
+   stays a quiet texture behind the headline */
+@media (max-width:720px){ .ltr-echo{stroke-width:1.2} }
 /* variant B — a live bezier editor: the curve morphs with its handles (SMIL in
    the markup) while the whole thing slowly zooms + pans (CSS). It sits in the
    open space to the RIGHT of the copy (desktop only), preserveAspectRatio=meet

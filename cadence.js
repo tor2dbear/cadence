@@ -1375,10 +1375,9 @@ function exitTool(){
   // shows the bezier-editor motif, ?hero=both overlays both; default is traces.
   try{ const hv=new URLSearchParams(location.search).get("hero");
     const bg=document.querySelector(".lherobg"); if(hv&&bg) bg.setAttribute("data-hero",hv);
-    // both variants animate via SMIL (not CSS), so honour reduced-motion by
-    // pausing them at their initial frame (the CSS zoom/pan is already gated;
-    // the parked trace heads are hidden via a reduced-motion CSS rule)
-    if(reduce){ document.querySelectorAll(".lce-svg,.ltr-svg").forEach(s=>s.pauseAnimations&&s.pauseAnimations()); }
+    // the editor morphs via SMIL, so honour reduced-motion by pausing it at its
+    // initial frame (its CSS zoom/pan + the CSS trace comet are already gated)
+    if(reduce){ const es=document.querySelector(".lce-svg"); if(es&&es.pauseAnimations) es.pauseAnimations(); }
   }catch(_){}
   const start=document.getElementById("startTool");
   if(start) start.addEventListener("click",enterTool);

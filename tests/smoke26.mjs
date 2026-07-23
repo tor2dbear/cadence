@@ -43,18 +43,19 @@ assert('easing curve draws via clip-path, not a mismatched stroke-dash',
 const springKf = (css.match(/@keyframes ltSpring\{[^\n]*/) || [''])[0];
 assert('spring tile travels the full track via left, not a fixed translateX',
   /left:calc\(100% - 22px\)/.test(springKf) && !/translateX/.test(springKf));
-// variant A — traces: each of 3 curves has a moving gradient-band head (accent
-// fading to grey to nothing) over a faint grey guide trail
-assert('traces: 3 curves, each a grey trail + a gradient-band accent comet',
+// variant A — traces: each of 3 curves has a faint grey guide + a comet made of
+// stacked accent segments, swept by CSS (NOT SMIL, which froze in some browsers)
+assert('traces: 3 curves, each a grey trail + a 5-segment accent comet',
   /class="lherobg"/.test(html)
   && (html.match(/class="ltr-trail ltr--/g) || []).length === 3
-  && (html.match(/class="ltr-head ltr--/g) || []).length === 3
-  && (html.match(/<linearGradient class="ltg"/g) || []).length === 3
-  && (html.match(/<animateTransform attributeName="gradientTransform"/g) || []).length === 3);
-assert('the gradient band is one smooth accent ramp fading to transparent',
-  /\.ltgs-head\{stop-color:var\(--accent\)/.test(css) && /\.ltgs-tail\{stop-color:var\(--accent\);stop-opacity:0\}/.test(css));
-assert('the trace heads are hidden under reduced-motion (only faint guides remain)',
-  /@media \(prefers-reduced-motion:reduce\)\{\s*\.ltr-head\{opacity:0\}/.test(css));
+  && (html.match(/class="ltr-echo ltr-e\d ltr--/g) || []).length === 15);
+assert('the comet is CSS-driven (no SMIL anywhere → animates in every browser)',
+  !/<animateTransform/.test(html) && !/url\(#ltg/.test(html)
+  && /@keyframes ltrComet\{[\s\S]*?stroke-dashoffset/.test(css)
+  && /\.ltr-echo\{[^}]*stroke:var\(--accent\)/.test(css));
+assert('the comet is reduced-motion-gated (no sweep → the accent stays invisible)',
+  /\.ltr-echo\{[^}]*opacity:0\}/.test(css)
+  && /@media \(prefers-reduced-motion:no-preference\)\{[\s\S]*?\.ltr-echo\{animation:ltrComet/.test(css));
 // variant B — a live editor that morphs (SMIL) + zoom/pans (CSS); temporary A/B
 // switch (?hero) coexists with the traces
 assert('editor variant morphs (SMIL) + zoom/pans, behind the ?hero switch',
