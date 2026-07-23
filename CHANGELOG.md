@@ -5,6 +5,16 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.17] — 2026-07-23
+
+### Fixed
+- **The motion switch snaps now.** Its thumb borrowed the page's hero-entrance
+  duration (`--l-in`, 640ms) plus a spring, so flipping crawled — both ways. A
+  control should snap: the thumb is 240ms now (180ms for the track/colour), while
+  still borrowing the page's easing *functions*, so it keeps dogfooding the
+  crafted-vs-plain character (spring back to crafted, linear to plain) at a
+  responsive speed.
+
 ## [0.9.16] — 2026-07-23
 
 ### Changed — clearer motion switch, and the sub-pages move + get the mark

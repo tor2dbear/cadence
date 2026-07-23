@@ -377,10 +377,14 @@ html.boot-tool #landing{display:none}
 .ltaste{margin-top:30px;border-top:1px solid var(--line);padding-top:18px;max-width:60ch}
 .ltaste__row{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
 .ltaste__lbl{font-family:var(--mono);font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.08em}
+/* a control snaps — use a UI-speed duration, not --l-in (640ms, the page's
+   hero-entrance time). The easing FUNCTIONS still come from the page tokens, so
+   the thumb dogfoods the crafted-vs-plain character (spring back to crafted,
+   linear to plain) — just at a responsive speed. */
 .ltoggle{width:44px;height:24px;border-radius:999px;border:1px solid var(--line);background:var(--panel-2);position:relative;cursor:pointer;padding:0;flex:none;
-  transition:background-color var(--l-in) var(--l-ease),border-color var(--l-in) var(--l-ease)}
+  transition:background-color 180ms var(--l-ease),border-color 180ms var(--l-ease)}
 .ltoggle__thumb{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--accent);
-  transition:transform var(--l-in) var(--l-spring)}
+  transition:transform 240ms var(--l-spring),background-color 180ms var(--l-ease)}
 .landing.naive .ltoggle{background:var(--panel-2);border-color:var(--warn)}
 .landing.naive .ltoggle__thumb{background:var(--warn);transform:translateX(20px)}
 /* both states are always labelled, one on each side of the switch, so the
