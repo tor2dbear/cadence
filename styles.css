@@ -373,39 +373,54 @@ html.boot-tool #landing{display:none}
 .lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,64vw,820px);
   z-index:-1;pointer-events:none;overflow:hidden}
 .ltr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-/* the comet: a bright accent head (e1) with two fainter segments trailing
-   behind (a later animation-delay = further back along the curve). The group's
-   feGaussianBlur smears them into one soft motion-blur streak — bright head
-   dissolving into the sand, no visible steps or gradient. Swept by CSS
-   stroke-dashoffset (animates in every browser, unlike the old SMIL gradient
-   that froze solid); a big dash gap parks it off the path end most of the
-   cycle, and nothing is shown permanently. */
-.ltr-echo{fill:none;stroke-linecap:round;stroke-width:2;stroke-dasharray:40 3000;stroke:var(--accent)}
-.ltr-e1{opacity:.95}   /* bright head */
-.ltr-e2{opacity:.55}
-.ltr-e3{opacity:.28}   /* faintest, furthest back */
+/* the comet: a bright accent head (e1) with four fainter segments trailing
+   behind it (a later animation-delay = further back along the curve), tapering
+   head → tail in the travel direction. Swept by CSS stroke-dashoffset (animates
+   in every browser, unlike the old SMIL gradient that froze solid); a big dash
+   gap parks it off the path end for most of the cycle. */
+.ltr-echo{fill:none;stroke-linecap:round;stroke-width:1.5;stroke-dasharray:42 3000;stroke:var(--accent)}
+.ltr-e1{opacity:.9}    /* bright head */
+.ltr-e2{opacity:.6}
+.ltr-e3{opacity:.4}
+.ltr-e4{opacity:.24}
+.ltr-e5{opacity:.12}   /* faintest, furthest back */
+/* the trace: a faint grey line the comet draws on behind its head (revealed by
+   stroke-dashoffset in step with the sweep), which then tones out slowly over
+   the rest of the cycle — the lingering "spår" that fades to nothing. */
+.ltr-trail{fill:none;stroke-linecap:round;stroke-width:1.1;stroke-dasharray:1000 1000;
+  stroke:color-mix(in srgb,var(--ink) 20%,transparent);opacity:0}
 @media (prefers-reduced-motion:no-preference){
-  /* one keyframe drives every curve (pathLength normalises them); the two tail
-     layers lag e1 by a beat each (sit further back), curves desync via dur + phase */
+  /* one keyframe each drives every curve (pathLength normalises them); the tail
+     layers lag e1 a beat each; curves desync via duration + phase (delay) */
   .ltr-echo{animation:ltrSweep 24s linear infinite}
-  .ltr-e2{animation-delay:.15s}.ltr-e3{animation-delay:.3s}
-  .ltr--2.ltr-echo{animation-duration:29s}
-  .ltr--2.ltr-e1{animation-delay:-13s}.ltr--2.ltr-e2{animation-delay:-12.85s}.ltr--2.ltr-e3{animation-delay:-12.7s}
-  .ltr--3.ltr-echo{animation-duration:26s}
-  .ltr--3.ltr-e1{animation-delay:-19s}.ltr--3.ltr-e2{animation-delay:-18.85s}.ltr--3.ltr-e3{animation-delay:-18.7s}
+  .ltr-trail{animation:ltrTrace 24s linear infinite}
+  .ltr-e2{animation-delay:.14s}.ltr-e3{animation-delay:.28s}.ltr-e4{animation-delay:.42s}.ltr-e5{animation-delay:.56s}
+  .ltr--2.ltr-echo,.ltr--2.ltr-trail{animation-duration:29s}
+  .ltr--2.ltr-trail{animation-delay:-13s}
+  .ltr--2.ltr-e1{animation-delay:-13s}.ltr--2.ltr-e2{animation-delay:-12.86s}.ltr--2.ltr-e3{animation-delay:-12.72s}.ltr--2.ltr-e4{animation-delay:-12.58s}.ltr--2.ltr-e5{animation-delay:-12.44s}
+  .ltr--3.ltr-echo,.ltr--3.ltr-trail{animation-duration:26s}
+  .ltr--3.ltr-trail{animation-delay:-19s}
+  .ltr--3.ltr-e1{animation-delay:-19s}.ltr--3.ltr-e2{animation-delay:-18.86s}.ltr--3.ltr-e3{animation-delay:-18.72s}.ltr--3.ltr-e4{animation-delay:-18.58s}.ltr--3.ltr-e5{animation-delay:-18.44s}
 }
-/* the comet sweeps across in the first quarter, then parks off the end (huge
-   gap → invisible) for the rest of the cycle */
+/* comet: sweep across in the first quarter, then park off the end (huge gap →
+   invisible) for the rest of the cycle */
 @keyframes ltrSweep{
   0%   {stroke-dashoffset:80}
   25%  {stroke-dashoffset:-1120}
   100% {stroke-dashoffset:-1120}
 }
-/* reduced motion: no sweep, so hide the comet (else a static chunk parks at the
-   path start) — nothing is drawn */
-@media (prefers-reduced-motion:reduce){ .ltr-mb{opacity:0} }
+/* trace: draw on behind the head over the same first quarter, then tone out
+   slowly (~11s) and stay gone until the next pass */
+@keyframes ltrTrace{
+  0%   {stroke-dashoffset:1000;opacity:.4}   /* undrawn */
+  25%  {stroke-dashoffset:0;opacity:.4}       /* fully drawn behind the comet */
+  70%  {stroke-dashoffset:0;opacity:0}        /* slow fade to nothing */
+  100% {stroke-dashoffset:0;opacity:0}
+}
+/* reduced motion: no sweep — comet + trace stay at their hidden base state */
+@media (prefers-reduced-motion:reduce){ .ltr-echo{stroke-dashoffset:-1120} }
 /* mobile: the height cap already keeps it a band; thin it a touch */
-@media (max-width:720px){ .ltr-echo{stroke-width:1.5} }
+@media (max-width:720px){ .ltr-echo{stroke-width:1.2} }
 /* variant B — a live bezier editor: the curve morphs with its handles (SMIL in
    the markup) while the whole thing slowly zooms + pans (CSS). It sits in the
    open space to the RIGHT of the copy (desktop only), preserveAspectRatio=meet
