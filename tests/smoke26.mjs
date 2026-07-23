@@ -52,13 +52,19 @@ assert('traces: 3 curves, each a 5-segment accent comet + a grey trace it draws 
   && (html.match(/class="ltr-trail ltr--/g) || []).length === 3);
 assert('the comet is CSS-swept (no SMIL, no gradient) and the trace tones out slowly',
   !/<animateTransform/.test(html) && !/url\(#ltg/.test(html)
-  && /@keyframes ltrSweep\{[\s\S]*?stroke-dashoffset/.test(css)
+  && /@keyframes ltrHead\{[\s\S]*?stroke-dashoffset/.test(css)
   && /\.ltr-echo\{[^}]*stroke:var\(--accent\)/.test(css)
   && /@keyframes ltrTrace\{[\s\S]*?opacity:0[\s\S]*?\}/.test(css)
   && /\.ltr-trail\{[^}]*opacity:0\}/.test(css));
+// the five segments share one leading edge (offset by their own length) so the
+// taper is monotonic — no beading / "not lined up" look
+assert('comet segments share a leading edge (dashoffset = length − head), a clean taper',
+  /\.ltr-e1\{--Li:\d+px/.test(css) && /\.ltr-e5\{--Li:\d+px/.test(css)
+  && /stroke-dashoffset:calc\(var\(--Li\) \+ 60px\)/.test(css)
+  && /stroke-dashoffset:calc\(var\(--Li\) - 1100px\)/.test(css));
 assert('the comet is reduced-motion-gated (parked → nothing is drawn)',
-  /@media \(prefers-reduced-motion:reduce\)\{\s*\.ltr-echo\{stroke-dashoffset:-1120\}/.test(css)
-  && /@media \(prefers-reduced-motion:no-preference\)\{[\s\S]*?\.ltr-echo\{animation:ltrSweep/.test(css));
+  /@media \(prefers-reduced-motion:reduce\)\{\s*\.ltr-echo,\.ltr-trail\{opacity:0\}/.test(css)
+  && /@media \(prefers-reduced-motion:no-preference\)\{[\s\S]*?\.ltr-echo\{animation:ltrHead/.test(css));
 // variant B — a live editor that morphs + zoom/pans, BOTH SMIL on one timeline
 // (the viewBox animation shares the morph's keyTimes), so they stay in sync;
 // temporary A/B switch (?hero) coexists with the traces
