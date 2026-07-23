@@ -368,41 +368,54 @@ html.boot-tool #landing{display:none}
 .lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,820px);
   z-index:-1;pointer-events:none;overflow:hidden}
 .ltr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-/* a thin easing curve is drawn on (its leading edge tracing the shape), in soft
-   accent, then desaturates to a faint beige trace and fades into the bg — like a
-   mark left behind. Curves come at long, desynced intervals so it reads as
-   incidental. pathLength=1000 + dasharray:1000 makes one clean draw-on reveal. */
-.ltr{fill:none;stroke-width:1.2;stroke-linecap:round;stroke-dasharray:1000;stroke-dashoffset:0;
-  stroke:color-mix(in srgb,var(--ink) 9%,transparent)}   /* reduced-motion: faint static curves */
+/* each easing curve is traced by a short COLOURED head (~the width of a word)
+   that glides along it, leaving a faint grey trail behind that fades into the
+   bg — the whole curve is never shown solid. Sparse, desynced intervals. */
+.ltr-trail,.ltr-head{fill:none;stroke-width:1.3;stroke-linecap:round}
+.ltr-trail{stroke:color-mix(in srgb,var(--ink) 12%,transparent);stroke-dasharray:1000;stroke-dashoffset:0}
+.ltr-head{stroke:var(--accent);stroke-dasharray:130 1000;stroke-dashoffset:130;opacity:0}
 @media (prefers-reduced-motion:no-preference){
-  .ltr{stroke-dashoffset:1000;opacity:0;animation:ltrTrail 24s var(--l-ease) infinite}
+  .ltr-trail,.ltr-head{animation-duration:24s;animation-iteration-count:infinite;animation-timing-function:linear}
+  .ltr-trail{animation-name:ltrTrail;opacity:0}   /* the fading grey trail */
+  .ltr-head{animation-name:ltrHead}               /* the coloured leading piece */
   .ltr--2{animation-duration:29s;animation-delay:-11s}
   .ltr--3{animation-duration:26s;animation-delay:-19s}
 }
+/* the trail reveals behind the head, then fades to nothing */
 @keyframes ltrTrail{
-  0%  {stroke-dashoffset:1000;opacity:0;stroke:var(--accent)}
-  3%  {opacity:.8}
-  18% {stroke-dashoffset:0;opacity:.8;stroke:var(--accent)}                        /* drawn, in colour */
-  45% {stroke:color-mix(in srgb,var(--ink) 15%,transparent);opacity:.4}           /* desaturating trace */
-  62% {stroke-dashoffset:0;opacity:0;stroke:color-mix(in srgb,var(--ink) 12%,transparent)} /* faded away */
+  0%  {stroke-dashoffset:1000;opacity:0}
+  3%  {opacity:.42}
+  24% {stroke-dashoffset:0;opacity:.42}
+  58% {stroke-dashoffset:0;opacity:0}
   100%{stroke-dashoffset:1000;opacity:0}
 }
-/* variant B — the bezier editor motif (one easing at a time, with handles).
-   Toggled against variant A via ?hero= on the landing (JS sets data-hero). */
-.lce-svg{position:absolute;top:-4%;right:-6%;width:min(60%,560px);height:auto;overflow:visible}
-.lce-base{fill:none;stroke:color-mix(in srgb,var(--ink) 7%,transparent);stroke-width:1;stroke-dasharray:2 3.5;vector-effect:non-scaling-stroke}
-.lce-curve{fill:none;stroke:color-mix(in srgb,var(--ink) 17%,transparent);stroke-width:2.2;stroke-linecap:round;vector-effect:non-scaling-stroke}
-.lce-handle{stroke:color-mix(in srgb,var(--accent) 26%,transparent);stroke-width:1.1;vector-effect:non-scaling-stroke}
-.lce-anchor{fill:color-mix(in srgb,var(--ink) 22%,transparent)}
-.lce-ctrl{fill:color-mix(in srgb,var(--accent) 42%,transparent)}
-.lce{opacity:0}
-.lce--1{opacity:1}   /* reduced-motion fallback: first easing stays visible */
-@media (prefers-reduced-motion:no-preference){
-  .lce{animation:lceCycle 16.5s var(--l-ease) infinite}
-  .lce--2{animation-delay:-5.5s}
-  .lce--3{animation-delay:-11s}
+/* the coloured head glides start→end once, then vanishes */
+@keyframes ltrHead{
+  0%  {stroke-dashoffset:130;opacity:0}
+  4%  {opacity:.85}
+  24% {stroke-dashoffset:-1000;opacity:.85}
+  28% {stroke-dashoffset:-1000;opacity:0}
+  100%{stroke-dashoffset:-1000;opacity:0}
 }
-@keyframes lceCycle{0%{opacity:0}6%{opacity:1}30%{opacity:1}40%{opacity:0}100%{opacity:0}}
+/* variant B — a live bezier editor: the curve morphs with its handles (SMIL in
+   the markup) while the whole thing slowly zooms + pans. Fills the layer with
+   preserveAspectRatio=meet, so it always fits (no clipping off-screen).
+   Toggled against variant A via ?hero= on the landing (JS sets data-hero). */
+.lce-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.lce-base{fill:none;stroke:color-mix(in srgb,var(--ink) 7%,transparent);stroke-width:1;stroke-dasharray:2 3.5}
+.lce-curve{fill:none;stroke:color-mix(in srgb,var(--ink) 16%,transparent);stroke-width:1.6;stroke-linecap:round}
+.lce-handle{stroke:color-mix(in srgb,var(--accent) 24%,transparent);stroke-width:1}
+.lce-anchor{fill:color-mix(in srgb,var(--ink) 20%,transparent)}
+.lce-ctrl{fill:color-mix(in srgb,var(--accent) 40%,transparent)}
+.lce-live{transform-box:fill-box;transform-origin:center}
+@media (prefers-reduced-motion:no-preference){
+  .lce-live{animation:lcePan 27s ease-in-out infinite}   /* zoom + pan; the morph is SMIL */
+}
+@keyframes lcePan{
+  0%,100%{transform:translate(0,0) scale(1)}
+  32%{transform:translate(-7%,5%) scale(1.24)}
+  64%{transform:translate(8%,-4%) scale(.86)}
+}
 /* the switch: A (traces) by default, B (editor) with ?hero=editor, both with ?hero=both */
 .lherobg .lce-svg{display:none}
 .lherobg[data-hero="editor"] .ltr-svg{display:none}

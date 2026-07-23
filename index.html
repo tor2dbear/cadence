@@ -53,31 +53,41 @@
   <div class="lherobg" aria-hidden="true">
     <!-- variant A (default): thin easing curves drawn on + fading away -->
     <svg class="ltr-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice">
-      <path class="ltr ltr--1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
-      <path class="ltr ltr--2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
-      <path class="ltr ltr--3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
+      <path class="ltr-trail ltr--1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
+      <path class="ltr-head ltr--1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
+      <path class="ltr-trail ltr--2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
+      <path class="ltr-head ltr--2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
+      <path class="ltr-trail ltr--3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
+      <path class="ltr-head ltr--3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
     </svg>
     <!-- variant B (?hero=editor): the bezier editor, one easing at a time with
          its handles fading in. Both show with ?hero=both. -->
-    <svg class="lce-svg" viewBox="0 0 128 100">
-      <line class="lce-base" x1="8" y1="86" x2="120" y2="14" />
-      <g class="lce lce--1">
-        <path class="lce-curve" d="M8,86 C32.6,14 48.3,14 120,14" />
-        <line class="lce-handle" x1="8" y1="86" x2="32.6" y2="14" /><line class="lce-handle" x1="120" y1="14" x2="48.3" y2="14" />
-        <circle class="lce-anchor" cx="8" cy="86" r="2.4" /><circle class="lce-anchor" cx="120" cy="14" r="2.4" />
-        <circle class="lce-ctrl" cx="32.6" cy="14" r="2.2" /><circle class="lce-ctrl" cx="48.3" cy="14" r="2.2" />
-      </g>
-      <g class="lce lce--2">
-        <path class="lce-curve" d="M8,86 C80.8,86 47.2,14 120,14" />
-        <line class="lce-handle" x1="8" y1="86" x2="80.8" y2="86" /><line class="lce-handle" x1="120" y1="14" x2="47.2" y2="14" />
-        <circle class="lce-anchor" cx="8" cy="86" r="2.4" /><circle class="lce-anchor" cx="120" cy="14" r="2.4" />
-        <circle class="lce-ctrl" cx="80.8" cy="86" r="2.2" /><circle class="lce-ctrl" cx="47.2" cy="14" r="2.2" />
-      </g>
-      <g class="lce lce--3">
-        <path class="lce-curve" d="M8,86 C46.1,-26.3 79.7,14 120,14" />
-        <line class="lce-handle" x1="8" y1="86" x2="46.1" y2="-26.3" /><line class="lce-handle" x1="120" y1="14" x2="79.7" y2="14" />
-        <circle class="lce-anchor" cx="8" cy="86" r="2.4" /><circle class="lce-anchor" cx="120" cy="14" r="2.4" />
-        <circle class="lce-ctrl" cx="46.1" cy="-26.3" r="2.2" /><circle class="lce-ctrl" cx="79.7" cy="14" r="2.2" />
+    <svg class="lce-svg" viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet">
+      <!-- a single easing being tuned: the control points slide, the curve
+           morphs with them (SMIL, so it works everywhere; JS pauses it for
+           reduced-motion), and the whole editor slowly zooms + pans (CSS). -->
+      <g class="lce-live">
+        <line class="lce-base" x1="24" y1="106" x2="196" y2="24" />
+        <path class="lce-curve" d="M24,106 C61.8,24 85.9,24 196,24">
+          <animate attributeName="d" dur="15s" repeatCount="indefinite" calcMode="spline"
+            keyTimes="0;0.34;0.67;1" keySplines="0.5 0 0.3 1;0.5 0 0.3 1;0.5 0 0.3 1"
+            values="M24,106 C61.8,24 85.9,24 196,24;M24,106 C135.8,106 84.2,24 196,24;M24,106 C82.5,-21.9 134.1,24 196,24;M24,106 C61.8,24 85.9,24 196,24" />
+        </path>
+        <line class="lce-handle" x1="24" y1="106" x2="61.8" y2="24">
+          <animate attributeName="x2" dur="15s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.34;0.67;1" keySplines="0.5 0 0.3 1;0.5 0 0.3 1;0.5 0 0.3 1" values="61.8;135.8;82.5;61.8" />
+          <animate attributeName="y2" dur="15s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.34;0.67;1" keySplines="0.5 0 0.3 1;0.5 0 0.3 1;0.5 0 0.3 1" values="24;106;-21.9;24" />
+        </line>
+        <line class="lce-handle" x1="196" y1="24" x2="85.9" y2="24">
+          <animate attributeName="x2" dur="15s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.34;0.67;1" keySplines="0.5 0 0.3 1;0.5 0 0.3 1;0.5 0 0.3 1" values="85.9;84.2;134.1;85.9" />
+        </line>
+        <circle class="lce-anchor" cx="24" cy="106" r="2.6" /><circle class="lce-anchor" cx="196" cy="24" r="2.6" />
+        <circle class="lce-ctrl" cx="61.8" cy="24" r="2.4">
+          <animate attributeName="cx" dur="15s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.34;0.67;1" keySplines="0.5 0 0.3 1;0.5 0 0.3 1;0.5 0 0.3 1" values="61.8;135.8;82.5;61.8" />
+          <animate attributeName="cy" dur="15s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.34;0.67;1" keySplines="0.5 0 0.3 1;0.5 0 0.3 1;0.5 0 0.3 1" values="24;106;-21.9;24" />
+        </circle>
+        <circle class="lce-ctrl" cx="85.9" cy="24" r="2.4">
+          <animate attributeName="cx" dur="15s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.34;0.67;1" keySplines="0.5 0 0.3 1;0.5 0 0.3 1;0.5 0 0.3 1" values="85.9;84.2;134.1;85.9" />
+        </circle>
       </g>
     </svg>
   </div>

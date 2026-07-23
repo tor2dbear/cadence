@@ -1374,7 +1374,11 @@ function exitTool(){
   // hero backdrop A/B switch (temporary, for picking a direction): ?hero=editor
   // shows the bezier-editor motif, ?hero=both overlays both; default is traces.
   try{ const hv=new URLSearchParams(location.search).get("hero");
-    const bg=document.querySelector(".lherobg"); if(hv&&bg) bg.setAttribute("data-hero",hv); }catch(_){}
+    const bg=document.querySelector(".lherobg"); if(hv&&bg) bg.setAttribute("data-hero",hv);
+    // the editor variant morphs via SMIL (not CSS), so honour reduced-motion by
+    // pausing it at its initial frame (the CSS zoom/pan is already media-gated)
+    if(reduce){ const es=document.querySelector(".lce-svg"); if(es&&es.pauseAnimations) es.pauseAnimations(); }
+  }catch(_){}
   const start=document.getElementById("startTool");
   if(start) start.addEventListener("click",enterTool);
   // the tool's wordmark is a home link → back to the intro. Plain modified

@@ -43,16 +43,18 @@ assert('easing curve draws via clip-path, not a mismatched stroke-dash',
 const springKf = (css.match(/@keyframes ltSpring\{[^\n]*/) || [''])[0];
 assert('spring tile travels the full track via left, not a fixed translateX',
   /left:calc\(100% - 22px\)/.test(springKf) && !/translateX/.test(springKf));
-// the hero's ambient easing traces: a segment glides along each (invisible)
-// easing curve — 3 traces, reduced-motion-gated (the segment travel only runs
-// with motion; the faint full guide is the reduced-motion fallback)
-assert('hero has the ambient easing traces (3 curves)',
-  /class="lherobg"/.test(html) && (html.match(/class="ltr ltr--/g) || []).length === 3);
-assert('the trace draw/fade is reduced-motion-gated',
-  /@media \(prefers-reduced-motion:no-preference\)\{[\s\S]*?\.ltr\{[\s\S]*?animation:ltrTrail/.test(css));
-// a temporary A/B: the bezier-editor variant + a ?hero switch coexist with the traces
-assert('both hero-backdrop variants + the ?hero switch are present',
-  /class="lce-svg"/.test(html) && /class="ltr-svg"/.test(html)
+// variant A — traces: each of 3 curves has a coloured head + a fading grey trail
+assert('traces: 3 curves, each a coloured head + grey trail',
+  /class="lherobg"/.test(html)
+  && (html.match(/class="ltr-head ltr--/g) || []).length === 3
+  && (html.match(/class="ltr-trail ltr--/g) || []).length === 3);
+assert('the trace head/trail is reduced-motion-gated',
+  /@media \(prefers-reduced-motion:no-preference\)\{[\s\S]*?\.ltr-trail\{animation-name:ltrTrail/.test(css));
+// variant B — a live editor that morphs (SMIL) + zoom/pans (CSS); temporary A/B
+// switch (?hero) coexists with the traces
+assert('editor variant morphs (SMIL) + zoom/pans, behind the ?hero switch',
+  /class="lce-live"/.test(html) && /<animate attributeName="d"/.test(html)
+  && /@keyframes lcePan/.test(css)
   && /\.lherobg\[data-hero="editor"\] \.ltr-svg\{display:none\}/.test(css));
 
 // --- runtime checks: the fonts load and the identity is applied ---
