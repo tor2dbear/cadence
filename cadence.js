@@ -333,7 +333,7 @@ function renderBench(){
         <div class="scope__demo">${'<span class="scope__dot"></span>'.repeat(SCOPE_N)}</div>
       </div>`;
     }
-    if(p.kind==="orb") stage=`<div class="orb"></div><span class="orb-base"></span>`;
+    if(p.kind==="orb") stage=`<span class="orb-base"></span><span class="orb-track"><div class="orb"></div></span>`;
     if(p.kind==="cascade"){
       const rr=resolve(findIntent(p.intent)), dms=parseInt(rr.d)||200, st=rr.s|0;
       const total=Math.max(1,(CASC_N-1)*st+dms);
