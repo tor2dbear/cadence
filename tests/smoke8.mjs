@@ -22,14 +22,14 @@ const css = await out('css');
 assert('CSS has --motion-enter-stagger', css.includes('--motion-enter-stagger: 70ms'));
 assert('CSS omits stagger for move (0)', !css.includes('--motion-move-stagger'));
 
-// the reveal probe uses the intent's stagger token (per-item delay)
-await page.locator('.probe__kind').first().selectOption('reveal');   // probe 0 points at "enter"
+// the cascade lens delays each item by the intent's stagger token (per-item)
+await page.locator('.probe__kind').first().selectOption('cascade');   // probe 0 points at "enter"
 await page.locator('.probe[data-i="0"] .probe__stage').click();
 await page.waitForTimeout(60);
-const t1 = await page.locator('.probe[data-i="0"] .card').nth(1).evaluate(el => el.style.transition);
-const t2 = await page.locator('.probe[data-i="0"] .card').nth(2).evaluate(el => el.style.transition);
-assert('reveal card 2 delayed 70ms', /(^|\s)70ms/.test(t1));
-assert('reveal card 3 delayed 140ms', /(^|\s)140ms/.test(t2));
+const t1 = await page.locator('.probe[data-i="0"] .casc__fill').nth(1).evaluate(el => el.style.transition);
+const t2 = await page.locator('.probe[data-i="0"] .casc__fill').nth(2).evaluate(el => el.style.transition);
+assert('cascade item 2 delayed 70ms', /(^|\s)70ms/.test(t1));
+assert('cascade item 3 delayed 140ms', /(^|\s)140ms/.test(t2));
 
 // system-read: a healthy stagger reads ok; a long one warns
 let hints = await page.locator('#hints').innerText();

@@ -60,12 +60,16 @@ assert('build.sh generates the changelog from CHANGELOG.md', /gen-changelog\.mjs
     /<h2 class="cl-ver"[^>]*><span class="cl-num">0\.9\.7<\/span>/.test(clHtml));
   assert('changelog generator carries BreadcrumbList', /"@type":"BreadcrumbList"/.test(clHtml));
   assert('changelog generator leaves no raw markdown bold', !/\*\*/.test(clHtml.replace(/<[^>]+>/g, '')));
+  assert('changelog carries the wordmark curve + a staggered entrance',
+    /clbrand__curve/.test(clHtml) && /@keyframes clrise/.test(clHtml));
 }
 
 // --- the guide is a real, indexable second page ---
 assert('guide has its own canonical', guide.includes(`rel="canonical" href="${HOST}/guide"`));
 assert('guide has exactly one h1', (guide.match(/<h1[ >]/g) || []).length === 1);
 assert('guide carries TechArticle structured data', /"@type":"TechArticle"/.test(guide));
+assert('guide carries the wordmark curve + a staggered entrance',
+  /gbrand__curve/.test(guide) && /@keyframes grise/.test(guide));
 assert('guide carries BreadcrumbList structured data', /"@type":"BreadcrumbList"/.test(guide));
 assert('guide links back to the tool/home', /href="index\.html#tool"/.test(guide) && /href="index\.html"/.test(guide));
 

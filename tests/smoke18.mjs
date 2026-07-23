@@ -43,13 +43,17 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
   await ed.waitForTimeout(50);
   const hash = await ed.evaluate(() => location.hash);
   assert('editor produced a hash', hash.length > 5);
+  // the address bar carries a short diff-from-default hash; the demo link (and
+  // the live-preview channel) carry the FULL encode, which is what demo.html
+  // decodes — so drive the demo from the demo link, not the address bar
   const demoHref = await ed.locator('#demoLink').getAttribute('href');
-  assert('demo link carries the hash', demoHref === 'demo.html' + hash);
+  assert('demo link carries the full state hash', demoHref.startsWith('demo.html#'));
+  const demoHash = demoHref.slice('demo.html'.length);
 
   const page = await browser.newPage({ viewport: { width: 640, height: 900 } });
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-  await page.goto(DEMO + hash, { waitUntil: 'networkidle' });
+  await page.goto(DEMO + demoHash, { waitUntil: 'networkidle' });
   { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
   // a spring intent → --role-enter-ease should be a linear() timing function
   const ease = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--role-enter-ease').trim());

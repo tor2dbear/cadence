@@ -75,19 +75,21 @@ const bindOf = it => it.binds[Math.min(activeMode, it.binds.length-1)] || it.bin
 // each probe is a lens (kind) pointed at one intent. "orb" is the abstract,
 // component-agnostic default; the rest are a swappable UI-component library.
 const KINDS = [
+  // abstract instruments — each isolates one measurable quality of a token.
+  // Real components (a drawer, a list, a modal) live on the demo page, at full
+  // fidelity and integrated; the bench doesn't re-stage low-fi copies of them.
   {k:"scope",label:"scope · everything"},
   {k:"orb",label:"orb · abstract"},
   {k:"cascade",label:"cascade · timeline"},
-  {k:"drawer",label:"drawer"},
-  {k:"button",label:"button"},
-  {k:"acc",label:"accordion"},
-  {k:"reveal",label:"list reveal"},
+  {k:"button",label:"button · press"},
+  {k:"acc",label:"accordion · reflow"},
   {k:"scrollreveal",label:"scroll · in-view"},
   {k:"scrub",label:"scroll · scrub"},
   {k:"viewtransition",label:"view transition"},
 ];
 const CASC_N = 6;    // items in the stagger timeline
 const SCOPE_N = 5;   // demo elements in the scope lens
+const ORB_TRAIL = 9; // trailing echoes behind the comet head (orb lens)
 // how each animated property reads on the scope demo elements
 const SCOPE_ANIM = {
   opacity:  {props:["opacity"],   before:{opacity:"0"}, after:{opacity:"1"}},
@@ -98,12 +100,9 @@ const SCOPE_ANIM = {
   height:   {props:["transform"], before:{transform:"scaleY(.18)"}, after:{transform:"scaleY(1)"}},
   width:    {props:["transform"], before:{transform:"scaleX(.18)"}, after:{transform:"scaleX(1)"}},
 };
-let probes = [
-  {kind:"scope",intent:null},   // opens on the unified "everything" lens (pointed at enter)
-  {kind:"orb",intent:null},
-  {kind:"orb",intent:null},
-  {kind:"orb",intent:null},
-];
+// the bench probes — seeded below (see SEED_INTENTS) once resolve()/defaultLensFor
+// exist, so each opens in the lens that fits its intent's character
+let probes = [];
 // token names double as CSS custom-property suffixes, so keep them slug-safe
 const slug = s => (s||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
 function uniqueName(base, arr, skipIdx){
@@ -151,9 +150,33 @@ const resolve = it => { const b=bindOf(it); const e=easeObj(b.ease);
   const dpx = b.distance ? distPx(b.distance) : null;
   return { d: durMs(b.dur)+"ms", e: easeCSS(e), eLabel: easeLabel(e), eEff: easeCSS(eff), split, s: +b.stagger||0, prop: b.prop||"all", distName: b.distance||"", distPx: dpx, reveal: (typeof b.reveal==="number") ? b.reveal : null, scrub: b.scrub ? {tl:b.scrub.tl||"view",range:b.scrub.range||"cover",fx:b.scrub.fx||"progress"} : null, vt: b.vt ? {type:b.vt.type||"root"} : null }; };
 const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
-// default probe intents: enter / exit / move / hover, one abstract orb each
-probes[0].intent = intents[0].id; probes[1].intent = intents[1].id;
-probes[2].intent = intents[2].id; probes[3].intent = intents[4].id;
+// pick the lens that best previews an intent's *defining* trait. Structural
+// mechanics win first (only their lens can show them at all), then a named
+// press/hover gesture, then sequence rhythm — else the flagship "everything"
+// the general everyday default is the orb (its comet reads travel + easing, and
+// its trailing echoes even show a spring's overshoot), so the bench spreads
+// across lenses instead of collapsing to one. scope is the deliberate
+// "inspect the curve / ride-dot" lens — it leads probe 0 but isn't a catch-all.
+// Used for the *default* only; an explicit lens choice (probes[i].lensSet) wins.
+function defaultLensFor(it){
+  const r=resolve(it);
+  if(r.scrub) return "scrub";                                   // scroll-linked → progress, not a clock
+  if(r.vt) return "viewtransition";                             // DOM state swap
+  if(r.reveal!=null) return "scrollreveal";                     // in-view reveal threshold
+  if(r.prop==="height"||r.prop==="width") return "acc";         // layout reflow
+  if(/\b(hover|press|tap|click|focus|toggle|button|ripple)\b/i.test(`${it.name||""} ${it.purpose||""}`)) return "button";
+  if(r.s>0) return "cascade";                                   // a sequence → show its rhythm
+  return "orb";                                                 // plain / spring / travel → the comet
+}
+// the mechanic lenses can't show a general intent (and vice-versa) — so a
+// re-point only re-lenses when one of these is involved; scope/orb/cascade can
+// show any plain/spring/staggered intent and are kept, preserving bench variety.
+const SPECIALIST_LENS = new Set(["scrub","viewtransition","scrollreveal","acc","button"]);
+// seed the bench: probe 0 leads on the flagship scope (the curve + ride-dot),
+// the rest open in the lens that fits their intent — so the bench opens varied
+// (scope · orb · orb · button for the default enter/exit/move/hover).
+const SEED_INTENTS=[intents[0].id, intents[1].id, intents[2].id, intents[4].id];
+probes = SEED_INTENTS.map((id,idx)=>({ kind: idx===0 ? "scope" : defaultLensFor(findIntent(id)), intent:id }));
 
 // ---------- render: duration ladder ----------
 const maxMs = () => Math.max(...durations.map(d=>d.ms));
@@ -318,6 +341,7 @@ function renderIntents(){
 function renderBench(){
   const el=document.getElementById("bench");
   el.innerHTML = probes.map((p,i)=>{
+    if(!KINDS.some(k=>k.k===p.kind)) p.kind="orb";   // retired lens in an old link → fall back
     const opts = intents.map(it=>`<option value="${it.id}" ${it.id===p.intent?"selected":""}>${it.name}</option>`).join("");
     const kinds = KINDS.map(kd=>`<option value="${kd.k}" ${kd.k===p.kind?"selected":""}>${kd.label}</option>`).join("");
     const ii = intents.findIndex(x=>x.id===p.intent);   // colour the probe by its intent
@@ -329,11 +353,19 @@ function renderBench(){
       if(eo.type==="spring") curve=`<polyline points="${springPoints(eo.spring)}"/>`;
       else { const [x1,y1,x2,y2]=eo.bez; curve=`<path d="M${SX(0)},${SY(0)} C${SX(x1)},${SY(y1)} ${SX(x2)},${SY(y2)} ${SX(1)},${SY(1)}"/>`; }
       stage=`<div class="scope">
-        <div class="scope__graph"><svg class="scope__curve" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="${SX(0)}" y1="${SY(0)}" x2="${SX(1)}" y2="${SY(1)}"/>${curve}</svg><div class="scope__head"></div></div>
+        <div class="scope__graph"><svg class="scope__curve" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="${SX(0)}" y1="${SY(0)}" x2="${SX(1)}" y2="${SY(1)}"/>${curve}</svg><div class="scope__head"></div><div class="scope__ride" style="left:${SX(0)}%;top:${SY(0)}%"></div></div>
         <div class="scope__demo">${'<span class="scope__dot"></span>'.repeat(SCOPE_N)}</div>
       </div>`;
     }
-    if(p.kind==="orb") stage=`<span class="orb-base"></span><span class="orb-track"><div class="orb"></div></span>`;
+    if(p.kind==="orb"){
+      // comet lens: an opaque head + a fading trail. The head leads; each echo
+      // lags a little, so the trail stretches where the token moves fast —
+      // easing you can see. Echoes fade + shrink toward the tail.
+      let echoes="";
+      for(let i=1;i<=ORB_TRAIL;i++){ const t=i/ORB_TRAIL;
+        echoes+=`<i class="orb-echo" style="opacity:${(0.52*(1-t*0.72)).toFixed(3)};transform:scale(${(1-0.42*t).toFixed(2)})"></i>`; }
+      stage=`<span class="orb-base"></span><span class="orb-track"><span class="orb-rail"><div class="orb"></div>${echoes}</span></span>`;
+    }
     if(p.kind==="cascade"){
       const rr=resolve(findIntent(p.intent)), dms=parseInt(rr.d)||200, st=rr.s|0;
       const total=Math.max(1,(CASC_N-1)*st+dms);
@@ -344,10 +376,8 @@ function renderBench(){
       }
       stage=`<div class="casc"><div class="casc__lanes">${lanes}<div class="casc__head"></div></div></div>`;
     }
-    if(p.kind==="drawer") stage=`<div class="scrim"></div><div class="drawer"><span class="l"></span><span class="l"></span><span class="l"></span></div>`;
     if(p.kind==="button") stage=`<div class="btnpad">Hover me</div>`;
     if(p.kind==="acc") stage=`<div class="acc"><div class="acc__hd">Details <span class="chev">⌄</span></div><div class="acc__body"><p>Height and chevron ride the same token, so the change feels like one gesture.</p></div></div>`;
-    if(p.kind==="reveal") stage=`<div class="reveal"><span class="card"></span><span class="card"></span><span class="card"></span></div>`;
     if(p.kind==="scrollreveal"){
       // a real scroll box: cards start below the fold and reveal as they cross
       // the intent's trigger threshold (via IntersectionObserver, so it's the
@@ -384,6 +414,11 @@ function renderBench(){
       <div class="probe__stage" data-play="${i}">${stage}</div>
     </div>`;
   }).join("");
+  // the button lens is a hover/press gesture — make "Hover me" honest (it also
+  // replays on click, like every lens, via the [data-play] handler)
+  el.querySelectorAll(".btnpad").forEach(b=>b.addEventListener("mouseenter",()=>{
+    const pr=b.closest("[data-play]"); if(pr) play(+pr.dataset.play);
+  }));
   armScrollReveals();
 }
 
@@ -442,17 +477,23 @@ function play(i){
     // actual property animates with the token's easing/spring (bounce shows natively)
     const dms=parseInt(r.d)||200, st=r.s|0, total=Math.max(1,(SCOPE_N-1)*st+dms);
     const head=root.querySelector(".scope__head");
+    const ride=root.querySelector(".scope__ride");
     const dots=[...root.querySelectorAll(".scope__dot")];
     const a=SCOPE_ANIM[r.prop]||SCOPE_ANIM.all;
     const set=(el,o)=>{ for(const kk in o) el.style[kk]=o[kk]; };
     if(head){ head.style.transition="none"; head.style.left="0%"; head.style.opacity="1"; }
+    // ride dot starts at the curve's origin; left is linear time, top is the eased
+    // value — since SY is affine, top eased by the token traces the drawn curve,
+    // overshooting for a spring (the missing spring preview)
+    if(ride){ ride.style.transition="none"; ride.style.left=SX(0)+"%"; ride.style.top=SY(0)+"%"; ride.style.opacity="1"; }
     dots.forEach(d=>{ d.style.transition="none"; set(d,a.before); });
     void root.offsetWidth;
     if(head) head.style.transition=`left ${total}ms linear`;
+    if(ride) ride.style.transition=`left ${r.d} linear, top ${r.d} ${r.e}`;
     const easeFor=pr=>/(opacity|color)/.test(pr)?r.eEff:r.e;   // effects vs spatial when split
     dots.forEach((d,k)=>{ d.style.transition=a.props.map(pr=>`${pr} ${r.d} ${easeFor(pr)} ${k*st}ms`).join(", "); });
-    requestAnimationFrame(()=>{ if(head) head.style.left="100%"; dots.forEach(d=>set(d,a.after)); });
-    setTimeout(()=>{ if(head){ head.style.transition="opacity 250ms"; head.style.opacity="0"; } }, total+80);
+    requestAnimationFrame(()=>{ if(head) head.style.left="100%"; if(ride){ ride.style.left=SX(1)+"%"; ride.style.top=SY(1)+"%"; } dots.forEach(d=>set(d,a.after)); });
+    setTimeout(()=>{ if(head){ head.style.transition="opacity 250ms"; head.style.opacity="0"; } if(ride){ ride.style.transition="opacity 250ms"; ride.style.opacity="0"; } }, total+80);
   }
   if(p.kind==="cascade"){
     // timeline lens: each lane fills at its staggered start; a playhead sweeps time
@@ -467,17 +508,16 @@ function play(i){
     setTimeout(()=>{ if(head){ head.style.transition="opacity 250ms"; head.style.opacity="0"; } }, total+80);
   }
   if(p.kind==="orb"){
-    // abstract lens: travel + fade + scale, purely showing the token's character
-    const o=root.querySelector(".orb");
-    o.style.left="14px"; o.style.opacity=".3"; o.style.transform="scale(.5)";
-    anim(o,{left:"calc(100% - 40px)",opacity:"1",transform:"scale(1)"},r);
-    setTimeout(()=>anim(o,{left:"14px",opacity:".3",transform:"scale(.5)"},r),1400);
-  }
-  if(p.kind==="drawer"){
-    const dr=root.querySelector(".drawer"),sc=root.querySelector(".scrim");
-    dr.style.transform="translateX(105%)";sc.style.opacity="0";
-    anim(sc,{opacity:"1"},r);anim(dr,{transform:"translateX(0)"},r);
-    setTimeout(()=>{anim(sc,{opacity:"0"},r);anim(dr,{transform:"translateX(105%)"},r);},1400);
+    // comet lens: the head leads, each echo lags i*step ms, so the trail
+    // stretches through the fast part of the easing and retracts at the ends.
+    const rail=root.querySelector(".orb-rail");
+    const dots=[...rail.querySelectorAll(".orb, .orb-echo")]; // head first, then echoes
+    const START="14px", END="calc(100% - 40px)", step=Math.max(9,(parseInt(r.d)||200)/15);
+    const setTrans=()=>dots.forEach((el,i)=>{ el.style.transition=`left ${r.d} ${r.e} ${i*step}ms`; });
+    dots.forEach(el=>{ el.style.transition="none"; el.style.left=START; });
+    void rail.offsetWidth; setTrans();
+    requestAnimationFrame(()=>dots.forEach(el=>el.style.left=END));
+    setTimeout(()=>{ setTrans(); requestAnimationFrame(()=>dots.forEach(el=>el.style.left=START)); },1400);
   }
   if(p.kind==="button"){
     const b=root.querySelector(".btnpad");
@@ -520,14 +560,22 @@ function play(i){
       setTimeout(reset,1600);
     }
   }
-  if(p.kind==="reveal"){
-    const cards=[...root.querySelectorAll(".card")];
-    cards.forEach(c=>{c.style.opacity="0";c.style.transform="translateY(14px)";});
-    cards.forEach((c,k)=>anim(c,{opacity:"1",transform:"translateY(0)"},r,k*r.s));
-    setTimeout(()=>cards.forEach((c,k)=>anim(c,{opacity:"0",transform:"translateY(14px)"},r,k*r.s)),1500);
-  }
 }
 function playAll(){ probes.forEach((_,i)=>setTimeout(()=>play(i), i*130)); }
+// keep the bench alive: after the intro, gently rotate through the probes so
+// one is always in motion (a motion tool that sits frozen reads as dead). One
+// at a time, calm cadence; skipped for reduced-motion and when off-screen.
+let benchIdle=null, benchRot=0;
+function startBenchIdle(){
+  if(reduce || benchIdle) return;
+  benchIdle=setInterval(()=>{
+    if(document.hidden || mode!=="tool" || document.body.classList.contains("previewing")) return;
+    for(let n=0;n<probes.length;n++){                     // next probe with visible motion
+      const idx=(benchRot++)%probes.length, k=probes[idx].kind;
+      if(k!=="scrollreveal" && k!=="scrub"){ play(idx); break; }
+    }
+  }, 2600);
+}
 
 // ---------- system read (the opinion layer) ----------
 function critique(){
@@ -924,11 +972,12 @@ const TEMPLATES = {
     p:[["orb",0],["orb",1],["orb",2],["orb",3]]},
 };
 
-// ---------- shareable state (whole system encoded in the URL hash) ----------
+// ---------- shareable state (whole system encoded in the URL) ----------
 const b64urlEncode = str => btoa(unescape(encodeURIComponent(str))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 const b64urlDecode = s => decodeURIComponent(escape(atob(s.replace(/-/g,"+").replace(/_/g,"/"))));
-function encodeState(){
-  const s = {
+// the full system as a compact positional object (arrays, not keyed fields)
+function stateObj(){
+  return {
     d: durations.map(d=>[d.name,d.ms]),
     e: easings.map(e=> e.type==="spring" ? [e.name,"spring",e.spring.stiffness,e.spring.damping] : [e.name,...e.bez]),
     m: modes.map(x=>x.name),
@@ -938,9 +987,44 @@ function encodeState(){
     x: distances.map(d=>[d.name,d.px]),
     p: probes.map(pb=>{ const k=intents.findIndex(x=>x.id===pb.intent); return [pb.kind, k<0?0:k]; }),
   };
-  return b64urlEncode(JSON.stringify(s));
 }
-function applyEncoded(raw){ applyState(JSON.parse(b64urlDecode(raw))); }
+// the full encoding — used for the live-demo link + channel, which want the
+// complete state no matter what changed (demo.html decodes this format)
+function encodeStateFull(){ return b64urlEncode(JSON.stringify(stateObj())); }
+// one positional section vs its default: null if identical, {f:rows} if the
+// shape changed (rows added/removed), else {d:{idx:row}} for just the differing
+// rows — so a lightly edited system encodes to a fraction of the full state.
+function packArr(cur, def){
+  if(cur.length!==def.length) return {f:cur};
+  const delta={}; let any=false;
+  for(let i=0;i<cur.length;i++) if(JSON.stringify(cur[i])!==JSON.stringify(def[i])){ delta[i]=cur[i]; any=true; }
+  return any ? {d:delta} : null;
+}
+function unpackArr(packed, def){
+  if(!packed) return def;
+  if(packed.f) return packed.f;
+  const out=def.slice(); for(const k in packed.d) out[+k]=packed.d[k]; return out;
+}
+// the short encoding — only the diff from the default system. This is what the
+// editor puts in the address bar, so the shared link is short (see writeURL).
+function encodeState(){
+  const s=stateObj(), D={};
+  if(s.am!==DEFAULT_S.am) D.am=s.am;
+  for(const k of ["d","e","m","i","x","p"]){ const p=packArr(s[k],DEFAULT_S[k]); if(p) D[k]=p; }
+  return b64urlEncode(JSON.stringify(D));
+}
+function expandDiff(D){                    // rebuild the full state (missing/unchanged → default)
+  return { am:("am" in D)?D.am:DEFAULT_S.am,
+    d:unpackArr(D.d,DEFAULT_S.d), e:unpackArr(D.e,DEFAULT_S.e), m:unpackArr(D.m,DEFAULT_S.m),
+    i:unpackArr(D.i,DEFAULT_S.i), x:unpackArr(D.x,DEFAULT_S.x), p:unpackArr(D.p,DEFAULT_S.p) };
+}
+function applyEncoded(raw){
+  const o=JSON.parse(b64urlDecode(raw));
+  // legacy / demo links carry the full state (every section a bare array); the
+  // short links carry only the diff (sections wrapped in {d/f}, or absent)
+  const full = Array.isArray(o.d) && Array.isArray(o.e) && Array.isArray(o.i);
+  applyState(full ? o : JSON.parse(JSON.stringify(expandDiff(o))));
+}
 // mutate the model in place from a parsed state object; throws on malformed input
 function applyState(o){
   if(!o||!Array.isArray(o.d)||!Array.isArray(o.e)||!Array.isArray(o.i)) throw new Error("bad state");
@@ -991,10 +1075,16 @@ let bchan=null; try{ bchan=new BroadcastChannel("cadence"); }catch(_){}
 // tool. Only the tool stamps its state into the hash, so the landing stays clean.
 let mode="tool";
 function writeURL(){
-  const enc=encodeState();
-  if(mode==="tool"){ try{ history.replaceState(null,"",location.pathname+location.search+"#"+enc); }catch(_){} }
-  if(bchan){ try{ bchan.postMessage({hash:enc}); }catch(_){} }
-  const dl=document.getElementById("demoLink"); if(dl) dl.href="demo.html#"+enc;
+  const enc=encodeState();          // short (diff from default) — for the address bar
+  // keep a clean `#tool` until the system diverges from the default; only then
+  // stamp the (short) shareable state into the address bar.
+  const hash = enc===DEFAULT_ENC ? "tool" : enc;
+  if(mode==="tool"){ try{ history.replaceState(null,"",location.pathname+location.search+"#"+hash); }catch(_){} }
+  // the demo link + live-preview channel want the complete state (demo.html
+  // decodes the full format), so they always get the full encode.
+  const full=encodeStateFull();
+  if(bchan){ try{ bchan.postMessage({hash:full}); }catch(_){} }
+  const dl=document.getElementById("demoLink"); if(dl) dl.href="demo.html#"+full;
 }
 
 function updateResolvedLines(){
@@ -1056,8 +1146,15 @@ document.addEventListener("change", e=>{
   if(sc==="ivt"){ const bb=bindOf(intents[i]); if(t.checked) bb.vt={...VT_DEFAULT}; else delete bb.vt; rerenderAll(); }
   if(sc==="ivttype"){ const bb=bindOf(intents[i]); if(bb.vt) bb.vt.type=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="ieff"){ bindOf(intents[i]).effectsEase=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
-  if(sc==="probe"){ probes[i].intent=t.value; renderBench(); writeURL(); }
-  if(sc==="pkind"){ probes[i].kind=t.value; renderBench(); writeURL(); }
+  // re-point a probe: keep its current lens if that lens can still show the new
+  // intent (general lenses show any plain/spring/staggered intent) — only
+  // re-lens when a specialist mechanic is involved on either side, so the bench
+  // keeps its variety instead of collapsing. An explicit choice always wins.
+  if(sc==="probe"){ probes[i].intent=t.value;
+    if(!probes[i].lensSet){ const need=defaultLensFor(findIntent(t.value));
+      if(SPECIALIST_LENS.has(need) || SPECIALIST_LENS.has(probes[i].kind)) probes[i].kind=need; }
+    renderBench(); writeURL(); }
+  if(sc==="pkind"){ probes[i].kind=t.value; probes[i].lensSet=true; renderBench(); writeURL(); }
   if(sc==="mname"){ const s=(t.value.trim())||modes[i].name; modes[i].name=uniqueName(s,modes,i); rerenderAll(); }
 });
 document.addEventListener("click", e=>{
@@ -1182,7 +1279,7 @@ let openPreview=()=>{};
   const cl=document.getElementById("previewClose"), fr=document.getElementById("previewFrame"), pop=document.getElementById("previewPop");
   if(!pv||!tog||!fr) return;
   const setP=on=>{
-    if(on && (pv.hidden || !fr.src)){ const enc=encodeState(); fr.src="demo.html#"+enc; if(pop) pop.href="demo.html#"+enc; }
+    if(on && (pv.hidden || !fr.src)){ const enc=encodeStateFull(); fr.src="demo.html#"+enc; if(pop) pop.href="demo.html#"+enc; }
     pv.hidden=!on; document.body.classList.toggle("previewing", on);
   };
   openPreview=()=>setP(true);
@@ -1222,6 +1319,12 @@ let openPreview=()=>{};
   if(x) x.addEventListener("click",()=>{ el.hidden=true; try{ localStorage.setItem("cadence-intro","off"); }catch(_){} });
 })();
 
+// the pristine default system, snapshotted once before any shared link is
+// applied — the baseline the short encoding diffs against, and the sentinel for
+// a clean `#tool` (the address bar stays clean while the state matches it, and
+// the short shareable hash only appears once you diverge — see writeURL).
+const DEFAULT_S = stateObj();
+const DEFAULT_ENC = encodeState();
 // restore a shared system from the URL hash + decide landing vs tool. Empty
 // hash → landing (first impression); any hash → straight into the tool (so
 // share links and #tool both skip the landing, and tests boot the editor).
@@ -1246,7 +1349,7 @@ function setBootClass(){
 }
 function enterTool(){
   if(mode==="tool") return;
-  const go=()=>{ mode="tool"; setBootClass(); writeURL(); window.scrollTo(0,0); if(!reduce) setTimeout(playAll,120);
+  const go=()=>{ mode="tool"; setBootClass(); writeURL(); window.scrollTo(0,0); if(!reduce){ setTimeout(playAll,120); startBenchIdle(); }
     // dock the live preview beside the editor so the edit→see loop is felt at once
     if(matchMedia("(min-width:1001px)").matches) setTimeout(openPreview,80); };
   // the entrance itself is a View Transition — the newest feature, dogfooded
@@ -1305,7 +1408,6 @@ function exitTool(){
   const NAIVE="exit as slow as enter, everything linear, no stagger — the motion reads as sluggish and undesigned.";
   const line=document.getElementById("opinionLine");
   const toggle=document.getElementById("tasteToggle");
-  const stateLbl=document.getElementById("tasteState");
   let naive=false, tick=0, timer=null;
   const stop=()=>{ if(timer){ clearInterval(timer); timer=null; } };
   const rotate=()=>{ if(!line) return; line.textContent=TASTE[tick%TASTE.length]; tick++; };
@@ -1323,8 +1425,7 @@ function exitTool(){
   }
   let rz; addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(reserveLine,150); },{passive:true});
   function sync(){
-    if(land) land.classList.toggle("naive", naive);
-    if(stateLbl) stateLbl.textContent = naive ? "naïve" : "with taste";
+    if(land) land.classList.toggle("naive", naive);   // drives the active label + curve/stagger vars
     if(toggle) toggle.setAttribute("aria-pressed", naive?"true":"false");
     if(!line) return;
     stop();
@@ -1340,4 +1441,4 @@ function exitTool(){
 })();
 
 rerenderAll();
-if(mode==="tool" && !reduce) setTimeout(playAll,500);
+if(mode==="tool" && !reduce){ setTimeout(playAll,500); startBenchIdle(); }

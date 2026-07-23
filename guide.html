@@ -35,6 +35,16 @@
   .gbrand{display:inline-flex;align-items:center;gap:9px;font-family:var(--serif);font-size:18px;font-weight:600;letter-spacing:-.01em;color:var(--ink);text-decoration:none}
   .gbrand img{display:block}
   .gbrand:hover{opacity:.62}
+  /* the wordmark's signature easing-curve underline, matching the landing */
+  .gbrand__wm{display:inline-flex;flex-direction:column;gap:2px;line-height:1}
+  .gbrand__curve{width:100%;height:5px;overflow:visible}
+  .gbrand__curve path{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round}
+  /* a quiet staggered entrance for the hero block — the site dogfooding its own
+     motion; disabled under reduced-motion (the elements are visible by default) */
+  @keyframes grise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:no-preference){
+    .grise{opacity:0;animation:grise .6s cubic-bezier(.22,1,.36,1) both;animation-delay:calc(var(--i,0) * 70ms)}
+  }
   .gkicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
   h1.gh1{font-family:var(--serif);font-size:clamp(28px,5.4vw,46px);line-height:1.06;letter-spacing:-.02em;margin:0 0 20px;font-weight:600;text-wrap:balance;font-optical-sizing:auto}
   .glede{font-size:16px;line-height:1.66;color:var(--ink-dim);margin:0 0 10px;max-width:66ch}
@@ -73,15 +83,15 @@
 </head>
 <body>
 <div class="gwrap">
-  <nav class="gnav">
-    <a class="gbrand" href="index.html"><img class="logomark" src="favicon.svg" alt="" width="20" height="20" />cadence</a>
+  <nav class="gnav grise" style="--i:0">
+    <a class="gbrand" href="index.html"><img class="logomark" src="favicon.svg" alt="" width="20" height="20" /><span class="gbrand__wm">cadence<svg class="gbrand__curve" viewBox="0 0 96 8" preserveAspectRatio="none" aria-hidden="true"><path d="M1,6.5 C34,6.5 46,2 95,1.5" /></svg></span></a>
     <a class="lnav__link" href="index.html#tool">Open the tool&nbsp;→</a>
   </nav>
 
   <article class="guide">
-    <p class="gkicker">Guide</p>
-    <h1 class="gh1">How to build a motion system: duration, easing &amp; design tokens</h1>
-    <p class="glede">A <strong>motion system</strong> is the small set of timing decisions behind everything that moves in an interface — how long things take, how they accelerate, how a list staggers. This guide walks through building one as reusable <strong>design tokens</strong>, so animation stays consistent instead of being guessed per component. You can build every step of it in <a href="index.html#tool">Cadence</a>.</p>
+    <p class="gkicker grise" style="--i:1">Guide</p>
+    <h1 class="gh1 grise" style="--i:2">How to build a motion system: duration, easing &amp; design tokens</h1>
+    <p class="glede grise" style="--i:3">A <strong>motion system</strong> is the small set of timing decisions behind everything that moves in an interface — how long things take, how they accelerate, how a list staggers. This guide walks through building one as reusable <strong>design tokens</strong>, so animation stays consistent instead of being guessed per component. You can build every step of it in <a href="index.html#tool">Cadence</a>.</p>
 
     <h2>1. Start with primitives: a duration ladder and an easing set</h2>
     <p>Primitives are the raw vocabulary — <strong>general and component-agnostic</strong>. Define a short <strong>duration ladder</strong> (a handful of steps, not a dozen) and a small <strong>easing set</strong>. Everything else references these, so the whole system moves in proportion.</p>

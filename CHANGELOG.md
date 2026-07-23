@@ -5,6 +5,137 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.17] — 2026-07-23
+
+### Fixed
+- **The motion switch snaps now.** Its thumb borrowed the page's hero-entrance
+  duration (`--l-in`, 640ms) plus a spring, so flipping crawled — both ways. A
+  control should snap: the thumb is 240ms now (180ms for the track/colour), while
+  still borrowing the page's easing *functions*, so it keeps dogfooding the
+  crafted-vs-plain character (spring back to crafted, linear to plain) at a
+  responsive speed.
+
+## [0.9.16] — 2026-07-23
+
+### Changed — clearer motion switch, and the sub-pages move + get the mark
+- **The landing's motion switch reads at rest now.** It showed only the current
+  state ("with taste") with the alternative buried in a sentence, so the choice
+  wasn't legible until you flipped it. Both states are now labelled either side
+  of the toggle — **crafted ⟷ plain** — with the active side lit (plain glows
+  warn, echoing the opinion line). The blurb is plain-language too: *"Flip to
+  plain motion — one speed, straight lines, everything at once — and feel the
+  difference the system makes"* (no more "naïve / symmetric timings" jargon).
+- **The guide and changelog carry the wordmark's easing-curve mark.** The little
+  curve under "cadence" (an easing curve — the brand signature) was landing-only;
+  the sub-pages had a bare wordmark. They match now.
+- **The guide and changelog animate in.** Both were dead-static — ironic for a
+  motion tool. They get a quiet staggered fade-up on load (reduced-motion-safe),
+  so the site keeps dogfooding its own motion.
+
+## [0.9.15] — 2026-07-23
+
+### Changed — the shareable URL is now a short diff, not the whole system
+- **The address-bar hash encodes only what differs from the default system.**
+  It used to serialise the *entire* system every time, so a one-token tweak
+  still produced ~900 characters of base64. Now the editor stores just the diff
+  from the default — a single edit is ~40 characters, and it grows only with how
+  much you've actually changed. (A fixed ~8-character link isn't possible without
+  a server to store the state behind a key; this keeps the link self-contained
+  and offline while making the common "share after a few tweaks" case tiny.)
+- The full encode is still used for the **live-demo link and preview channel**
+  (demo.html decodes the complete state), and **old/full-format links still
+  load** — so nothing that was shared before breaks.
+
+## [0.9.14] — 2026-07-23
+
+### Changed — the URL stays clean until you diverge
+- **Entering the tool no longer dumps a wall of base64 into the address bar.**
+  It used to stamp the full encoded state on entry even when nothing had changed
+  from the default system. Now the URL keeps a clean `#tool` while the system
+  still matches the default, and the long **shareable** state hash only appears
+  once you actually edit something (and drops back to `#tool` if you revert). The
+  live-demo channel and the demo link always get the full state, so they stay in
+  sync regardless.
+
+## [0.9.13] — 2026-07-23
+
+### Changed — the default lens now fits the intent (without collapsing the bench)
+- **Each probe opens in the lens that actually previews its intent.** The bench
+  used to seed `scope + 3× orb` regardless of what each intent did — so a hover
+  intent, a scroll-scrub intent and a spring all showed as identical travelling
+  orbs, and three of those *can't even show* what the intent does (an orb has no
+  press, no scroll mechanic, no state swap). A new `defaultLensFor()` picks the
+  lens by the intent's **defining trait**: structural mechanics win first
+  (`scroll·scrub` → scrub, `view transition` → vt, in-view reveal → `scroll·in-view`,
+  a height/width reflow → `accordion·reflow`), then a named press/hover gesture →
+  `button·press`, then a sequence (stagger) → `cascade`, else the everyday
+  **orb** (its comet reads travel + easing, and its trailing echoes even show a
+  spring's overshoot). **scope** is the deliberate *inspect-the-curve / ride-dot*
+  lens — it leads probe 0 but is never a catch-all, so the bench stays varied
+  rather than collapsing to one lens on a spring-heavy system.
+- **Re-pointing a probe keeps its current lens when that lens can still show the
+  new intent** (any general lens shows a plain / spring / staggered intent) —
+  only a specialist mechanic on either side re-lenses. So enabling scroll-scrub
+  on an intent and pointing a probe at it *shows it in the scrub lens*, while
+  moving between ordinary intents preserves the bench's variety. An **explicit**
+  lens choice always wins: once you pick a lens for a probe, re-pointing keeps it.
+- The default bench opens `scope · orb · orb · button` (enter / exit / move /
+  hover) — `hover → button·press` in particular is finally honest. Old share
+  links are unaffected (they carry their own saved lenses).
+
+## [0.9.12] — 2026-07-23
+
+### Changed — the scope lens rides the curve, and springs preview honestly
+- **The scope lens now has a playhead that rides the curve.** Alongside the
+  vertical time bar, a dot traces the drawn easing itself — its horizontal
+  position is linear time, its vertical position is the token's *eased* value —
+  so you watch the curve get walked, not just swept.
+- **A real spring preview, finally.** Because that dot's vertical motion is
+  driven by the token's own timing function, a **spring overshoots past the top
+  of the curve and settles** — the multi-bounce you couldn't see when a preview
+  just translated an element a fixed distance over a fixed duration. The scope
+  lens doubles as the spring preview the tool was missing.
+- **The landing "spring" tile travels the whole tile again.** It animated a
+  fixed `translateX`, so on wide and mobile-width tiles the orb only reached
+  ~40% before springing back. It now travels proportionally (across the track),
+  so the bounce reads as a full traverse everywhere.
+
+## [0.9.11] — 2026-07-22
+
+### Changed — the bench stays alive
+- **The test bench no longer freezes after the intro.** A motion tool that sits
+  motionless reads as dead, so once the opening play-through finishes the bench
+  gently **idle-loops** — one lens at a time, on a calm rotating cadence, so
+  something is always moving without being busy. Skipped for reduced-motion and
+  when the tab is hidden or the preview is docked.
+- **Replay is now signposted.** Each lens shows a subtle "↻ replay" hint on
+  hover — clicking a lens has always replayed it, but nothing said so.
+
+## [0.9.10] — 2026-07-22
+
+### Changed — the test bench is now abstract instruments only
+- **Retired the wireframe-component lenses (`drawer`, `list reveal`).** They
+  were low-fidelity copies of what the **demo page** already does with real,
+  integrated components — so they blurred the line between the two. The bench's
+  job is to *isolate one measurable quality of a token* (curve, stagger, travel,
+  scroll mechanic, state swap); the demo page owns real components at full
+  fidelity. Old share links that referenced a retired lens fall back to `orb`.
+- **The `button` lens is honest now** — labelled `button · press`, it responds
+  to **hover** (as "Hover me" always implied) as well as click-to-replay. The
+  `accordion` lens is reframed as `accordion · reflow` (the expand-in-place
+  gesture the abstract lenses can't show).
+
+## [0.9.9] — 2026-07-22
+
+### Changed
+- **The tool's orb lens is now a comet, not a fading disc.** It used to animate
+  `opacity` from `.3` to `1`, so at rest the track line showed straight through
+  the semi-transparent orb — unfinished. The head is now **fully opaque** and
+  leaves a **trail of fading echoes**: the head leads and each echo lags a
+  little, so the trail stretches through the fast part of the easing and
+  retracts at the ends — the token's easing character, now visible as motion
+  blur. (The trail's translucency reads as blur, not a see-through orb.)
+
 ## [0.9.8] — 2026-07-22
 
 ### Added

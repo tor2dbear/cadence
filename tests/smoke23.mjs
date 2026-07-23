@@ -19,7 +19,13 @@ assert('three proof tiles', await page.locator('.ltile').count() === 3);
 await page.locator('#tasteToggle').click();
 assert('toggle adds the naïve class', await page.locator('#landing').evaluate(el => el.classList.contains('naive')));
 assert('opinion line flips to warn', await page.locator('#opinionLine').evaluate(el => el.classList.contains('warn')));
-assert('state label shows naïve', (await page.locator('#tasteState').innerText()).includes('na'));
+// both states are labelled either side of the switch; the active one lights up
+assert('switch shows both labels (crafted / plain)',
+  (await page.locator('.ltaste__opt--crafted').innerText()).toLowerCase() === 'crafted' &&
+  (await page.locator('.ltaste__opt--plain').innerText()).toLowerCase() === 'plain');
+assert('the active (plain) label is highlighted vs the other',
+  await page.evaluate(() => getComputedStyle(document.querySelector('.ltaste__opt--plain')).color
+    !== getComputedStyle(document.querySelector('.ltaste__opt--crafted')).color));
 await page.locator('#tasteToggle').click();
 assert('toggle back removes naïve', !(await page.locator('#landing').evaluate(el => el.classList.contains('naive'))));
 assert('opinion line back to ok', await page.locator('#opinionLine').evaluate(el => el.classList.contains('ok')));
@@ -36,8 +42,23 @@ await page.waitForTimeout(300);   // let the view transition settle
 assert('tool visible after Start', await page.locator('#toolview').isVisible());
 assert('landing hidden after Start', !(await page.locator('#landing').isVisible()));
 assert('editor is live (durations rendered)', await page.locator('#durations .drow').count() > 0);
-assert('hash now carries tool state', await page.evaluate(() => location.hash.length > 1));
+// entering the tool at defaults keeps a clean #tool — no wall of base64 until
+// you actually diverge from the default system
+assert('entering the tool keeps a clean #tool', (await page.evaluate(() => location.hash)) === '#tool');
+// an edit then stamps a shareable state hash — a diff from the default, so it's
+// far shorter than the full encode (which the demo link/channel still use)
+await page.locator('#durations .drow input[type=range]').first().evaluate(el => { el.value = Number(el.value) + 40; el.dispatchEvent(new Event('input', { bubbles: true })); });
+await page.waitForTimeout(80);
+const hInfo = await page.evaluate(() => ({ h: location.hash, full: encodeStateFull().length }));
+assert('an edit stamps a state hash (not #tool)', hInfo.h !== '#tool' && hInfo.h.length > 8);
+assert('the state hash is a short diff, not the full encode', (hInfo.h.length - 1) < hInfo.full / 3);
 assert('no console/page errors (landing→tool)', errors.length === 0);
+// the shared hash round-trips: a fresh load restores the edited duration
+const pr = await browser.newPage();
+await pr.goto(await page.evaluate(() => location.href), { waitUntil: 'networkidle' });
+assert('short diff hash round-trips (duration restored)',
+  (await pr.locator('#durations .drow input[type=range]').first().inputValue()) ===
+  (await page.locator('#durations .drow input[type=range]').first().inputValue()));
 
 // --- #tool boots straight into the tool, skipping the landing ---
 const p2 = await browser.newPage();
