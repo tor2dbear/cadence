@@ -5,6 +5,20 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.10] — 2026-07-22
+
+### Changed — the test bench is now abstract instruments only
+- **Retired the wireframe-component lenses (`drawer`, `list reveal`).** They
+  were low-fidelity copies of what the **demo page** already does with real,
+  integrated components — so they blurred the line between the two. The bench's
+  job is to *isolate one measurable quality of a token* (curve, stagger, travel,
+  scroll mechanic, state swap); the demo page owns real components at full
+  fidelity. Old share links that referenced a retired lens fall back to `orb`.
+- **The `button` lens is honest now** — labelled `button · press`, it responds
+  to **hover** (as "Hover me" always implied) as well as click-to-replay. The
+  `accordion` lens is reframed as `accordion · reflow` (the expand-in-place
+  gesture the abstract lenses can't show).
+
 ## [0.9.9] — 2026-07-22
 
 ### Changed

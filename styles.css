@@ -239,17 +239,11 @@ button.btn{background:var(--accent);color:var(--on-accent);border:0;border-radiu
 .casc__fill{position:absolute;inset:0;background:var(--accent);opacity:.92;transform:scaleX(0);transform-origin:left}
 .casc__head{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--ink-dim);left:0;opacity:0;pointer-events:none}
 
-.drawer{position:absolute;top:0;right:0;height:100%;width:60%;background:var(--panel-2);border-left:1px solid var(--line);transform:translateX(105%);padding:40px 14px 14px;display:flex;flex-direction:column;gap:7px}
-.drawer .l{height:8px;border-radius:4px;background:var(--line)}
-.drawer .l:nth-child(1){width:70%}.drawer .l:nth-child(2){width:90%}.drawer .l:nth-child(3){width:55%}
-.scrim{position:absolute;inset:0;background:rgba(0,0,0,.45);opacity:0}
 .btnpad{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--accent);color:var(--on-accent);font-weight:600;font-size:12px;padding:9px 18px;border-radius:8px}
 .acc{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:82%;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;overflow:hidden}
 .acc__hd{padding:10px 12px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
 .acc__body{height:0;overflow:hidden;padding:0 12px;color:var(--ink-dim);font-size:11.5px}
 .acc__body p{margin:0;padding:0 0 11px}
-.reveal{position:absolute;top:44px;left:14px;right:14px;bottom:14px;display:flex;flex-direction:column;gap:7px}
-.reveal .card{background:var(--panel-2);border:1px solid var(--line);border-radius:7px;height:26px;opacity:0;transform:translateY(14px)}
 
 /* scroll-reveal lens — a genuine scroll box; cards reveal as they cross the
    threshold, driven by a scoped IntersectionObserver (the honest counterpart

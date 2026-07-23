@@ -75,13 +75,14 @@ const bindOf = it => it.binds[Math.min(activeMode, it.binds.length-1)] || it.bin
 // each probe is a lens (kind) pointed at one intent. "orb" is the abstract,
 // component-agnostic default; the rest are a swappable UI-component library.
 const KINDS = [
+  // abstract instruments — each isolates one measurable quality of a token.
+  // Real components (a drawer, a list, a modal) live on the demo page, at full
+  // fidelity and integrated; the bench doesn't re-stage low-fi copies of them.
   {k:"scope",label:"scope · everything"},
   {k:"orb",label:"orb · abstract"},
   {k:"cascade",label:"cascade · timeline"},
-  {k:"drawer",label:"drawer"},
-  {k:"button",label:"button"},
-  {k:"acc",label:"accordion"},
-  {k:"reveal",label:"list reveal"},
+  {k:"button",label:"button · press"},
+  {k:"acc",label:"accordion · reflow"},
   {k:"scrollreveal",label:"scroll · in-view"},
   {k:"scrub",label:"scroll · scrub"},
   {k:"viewtransition",label:"view transition"},
@@ -319,6 +320,7 @@ function renderIntents(){
 function renderBench(){
   const el=document.getElementById("bench");
   el.innerHTML = probes.map((p,i)=>{
+    if(!KINDS.some(k=>k.k===p.kind)) p.kind="orb";   // retired lens in an old link → fall back
     const opts = intents.map(it=>`<option value="${it.id}" ${it.id===p.intent?"selected":""}>${it.name}</option>`).join("");
     const kinds = KINDS.map(kd=>`<option value="${kd.k}" ${kd.k===p.kind?"selected":""}>${kd.label}</option>`).join("");
     const ii = intents.findIndex(x=>x.id===p.intent);   // colour the probe by its intent
@@ -353,10 +355,8 @@ function renderBench(){
       }
       stage=`<div class="casc"><div class="casc__lanes">${lanes}<div class="casc__head"></div></div></div>`;
     }
-    if(p.kind==="drawer") stage=`<div class="scrim"></div><div class="drawer"><span class="l"></span><span class="l"></span><span class="l"></span></div>`;
     if(p.kind==="button") stage=`<div class="btnpad">Hover me</div>`;
     if(p.kind==="acc") stage=`<div class="acc"><div class="acc__hd">Details <span class="chev">⌄</span></div><div class="acc__body"><p>Height and chevron ride the same token, so the change feels like one gesture.</p></div></div>`;
-    if(p.kind==="reveal") stage=`<div class="reveal"><span class="card"></span><span class="card"></span><span class="card"></span></div>`;
     if(p.kind==="scrollreveal"){
       // a real scroll box: cards start below the fold and reveal as they cross
       // the intent's trigger threshold (via IntersectionObserver, so it's the
@@ -393,6 +393,11 @@ function renderBench(){
       <div class="probe__stage" data-play="${i}">${stage}</div>
     </div>`;
   }).join("");
+  // the button lens is a hover/press gesture — make "Hover me" honest (it also
+  // replays on click, like every lens, via the [data-play] handler)
+  el.querySelectorAll(".btnpad").forEach(b=>b.addEventListener("mouseenter",()=>{
+    const pr=b.closest("[data-play]"); if(pr) play(+pr.dataset.play);
+  }));
   armScrollReveals();
 }
 
@@ -487,12 +492,6 @@ function play(i){
     requestAnimationFrame(()=>dots.forEach(el=>el.style.left=END));
     setTimeout(()=>{ setTrans(); requestAnimationFrame(()=>dots.forEach(el=>el.style.left=START)); },1400);
   }
-  if(p.kind==="drawer"){
-    const dr=root.querySelector(".drawer"),sc=root.querySelector(".scrim");
-    dr.style.transform="translateX(105%)";sc.style.opacity="0";
-    anim(sc,{opacity:"1"},r);anim(dr,{transform:"translateX(0)"},r);
-    setTimeout(()=>{anim(sc,{opacity:"0"},r);anim(dr,{transform:"translateX(105%)"},r);},1400);
-  }
   if(p.kind==="button"){
     const b=root.querySelector(".btnpad");
     b.style.transform="translate(-50%,-50%) scale(1)";
@@ -533,12 +532,6 @@ function play(i){
       requestAnimationFrame(()=>{ o.style.opacity="0";o.style.transform="scale(.98)"; n.style.opacity="1";n.style.transform="scale(1)"; });
       setTimeout(reset,1600);
     }
-  }
-  if(p.kind==="reveal"){
-    const cards=[...root.querySelectorAll(".card")];
-    cards.forEach(c=>{c.style.opacity="0";c.style.transform="translateY(14px)";});
-    cards.forEach((c,k)=>anim(c,{opacity:"1",transform:"translateY(0)"},r,k*r.s));
-    setTimeout(()=>cards.forEach((c,k)=>anim(c,{opacity:"0",transform:"translateY(14px)"},r,k*r.s)),1500);
   }
 }
 function playAll(){ probes.forEach((_,i)=>setTimeout(()=>play(i), i*130)); }

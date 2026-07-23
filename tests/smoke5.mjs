@@ -22,16 +22,17 @@ assert('3 orb stages + 1 scope stage', await page.locator('.probe .orb').count()
 const intentSel = await page.locator('.probe__sel').evaluateAll(els => els.map(e => e.selectedOptions[0].textContent));
 assert('default intents spread', JSON.stringify(intentSel) === JSON.stringify(['enter','exit','move','hover']));
 
-// switch probe 0 lens -> drawer: stage swaps to a drawer, orb gone
-await page.locator('.probe__kind').first().selectOption('drawer');
-assert('probe 0 now shows drawer', await page.locator('.probe').first().locator('.drawer').count() === 1);
+// switch probe 0 lens -> button: stage swaps to the button gesture, orb gone
+await page.locator('.probe__kind').first().selectOption('button');
+assert('probe 0 now shows the button lens', await page.locator('.probe').first().locator('.btnpad').count() === 1);
 assert('probe 0 orb gone', await page.locator('.probe').first().locator('.orb').count() === 0);
 
-// play an orb probe (probe 1) — should animate without error
+// play an orb probe (probe 1) — the comet head is opaque and travels on play
 await page.locator('.probe').nth(1).locator('.probe__stage').click();
-await page.waitForTimeout(200);
-const midOpacity = await page.locator('.probe').nth(1).locator('.orb').evaluate(el => getComputedStyle(el).opacity);
-assert('orb animates on play (opacity rose above rest .3)', parseFloat(midOpacity) > 0.3);
+await page.waitForTimeout(120);
+const head = page.locator('.probe').nth(1).locator('.orb');
+assert('comet head is opaque (no see-through)', (await head.evaluate(el => getComputedStyle(el).opacity)) === '1');
+assert('comet head travels on play', (await head.evaluate(el => el.style.left)) !== '14px');
 
 // lens choice round-trips through the URL
 await page.waitForTimeout(1600);
@@ -39,7 +40,7 @@ const url = await page.evaluate(() => location.href);
 const p2 = await mk();
 await p2.goto(url, { waitUntil: 'networkidle' });
 { const _x=p2.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
-assert('restored: probe 0 lens = drawer', (await p2.locator('.probe__kind').first().inputValue()) === 'drawer');
+assert('restored: probe 0 lens = button', (await p2.locator('.probe__kind').first().inputValue()) === 'button');
 assert('restored: probe 1 lens = orb', (await p2.locator('.probe__kind').nth(1).inputValue()) === 'orb');
 
 // legacy link (bare intent indices, no kind) still loads: intents restored, kinds default to orb
