@@ -365,7 +365,12 @@ html.boot-tool #landing{display:none}
    the whole curve is never shown. Full-bleed: it breaks out of the centred
    column to span the whole viewport, sitting below all copy (z-index:-1 in the
    landing's isolated stacking context). */
-.lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,820px);
+/* height is also capped against width (64vw): the backdrop is a 2:1 SVG sliced
+   to fill its box, so a TALL box (portrait phones/tablets) over-zooms it and
+   the moving band grows wider than the visible window — the fade dies and the
+   accent lands as a solid bar. Capping height keeps the box near ~1.6:1 at any
+   width, so the band always reads as a band. On desktop 84vh wins (unchanged). */
+.lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,64vw,820px);
   z-index:-1;pointer-events:none;overflow:hidden}
 .ltr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 /* each easing curve is traced by a single moving gradient band (SMIL, in the
@@ -387,17 +392,12 @@ html.boot-tool #landing{display:none}
 /* reduced motion: the SMIL band is paused in JS; hide the heads so only the
    faint grey guides remain (no stray parked band) */
 @media (prefers-reduced-motion:reduce){ .ltr-head{opacity:0} }
-/* mobile: a portrait viewport slice-zooms the 2:1 backdrop hard, so the moving
-   band grows wider than the visible window and the fade can't read — it turns
-   into a solid accent bar over the copy. Shrink the backdrop to the top band
-   (less zoom → the band reads as a band again) and ease off the accent so it
-   stays a quiet texture behind the headline, not bars across the text. */
+/* mobile: the height cap already keeps the band a band; just ease the accent a
+   touch more so it stays a quiet texture behind the headline */
 @media (max-width:720px){
-  .lherobg{height:44vh}
   .ltr-head{stroke-width:1.1}
-  .ltgs-head{stop-opacity:.5}
-  .ltgs-glow{stop-opacity:.24}
-  .ltgs-mid{stop-opacity:.1}
+  .ltgs-head{stop-opacity:.62}
+  .ltgs-glow{stop-opacity:.3}
 }
 /* variant B — a live bezier editor: the curve morphs with its handles (SMIL in
    the markup) while the whole thing slowly zooms + pans (CSS). It sits in the
