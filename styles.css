@@ -35,7 +35,7 @@
   }
 }
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;margin:0;overflow-x:clip}
 em{font-style:italic}
 button{font-family:var(--sans)}
 /* visible keyboard focus for every control */
@@ -346,7 +346,8 @@ html.boot-tool #landing{display:none}
   --l-spring:linear(0,.006,.025,.1,.281,.489,.676,.82,.925,.99,1.02,1.03,1.024,1.012,1.002,.997,.997,1,1.001,1);
   --l-curve:cubic-bezier(.22,1,.36,1);
   min-height:100vh;display:flex;flex-direction:column;gap:34px;
-  max-width:960px;margin-inline:auto;padding:22px 26px 60px}
+  max-width:960px;margin-inline:auto;padding:22px 26px 60px;
+  position:relative;isolation:isolate}   /* hosts the full-bleed hero backdrop (z-index:-1) */
 .landing.naive{ --l-ease:linear; --l-stag:0ms; --l-spring:linear(0,1); --l-curve:linear }
 
 .lnav{display:flex;align-items:center;justify-content:space-between}
@@ -358,11 +359,14 @@ html.boot-tool #landing{display:none}
 .lnav__link{font-family:var(--mono);font-size:11px;color:var(--ink-faint);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 11px}
 .lnav__link:hover{border-color:var(--accent);color:var(--ink)}
 
-.lhero{max-width:720px;margin-top:6vh;position:relative;isolation:isolate;overflow:clip}
-/* ambient easing traces behind the hero: a short segment glides along each
+.lhero{max-width:720px;margin-top:6vh}
+/* ambient easing traces behind the hero: a short arc glides along each
    (otherwise-invisible) easing curve, so you read the shape from the motion —
-   the whole curve is never shown. Faint, below the copy (isolated context). */
-.lherobg{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:clip}
+   the whole curve is never shown. Full-bleed: it breaks out of the centred
+   column to span the whole viewport, sitting below all copy (z-index:-1 in the
+   landing's isolated stacking context). */
+.lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,820px);
+  z-index:-1;pointer-events:none;overflow:hidden}
 .ltr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .ltr-guide,.ltr-seg{fill:none}
 .ltr-guide{stroke:color-mix(in srgb,var(--ink) 6%,transparent);stroke-width:2}

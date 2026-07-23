@@ -48,6 +48,18 @@
      designing" morphs into the tool (same document) via a view transition. -->
 <main class="landing" id="landing" aria-label="Cadence — introduction">
   <div class="lprogress" aria-hidden="true"></div>
+  <!-- full-bleed hero backdrop: one arc at a time glides along an (invisible)
+       easing curve. Spans the viewport (breaks out of the centred column). -->
+  <div class="lherobg" aria-hidden="true">
+    <svg class="ltr-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice">
+      <path class="ltr-guide ltr--1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
+      <path class="ltr-seg ltr--1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
+      <path class="ltr-guide ltr--2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
+      <path class="ltr-seg ltr--2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
+      <path class="ltr-guide ltr--3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
+      <path class="ltr-seg ltr--3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
+    </svg>
+  </div>
   <nav class="lnav">
     <span class="lbrand"><img class="logomark" src="favicon.svg" alt="" width="20" height="20" /><span class="lbrand__wm">cadence<svg class="lbrand__curve" viewBox="0 0 96 8" preserveAspectRatio="none" aria-hidden="true"><path d="M1,6.5 C34,6.5 46,2 95,1.5" /></svg></span></span>
     <span class="lnav__links">
@@ -57,21 +69,6 @@
   </nav>
 
   <section class="lhero">
-    <!-- ambient field of easing curves behind the hero — the product's own
-         object, drifting. It rides --l-curve, so it eases in "crafted" and
-         goes linear in "plain" (dogfooding the motion switch). -->
-    <div class="lherobg" aria-hidden="true">
-      <!-- a segment glides along each (invisible) easing curve, tracing its
-           shape as it goes — the whole curve is never shown at once. -->
-      <svg class="ltr-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice">
-        <path class="ltr-guide ltr--1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
-        <path class="ltr-seg ltr--1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
-        <path class="ltr-guide ltr--2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
-        <path class="ltr-seg ltr--2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
-        <path class="ltr-guide ltr--3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
-        <path class="ltr-seg ltr--3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
-      </svg>
-    </div>
     <p class="lkicker rise" style="--i:0">A motion&nbsp;system designer</p>
     <h1 class="lhead rise" style="--i:1">Not more knobs —<br><em>structure, and an&nbsp;opinion.</em></h1>
     <p class="lsub rise" style="--i:2">Tune duration &amp; easing scales, compose semantic <strong>intents</strong>, and get a system that <strong>critiques itself</strong> — exported as CSS, Tailwind, Style&nbsp;Dictionary, plus scroll-driven &amp; view-transition recipes.</p>
