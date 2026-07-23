@@ -387,6 +387,18 @@ html.boot-tool #landing{display:none}
 /* reduced motion: the SMIL band is paused in JS; hide the heads so only the
    faint grey guides remain (no stray parked band) */
 @media (prefers-reduced-motion:reduce){ .ltr-head{opacity:0} }
+/* mobile: a portrait viewport slice-zooms the 2:1 backdrop hard, so the moving
+   band grows wider than the visible window and the fade can't read — it turns
+   into a solid accent bar over the copy. Shrink the backdrop to the top band
+   (less zoom → the band reads as a band again) and ease off the accent so it
+   stays a quiet texture behind the headline, not bars across the text. */
+@media (max-width:720px){
+  .lherobg{height:44vh}
+  .ltr-head{stroke-width:1.1}
+  .ltgs-head{stop-opacity:.5}
+  .ltgs-glow{stop-opacity:.24}
+  .ltgs-mid{stop-opacity:.1}
+}
 /* variant B — a live bezier editor: the curve morphs with its handles (SMIL in
    the markup) while the whole thing slowly zooms + pans (CSS). It sits in the
    open space to the RIGHT of the copy (desktop only), preserveAspectRatio=meet
