@@ -1371,6 +1371,10 @@ function exitTool(){
 }
 (function initLanding(){
   setBootClass();
+  // hero backdrop A/B switch (temporary, for picking a direction): ?hero=editor
+  // shows the bezier-editor motif, ?hero=both overlays both; default is traces.
+  try{ const hv=new URLSearchParams(location.search).get("hero");
+    const bg=document.querySelector(".lherobg"); if(hv&&bg) bg.setAttribute("data-hero",hv); }catch(_){}
   const start=document.getElementById("startTool");
   if(start) start.addEventListener("click",enterTool);
   // the tool's wordmark is a home link → back to the intro. Plain modified

@@ -50,6 +50,10 @@ assert('hero has the ambient easing traces (3 curves)',
   /class="lherobg"/.test(html) && (html.match(/class="ltr ltr--/g) || []).length === 3);
 assert('the trace draw/fade is reduced-motion-gated',
   /@media \(prefers-reduced-motion:no-preference\)\{[\s\S]*?\.ltr\{[\s\S]*?animation:ltrTrail/.test(css));
+// a temporary A/B: the bezier-editor variant + a ?hero switch coexist with the traces
+assert('both hero-backdrop variants + the ?hero switch are present',
+  /class="lce-svg"/.test(html) && /class="ltr-svg"/.test(html)
+  && /\.lherobg\[data-hero="editor"\] \.ltr-svg\{display:none\}/.test(css));
 
 // --- runtime checks: the fonts load and the identity is applied ---
 const browser = await chromium.launch();

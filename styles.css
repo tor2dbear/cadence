@@ -387,6 +387,27 @@ html.boot-tool #landing{display:none}
   62% {stroke-dashoffset:0;opacity:0;stroke:color-mix(in srgb,var(--ink) 12%,transparent)} /* faded away */
   100%{stroke-dashoffset:1000;opacity:0}
 }
+/* variant B — the bezier editor motif (one easing at a time, with handles).
+   Toggled against variant A via ?hero= on the landing (JS sets data-hero). */
+.lce-svg{position:absolute;top:-4%;right:-6%;width:min(60%,560px);height:auto;overflow:visible}
+.lce-base{fill:none;stroke:color-mix(in srgb,var(--ink) 7%,transparent);stroke-width:1;stroke-dasharray:2 3.5;vector-effect:non-scaling-stroke}
+.lce-curve{fill:none;stroke:color-mix(in srgb,var(--ink) 17%,transparent);stroke-width:2.2;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.lce-handle{stroke:color-mix(in srgb,var(--accent) 26%,transparent);stroke-width:1.1;vector-effect:non-scaling-stroke}
+.lce-anchor{fill:color-mix(in srgb,var(--ink) 22%,transparent)}
+.lce-ctrl{fill:color-mix(in srgb,var(--accent) 42%,transparent)}
+.lce{opacity:0}
+.lce--1{opacity:1}   /* reduced-motion fallback: first easing stays visible */
+@media (prefers-reduced-motion:no-preference){
+  .lce{animation:lceCycle 16.5s var(--l-ease) infinite}
+  .lce--2{animation-delay:-5.5s}
+  .lce--3{animation-delay:-11s}
+}
+@keyframes lceCycle{0%{opacity:0}6%{opacity:1}30%{opacity:1}40%{opacity:0}100%{opacity:0}}
+/* the switch: A (traces) by default, B (editor) with ?hero=editor, both with ?hero=both */
+.lherobg .lce-svg{display:none}
+.lherobg[data-hero="editor"] .ltr-svg{display:none}
+.lherobg[data-hero="editor"] .lce-svg,
+.lherobg[data-hero="both"] .lce-svg{display:block}
 .lkicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
 .lhead{font-family:var(--serif);font-size:clamp(30px,6.2vw,54px);line-height:1.05;letter-spacing:-.015em;margin:0 0 18px;font-weight:600;font-optical-sizing:auto}
 .lhead em{font-style:italic;color:var(--accent)}
