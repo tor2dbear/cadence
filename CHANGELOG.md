@@ -5,6 +5,23 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.12] — 2026-07-23
+
+### Changed — the scope lens rides the curve, and springs preview honestly
+- **The scope lens now has a playhead that rides the curve.** Alongside the
+  vertical time bar, a dot traces the drawn easing itself — its horizontal
+  position is linear time, its vertical position is the token's *eased* value —
+  so you watch the curve get walked, not just swept.
+- **A real spring preview, finally.** Because that dot's vertical motion is
+  driven by the token's own timing function, a **spring overshoots past the top
+  of the curve and settles** — the multi-bounce you couldn't see when a preview
+  just translated an element a fixed distance over a fixed duration. The scope
+  lens doubles as the spring preview the tool was missing.
+- **The landing "spring" tile travels the whole tile again.** It animated a
+  fixed `translateX`, so on wide and mobile-width tiles the orb only reached
+  ~40% before springing back. It now travels proportionally (across the track),
+  so the bounce reads as a full traverse everywhere.
+
 ## [0.9.11] — 2026-07-22
 
 ### Changed — the bench stays alive

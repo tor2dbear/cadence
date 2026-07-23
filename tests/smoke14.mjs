@@ -16,6 +16,7 @@ await page.locator('#intents .intent').first().locator('.intent__more').click();
 assert('probe 0 is scope', (await page.locator(`${P0} .probe__kind`).inputValue()) === 'scope');
 assert('scope has 5 demo dots', (await page.locator(`${P0} .scope__dot`).count()) === 5);
 assert('scope has a playhead', (await page.locator(`${P0} .scope__head`).count()) === 1);
+assert('scope has a ride dot (playhead on the curve)', (await page.locator(`${P0} .scope__ride`).count()) === 1);
 // enter uses a cubic easing → the curve is a <path>
 assert('scope curve is a path (cubic)', (await page.locator(`${P0} .scope__curve path`).count()) === 1);
 
@@ -34,6 +35,15 @@ assert('scope curve becomes a polyline (spring)', (await page.locator(`${P0} .sc
 await page.locator(`${P0} .probe__stage`).click();
 await page.waitForTimeout(80);
 assert('scope demo uses linear() for the spring', (await dotTr(0)).includes('linear('));
+// the ride dot rides the curve: x is linear time, y is eased by the token — so
+// for a spring the vertical (top) transition carries the spring's linear(), which
+// makes it overshoot past the top and settle (the spring preview a translate can't show)
+const rideTr = await page.locator(`${P0} .scope__ride`).evaluate(el => el.style.transition);
+assert('ride dot: left is linear time', /left\s+[\d.]+m?s\s+linear(?!\()/.test(rideTr));
+assert('ride dot: top carries the spring linear()', /top\s+[\d.]+m?s\s+linear\(/.test(rideTr));
+await page.waitForTimeout(700); // let the spring settle
+const rideEnd = await page.locator(`${P0} .scope__ride`).evaluate(el => ({ l: el.style.left, o: getComputedStyle(el).opacity }));
+assert('ride dot settles at the curve end (left = 100%)', rideEnd.l === '100%');
 
 // scope lens round-trips through the URL
 const url = await page.evaluate(() => location.href);

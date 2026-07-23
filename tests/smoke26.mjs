@@ -38,6 +38,11 @@ assert('Fraunces is the variable font (weight range, opsz)',
 // into disconnected segments under non-scaling-stroke on a stretched path)
 assert('easing curve draws via clip-path, not a mismatched stroke-dash',
   /@keyframes ltDraw\{[^}]*clip-path/i.test(css) && !/\.lt-curve path\{[^}]*stroke-dasharray/.test(css));
+// the spring tile travels proportionally (left across the track), not a fixed
+// translateX that only reached ~40% on wide/mobile tiles
+const springKf = (css.match(/@keyframes ltSpring\{[^\n]*/) || [''])[0];
+assert('spring tile travels the full track via left, not a fixed translateX',
+  /left:calc\(100% - 22px\)/.test(springKf) && !/translateX/.test(springKf));
 
 // --- runtime checks: the fonts load and the identity is applied ---
 const browser = await chromium.launch();

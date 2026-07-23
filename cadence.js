@@ -332,7 +332,7 @@ function renderBench(){
       if(eo.type==="spring") curve=`<polyline points="${springPoints(eo.spring)}"/>`;
       else { const [x1,y1,x2,y2]=eo.bez; curve=`<path d="M${SX(0)},${SY(0)} C${SX(x1)},${SY(y1)} ${SX(x2)},${SY(y2)} ${SX(1)},${SY(1)}"/>`; }
       stage=`<div class="scope">
-        <div class="scope__graph"><svg class="scope__curve" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="${SX(0)}" y1="${SY(0)}" x2="${SX(1)}" y2="${SY(1)}"/>${curve}</svg><div class="scope__head"></div></div>
+        <div class="scope__graph"><svg class="scope__curve" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="${SX(0)}" y1="${SY(0)}" x2="${SX(1)}" y2="${SY(1)}"/>${curve}</svg><div class="scope__head"></div><div class="scope__ride" style="left:${SX(0)}%;top:${SY(0)}%"></div></div>
         <div class="scope__demo">${'<span class="scope__dot"></span>'.repeat(SCOPE_N)}</div>
       </div>`;
     }
@@ -456,17 +456,23 @@ function play(i){
     // actual property animates with the token's easing/spring (bounce shows natively)
     const dms=parseInt(r.d)||200, st=r.s|0, total=Math.max(1,(SCOPE_N-1)*st+dms);
     const head=root.querySelector(".scope__head");
+    const ride=root.querySelector(".scope__ride");
     const dots=[...root.querySelectorAll(".scope__dot")];
     const a=SCOPE_ANIM[r.prop]||SCOPE_ANIM.all;
     const set=(el,o)=>{ for(const kk in o) el.style[kk]=o[kk]; };
     if(head){ head.style.transition="none"; head.style.left="0%"; head.style.opacity="1"; }
+    // ride dot starts at the curve's origin; left is linear time, top is the eased
+    // value — since SY is affine, top eased by the token traces the drawn curve,
+    // overshooting for a spring (the missing spring preview)
+    if(ride){ ride.style.transition="none"; ride.style.left=SX(0)+"%"; ride.style.top=SY(0)+"%"; ride.style.opacity="1"; }
     dots.forEach(d=>{ d.style.transition="none"; set(d,a.before); });
     void root.offsetWidth;
     if(head) head.style.transition=`left ${total}ms linear`;
+    if(ride) ride.style.transition=`left ${r.d} linear, top ${r.d} ${r.e}`;
     const easeFor=pr=>/(opacity|color)/.test(pr)?r.eEff:r.e;   // effects vs spatial when split
     dots.forEach((d,k)=>{ d.style.transition=a.props.map(pr=>`${pr} ${r.d} ${easeFor(pr)} ${k*st}ms`).join(", "); });
-    requestAnimationFrame(()=>{ if(head) head.style.left="100%"; dots.forEach(d=>set(d,a.after)); });
-    setTimeout(()=>{ if(head){ head.style.transition="opacity 250ms"; head.style.opacity="0"; } }, total+80);
+    requestAnimationFrame(()=>{ if(head) head.style.left="100%"; if(ride){ ride.style.left=SX(1)+"%"; ride.style.top=SY(1)+"%"; } dots.forEach(d=>set(d,a.after)); });
+    setTimeout(()=>{ if(head){ head.style.transition="opacity 250ms"; head.style.opacity="0"; } if(ride){ ride.style.transition="opacity 250ms"; ride.style.opacity="0"; } }, total+80);
   }
   if(p.kind==="cascade"){
     // timeline lens: each lane fills at its staggered start; a playhead sweeps time
