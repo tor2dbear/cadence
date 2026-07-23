@@ -77,6 +77,11 @@ const midY = (page, sel) => page.locator(sel).evaluate(el => { const b = el.getB
     return Math.abs((a.top + a.bottom) / 2 - (c.top + c.bottom) / 2);
   });
   assert('tool orb is centred on its line', orbDelta < 1);
+  // the orb lens is now a comet: an OPAQUE head (the line no longer shows
+  // through it) plus a fading trail of echoes
+  assert('orb head is opaque (line no longer shines through)',
+    await page.locator('.orb').first().evaluate(el => getComputedStyle(el).opacity === '1'));
+  assert('orb lens has a comet trail', await page.locator('.orb-echo').count() >= 3);
   await page.close();
 }
 

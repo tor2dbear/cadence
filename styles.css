@@ -213,7 +213,13 @@ button.btn{background:var(--accent);color:var(--on-accent);border:0;border-radiu
 /* margin-centred (not translateY) so the animated transform can't drop it below
    the line on iOS Safari — see .lt-orb */
 .orb-track{position:absolute;inset:0;display:flex;align-items:center;pointer-events:none}
-.orb{position:relative;left:14px;width:20px;height:20px;border-radius:50%;background:var(--accent);opacity:.3;transform:scale(.5);box-shadow:0 2px 8px rgba(0,0,0,.35);pointer-events:none}
+/* the rail is the one flex child (flex-centred vertically, iOS-safe); the head
+   + trail echoes are absolute inside it, all the same box height so they stay
+   centred without a transform the compositor can round */
+.orb-rail{position:relative;flex:1;height:20px}
+.orb,.orb-echo{position:absolute;top:0;left:14px;width:20px;height:20px;border-radius:50%;background:var(--accent);pointer-events:none}
+.orb{box-shadow:0 2px 8px rgba(0,0,0,.35);z-index:2}   /* opaque comet head */
+.orb-echo{z-index:1}                                    /* fading trail (opacity+scale set inline) */
 
 /* scope lens — everything at once: curve + playhead, plus property-driven stagger demo */
 .scope{position:absolute;inset:0;padding:36px 12px 12px;display:flex;flex-direction:column;gap:8px}

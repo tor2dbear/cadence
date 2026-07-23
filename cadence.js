@@ -88,6 +88,7 @@ const KINDS = [
 ];
 const CASC_N = 6;    // items in the stagger timeline
 const SCOPE_N = 5;   // demo elements in the scope lens
+const ORB_TRAIL = 6; // trailing echoes behind the comet head (orb lens)
 // how each animated property reads on the scope demo elements
 const SCOPE_ANIM = {
   opacity:  {props:["opacity"],   before:{opacity:"0"}, after:{opacity:"1"}},
@@ -333,7 +334,15 @@ function renderBench(){
         <div class="scope__demo">${'<span class="scope__dot"></span>'.repeat(SCOPE_N)}</div>
       </div>`;
     }
-    if(p.kind==="orb") stage=`<span class="orb-base"></span><span class="orb-track"><div class="orb"></div></span>`;
+    if(p.kind==="orb"){
+      // comet lens: an opaque head + a fading trail. The head leads; each echo
+      // lags a little, so the trail stretches where the token moves fast —
+      // easing you can see. Echoes fade + shrink toward the tail.
+      let echoes="";
+      for(let i=1;i<=ORB_TRAIL;i++){ const t=i/ORB_TRAIL;
+        echoes+=`<i class="orb-echo" style="opacity:${(0.4*(1-t*0.9)).toFixed(3)};transform:scale(${(1-0.5*t).toFixed(2)})"></i>`; }
+      stage=`<span class="orb-base"></span><span class="orb-track"><span class="orb-rail"><div class="orb"></div>${echoes}</span></span>`;
+    }
     if(p.kind==="cascade"){
       const rr=resolve(findIntent(p.intent)), dms=parseInt(rr.d)||200, st=rr.s|0;
       const total=Math.max(1,(CASC_N-1)*st+dms);
@@ -467,11 +476,16 @@ function play(i){
     setTimeout(()=>{ if(head){ head.style.transition="opacity 250ms"; head.style.opacity="0"; } }, total+80);
   }
   if(p.kind==="orb"){
-    // abstract lens: travel + fade + scale, purely showing the token's character
-    const o=root.querySelector(".orb");
-    o.style.left="14px"; o.style.opacity=".3"; o.style.transform="scale(.5)";
-    anim(o,{left:"calc(100% - 40px)",opacity:"1",transform:"scale(1)"},r);
-    setTimeout(()=>anim(o,{left:"14px",opacity:".3",transform:"scale(.5)"},r),1400);
+    // comet lens: the head leads, each echo lags i*step ms, so the trail
+    // stretches through the fast part of the easing and retracts at the ends.
+    const rail=root.querySelector(".orb-rail");
+    const dots=[...rail.querySelectorAll(".orb, .orb-echo")]; // head first, then echoes
+    const START="14px", END="calc(100% - 40px)", step=Math.max(6,(parseInt(r.d)||200)/22);
+    const setTrans=()=>dots.forEach((el,i)=>{ el.style.transition=`left ${r.d} ${r.e} ${i*step}ms`; });
+    dots.forEach(el=>{ el.style.transition="none"; el.style.left=START; });
+    void rail.offsetWidth; setTrans();
+    requestAnimationFrame(()=>dots.forEach(el=>el.style.left=END));
+    setTimeout(()=>{ setTrans(); requestAnimationFrame(()=>dots.forEach(el=>el.style.left=START)); },1400);
   }
   if(p.kind==="drawer"){
     const dr=root.querySelector(".drawer"),sc=root.querySelector(".scrim");

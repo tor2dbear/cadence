@@ -5,6 +5,17 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.9] — 2026-07-22
+
+### Changed
+- **The tool's orb lens is now a comet, not a fading disc.** It used to animate
+  `opacity` from `.3` to `1`, so at rest the track line showed straight through
+  the semi-transparent orb — unfinished. The head is now **fully opaque** and
+  leaves a **trail of fading echoes**: the head leads and each echo lags a
+  little, so the trail stretches through the fast part of the easing and
+  retracts at the ends — the token's easing character, now visible as motion
+  blur. (The trail's translucency reads as blur, not a see-through orb.)
+
 ## [0.9.8] — 2026-07-22
 
 ### Added
