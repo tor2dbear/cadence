@@ -972,11 +972,12 @@ const TEMPLATES = {
     p:[["orb",0],["orb",1],["orb",2],["orb",3]]},
 };
 
-// ---------- shareable state (whole system encoded in the URL hash) ----------
+// ---------- shareable state (whole system encoded in the URL) ----------
 const b64urlEncode = str => btoa(unescape(encodeURIComponent(str))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 const b64urlDecode = s => decodeURIComponent(escape(atob(s.replace(/-/g,"+").replace(/_/g,"/"))));
-function encodeState(){
-  const s = {
+// the full system as a compact positional object (arrays, not keyed fields)
+function stateObj(){
+  return {
     d: durations.map(d=>[d.name,d.ms]),
     e: easings.map(e=> e.type==="spring" ? [e.name,"spring",e.spring.stiffness,e.spring.damping] : [e.name,...e.bez]),
     m: modes.map(x=>x.name),
@@ -986,9 +987,44 @@ function encodeState(){
     x: distances.map(d=>[d.name,d.px]),
     p: probes.map(pb=>{ const k=intents.findIndex(x=>x.id===pb.intent); return [pb.kind, k<0?0:k]; }),
   };
-  return b64urlEncode(JSON.stringify(s));
 }
-function applyEncoded(raw){ applyState(JSON.parse(b64urlDecode(raw))); }
+// the full encoding — used for the live-demo link + channel, which want the
+// complete state no matter what changed (demo.html decodes this format)
+function encodeStateFull(){ return b64urlEncode(JSON.stringify(stateObj())); }
+// one positional section vs its default: null if identical, {f:rows} if the
+// shape changed (rows added/removed), else {d:{idx:row}} for just the differing
+// rows — so a lightly edited system encodes to a fraction of the full state.
+function packArr(cur, def){
+  if(cur.length!==def.length) return {f:cur};
+  const delta={}; let any=false;
+  for(let i=0;i<cur.length;i++) if(JSON.stringify(cur[i])!==JSON.stringify(def[i])){ delta[i]=cur[i]; any=true; }
+  return any ? {d:delta} : null;
+}
+function unpackArr(packed, def){
+  if(!packed) return def;
+  if(packed.f) return packed.f;
+  const out=def.slice(); for(const k in packed.d) out[+k]=packed.d[k]; return out;
+}
+// the short encoding — only the diff from the default system. This is what the
+// editor puts in the address bar, so the shared link is short (see writeURL).
+function encodeState(){
+  const s=stateObj(), D={};
+  if(s.am!==DEFAULT_S.am) D.am=s.am;
+  for(const k of ["d","e","m","i","x","p"]){ const p=packArr(s[k],DEFAULT_S[k]); if(p) D[k]=p; }
+  return b64urlEncode(JSON.stringify(D));
+}
+function expandDiff(D){                    // rebuild the full state (missing/unchanged → default)
+  return { am:("am" in D)?D.am:DEFAULT_S.am,
+    d:unpackArr(D.d,DEFAULT_S.d), e:unpackArr(D.e,DEFAULT_S.e), m:unpackArr(D.m,DEFAULT_S.m),
+    i:unpackArr(D.i,DEFAULT_S.i), x:unpackArr(D.x,DEFAULT_S.x), p:unpackArr(D.p,DEFAULT_S.p) };
+}
+function applyEncoded(raw){
+  const o=JSON.parse(b64urlDecode(raw));
+  // legacy / demo links carry the full state (every section a bare array); the
+  // short links carry only the diff (sections wrapped in {d/f}, or absent)
+  const full = Array.isArray(o.d) && Array.isArray(o.e) && Array.isArray(o.i);
+  applyState(full ? o : JSON.parse(JSON.stringify(expandDiff(o))));
+}
 // mutate the model in place from a parsed state object; throws on malformed input
 function applyState(o){
   if(!o||!Array.isArray(o.d)||!Array.isArray(o.e)||!Array.isArray(o.i)) throw new Error("bad state");
@@ -1039,14 +1075,16 @@ let bchan=null; try{ bchan=new BroadcastChannel("cadence"); }catch(_){}
 // tool. Only the tool stamps its state into the hash, so the landing stays clean.
 let mode="tool";
 function writeURL(){
-  const enc=encodeState();
+  const enc=encodeState();          // short (diff from default) — for the address bar
   // keep a clean `#tool` until the system diverges from the default; only then
-  // stamp the full shareable state into the address bar. The demo link and the
-  // live-preview channel always get the full encode, so they stay in sync.
+  // stamp the (short) shareable state into the address bar.
   const hash = enc===DEFAULT_ENC ? "tool" : enc;
   if(mode==="tool"){ try{ history.replaceState(null,"",location.pathname+location.search+"#"+hash); }catch(_){} }
-  if(bchan){ try{ bchan.postMessage({hash:enc}); }catch(_){} }
-  const dl=document.getElementById("demoLink"); if(dl) dl.href="demo.html#"+enc;
+  // the demo link + live-preview channel want the complete state (demo.html
+  // decodes the full format), so they always get the full encode.
+  const full=encodeStateFull();
+  if(bchan){ try{ bchan.postMessage({hash:full}); }catch(_){} }
+  const dl=document.getElementById("demoLink"); if(dl) dl.href="demo.html#"+full;
 }
 
 function updateResolvedLines(){
@@ -1241,7 +1279,7 @@ let openPreview=()=>{};
   const cl=document.getElementById("previewClose"), fr=document.getElementById("previewFrame"), pop=document.getElementById("previewPop");
   if(!pv||!tog||!fr) return;
   const setP=on=>{
-    if(on && (pv.hidden || !fr.src)){ const enc=encodeState(); fr.src="demo.html#"+enc; if(pop) pop.href="demo.html#"+enc; }
+    if(on && (pv.hidden || !fr.src)){ const enc=encodeStateFull(); fr.src="demo.html#"+enc; if(pop) pop.href="demo.html#"+enc; }
     pv.hidden=!on; document.body.classList.toggle("previewing", on);
   };
   openPreview=()=>setP(true);
@@ -1281,10 +1319,11 @@ let openPreview=()=>{};
   if(x) x.addEventListener("click",()=>{ el.hidden=true; try{ localStorage.setItem("cadence-intro","off"); }catch(_){} });
 })();
 
-// the pristine default system, encoded once before any shared link is applied.
-// While the state still matches this, the tool keeps a clean `#tool` in the URL
-// instead of a wall of base64 — the long shareable hash only appears once you
-// actually diverge from the default (see writeURL).
+// the pristine default system, snapshotted once before any shared link is
+// applied — the baseline the short encoding diffs against, and the sentinel for
+// a clean `#tool` (the address bar stays clean while the state matches it, and
+// the short shareable hash only appears once you diverge — see writeURL).
+const DEFAULT_S = stateObj();
 const DEFAULT_ENC = encodeState();
 // restore a shared system from the URL hash + decide landing vs tool. Empty
 // hash → landing (first impression); any hash → straight into the tool (so

@@ -5,6 +5,20 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.15] — 2026-07-23
+
+### Changed — the shareable URL is now a short diff, not the whole system
+- **The address-bar hash encodes only what differs from the default system.**
+  It used to serialise the *entire* system every time, so a one-token tweak
+  still produced ~900 characters of base64. Now the editor stores just the diff
+  from the default — a single edit is ~40 characters, and it grows only with how
+  much you've actually changed. (A fixed ~8-character link isn't possible without
+  a server to store the state behind a key; this keeps the link self-contained
+  and offline while making the common "share after a few tweaks" case tiny.)
+- The full encode is still used for the **live-demo link and preview channel**
+  (demo.html decodes the complete state), and **old/full-format links still
+  load** — so nothing that was shared before breaks.
+
 ## [0.9.14] — 2026-07-23
 
 ### Changed — the URL stays clean until you diverge
