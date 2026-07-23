@@ -51,8 +51,8 @@ assert('traces: 3 curves, each a grey trail + a gradient-band accent comet',
   && (html.match(/class="ltr-head ltr--/g) || []).length === 3
   && (html.match(/<linearGradient class="ltg"/g) || []).length === 3
   && (html.match(/<animateTransform attributeName="gradientTransform"/g) || []).length === 3);
-assert('the gradient band fades accent → grey → transparent within the band',
-  /\.ltgs-head\{stop-color:var\(--accent\)/.test(css) && /\.ltgs-tail\{stop-color:var\(--ink\);stop-opacity:0\}/.test(css));
+assert('the gradient band is one smooth accent ramp fading to transparent',
+  /\.ltgs-head\{stop-color:var\(--accent\)/.test(css) && /\.ltgs-tail\{stop-color:var\(--accent\);stop-opacity:0\}/.test(css));
 assert('the trace heads are hidden under reduced-motion (only faint guides remain)',
   /@media \(prefers-reduced-motion:reduce\)\{\s*\.ltr-head\{opacity:0\}/.test(css));
 // variant B — a live editor that morphs (SMIL) + zoom/pans (CSS); temporary A/B
@@ -61,6 +61,12 @@ assert('editor variant morphs (SMIL) + zoom/pans, behind the ?hero switch',
   /class="lce-live"/.test(html) && /<animate attributeName="d"/.test(html)
   && /@keyframes lcePan/.test(css)
   && /\.lherobg\[data-hero="editor"\] \.ltr-svg\{display:none\}/.test(css));
+// the editor sits in the open right-hand space, sways about its Y axis between
+// morphs, and is a desktop-only flourish
+assert('editor is confined to the right + sways on the Y axis, desktop-only',
+  /\.lce-svg\{position:absolute;top:[\d.]+%;right:[\d.]+%/.test(css)
+  && /@keyframes lceSpin\{[\s\S]*?rotateY/.test(css)
+  && /@media \(max-width:\d+px\)\{\s*\.lherobg\[data-hero\] \.lce-svg\{display:none/.test(css));
 
 // --- runtime checks: the fonts load and the identity is applied ---
 const browser = await chromium.launch();
