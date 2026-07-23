@@ -5,6 +5,17 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.11] — 2026-07-22
+
+### Changed — the bench stays alive
+- **The test bench no longer freezes after the intro.** A motion tool that sits
+  motionless reads as dead, so once the opening play-through finishes the bench
+  gently **idle-loops** — one lens at a time, on a calm rotating cadence, so
+  something is always moving without being busy. Skipped for reduced-motion and
+  when the tab is hidden or the preview is docked.
+- **Replay is now signposted.** Each lens shows a subtle "↻ replay" hint on
+  hover — clicking a lens has always replayed it, but nothing said so.
+
 ## [0.9.10] — 2026-07-22
 
 ### Changed — the test bench is now abstract instruments only

@@ -207,6 +207,9 @@ button.btn{background:var(--accent);color:var(--on-accent);border:0;border-radiu
 .probe__kind{background:var(--panel-2);color:var(--ink-dim);border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 5px;max-width:52%}
 .probe__sel{margin-left:auto;background:var(--panel-2);color:var(--ink-dim);border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:10px;padding:3px 5px;max-width:44%}
 .probe__stage{position:absolute;inset:0;cursor:pointer}
+/* signpost that a lens replays on click (it also idles-loops on its own) */
+.probe__stage::after{content:"↻ replay";position:absolute;right:9px;bottom:8px;font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--ink-faint);opacity:0;transition:opacity 140ms ease;pointer-events:none;z-index:4}
+.probe__stage:hover::after{opacity:.72}
 
 /* abstract orb lens */
 .orb-base{position:absolute;top:0;bottom:0;margin-block:auto;left:14px;right:14px;height:2px;border-radius:2px;background:var(--line);pointer-events:none}

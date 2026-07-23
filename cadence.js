@@ -535,6 +535,20 @@ function play(i){
   }
 }
 function playAll(){ probes.forEach((_,i)=>setTimeout(()=>play(i), i*130)); }
+// keep the bench alive: after the intro, gently rotate through the probes so
+// one is always in motion (a motion tool that sits frozen reads as dead). One
+// at a time, calm cadence; skipped for reduced-motion and when off-screen.
+let benchIdle=null, benchRot=0;
+function startBenchIdle(){
+  if(reduce || benchIdle) return;
+  benchIdle=setInterval(()=>{
+    if(document.hidden || mode!=="tool" || document.body.classList.contains("previewing")) return;
+    for(let n=0;n<probes.length;n++){                     // next probe with visible motion
+      const idx=(benchRot++)%probes.length, k=probes[idx].kind;
+      if(k!=="scrollreveal" && k!=="scrub"){ play(idx); break; }
+    }
+  }, 2600);
+}
 
 // ---------- system read (the opinion layer) ----------
 function critique(){
@@ -1253,7 +1267,7 @@ function setBootClass(){
 }
 function enterTool(){
   if(mode==="tool") return;
-  const go=()=>{ mode="tool"; setBootClass(); writeURL(); window.scrollTo(0,0); if(!reduce) setTimeout(playAll,120);
+  const go=()=>{ mode="tool"; setBootClass(); writeURL(); window.scrollTo(0,0); if(!reduce){ setTimeout(playAll,120); startBenchIdle(); }
     // dock the live preview beside the editor so the edit→see loop is felt at once
     if(matchMedia("(min-width:1001px)").matches) setTimeout(openPreview,80); };
   // the entrance itself is a View Transition — the newest feature, dogfooded
@@ -1347,4 +1361,4 @@ function exitTool(){
 })();
 
 rerenderAll();
-if(mode==="tool" && !reduce) setTimeout(playAll,500);
+if(mode==="tool" && !reduce){ setTimeout(playAll,500); startBenchIdle(); }

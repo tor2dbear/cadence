@@ -1,5 +1,8 @@
 import { chromium } from 'playwright';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 const BASE = new URL('../index.html', import.meta.url).href;
+const src = p => readFileSync(fileURLToPath(new URL(p, import.meta.url)), 'utf8');
 const LEGACY = BASE + '#eyJkIjpbWyJmYXN0IiwxNTBdLFsiYmFzZSIsMjAwXSxbInNsb3ciLDMwMF0sWyJzbG93ZXIiLDUwMF0sWyJ4c2xvdyIsMTAwMF1dLCJlIjpbWyJzdGFuZGFyZCIsMC4yLDAsMC4yLDFdLFsiZGVjZWxlcmF0ZSIsMCwwLDAuMiwxXSxbImFjY2VsZXJhdGUiLDAuNCwwLDEsMV0sWyJlbXBoYXNpemVkIiwwLjIyLDEsMC4zNiwxXSxbImN1c3QiLDAsMCwxLDFdXSwiaSI6W1siZW50ZXIiLCJiYXNlIiwiZW1waGFzaXplZCIsInRoaW5ncyBhcHBlYXJpbmciXSxbImV4aXQiLCJmYXN0IiwiYWNjZWxlcmF0ZSIsInRoaW5ncyBsZWF2aW5nIl0sWyJlbXBoYXNpemVkIiwic2xvd2VyIiwiZW1waGFzaXplZCIsImhlcm8gbW9tZW50cyJdLFsiaG92ZXIiLCJmYXN0Iiwic3RhbmRhcmQiLCJwb2ludGVyIGZlZWRiYWNrIl0sWyJjdXN0b20iLCJzbG93ZXIiLCJkZWNlbGVyYXRlIiwieW91ciBvd24iXV0sInAiOlswLDMsMCwwXX0';
 
 const browser = await chromium.launch();
@@ -50,6 +53,16 @@ await p3.goto(LEGACY, { waitUntil: 'networkidle' });
 assert('legacy link: 5 easings restored', await p3.locator('#easings .ecard').count() === 5);
 const lk = await p3.locator('.probe__kind').evaluateAll(els => els.map(e => e.value));
 assert('legacy link: kinds fall back to defaults (scope + orbs)', lk[0] === 'scope' && lk.slice(1).every(k => k === 'orb'));
+
+// the bench stays alive (idle-loop) and signposts replay (static guards, robust)
+{
+  const js = src('../cadence.js'), css = src('../styles.css');
+  assert('bench has an idle-loop that keeps a lens in motion',
+    /function startBenchIdle\(\)/.test(js) && /startBenchIdle\(\)/.test(js.replace(/function startBenchIdle\(\)/, '')));
+  assert('idle loop is gated on reduced-motion + tool view',
+    /startBenchIdle[\s\S]{0,220}reduce/.test(js) && /startBenchIdle[\s\S]{0,260}mode!=="tool"/.test(js));
+  assert('a replay affordance is signposted on the lens', /\.probe__stage::after\{content:"↻ replay"/.test(css));
+}
 
 assert('no console/page errors', errors.length === 0);
 if (errors.length) console.log('ERRORS:', errors);
