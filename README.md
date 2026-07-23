@@ -73,9 +73,12 @@ Prototype (v0.3). Rough edges expected.
   stagger timeline, **press** / **reflow** gestures, and **scroll-driven** &
   **view-transition** lenses. Each probe opens in the lens that fits its
   intent's character (a press gesture in `button·press`, a scroll-scrub in
-  `scroll·scrub`, a spring in `scope`), and re-pointing a probe follows the new
-  intent — so the preview always matches what the token does. Real, integrated
-  components live on the demo page — not the bench.
+  `scroll·scrub`, a sequence in `cascade`, otherwise the everyday `orb`), with
+  `scope` as the deliberate inspect-the-curve lens leading probe 0 — so the
+  bench opens varied rather than collapsing to one lens. Re-pointing a probe
+  keeps its lens when it can still show the intent, and only switches for a
+  specialist mechanic. Real, integrated components live on the demo page — not
+  the bench.
 - A **live demo** (`demo.html`) — a real product surface where the system is
   applied to actual components; it re-times live as you edit (BroadcastChannel +
   the URL hash), openable in a tab or as an in-editor preview overlay.

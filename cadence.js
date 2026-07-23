@@ -153,9 +153,11 @@ const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
 // pick the lens that best previews an intent's *defining* trait. Structural
 // mechanics win first (only their lens can show them at all), then a named
 // press/hover gesture, then sequence rhythm — else the flagship "everything"
-// scope, which already carries the curve, the ride-dot (+ spring overshoot),
-// the animated property and the stagger. Used for the *default* only; an
-// explicit lens choice (probes[i].lensSet) always wins.
+// the general everyday default is the orb (its comet reads travel + easing, and
+// its trailing echoes even show a spring's overshoot), so the bench spreads
+// across lenses instead of collapsing to one. scope is the deliberate
+// "inspect the curve / ride-dot" lens — it leads probe 0 but isn't a catch-all.
+// Used for the *default* only; an explicit lens choice (probes[i].lensSet) wins.
 function defaultLensFor(it){
   const r=resolve(it);
   if(r.scrub) return "scrub";                                   // scroll-linked → progress, not a clock
@@ -163,20 +165,18 @@ function defaultLensFor(it){
   if(r.reveal!=null) return "scrollreveal";                     // in-view reveal threshold
   if(r.prop==="height"||r.prop==="width") return "acc";         // layout reflow
   if(/\b(hover|press|tap|click|focus|toggle|button|ripple)\b/i.test(`${it.name||""} ${it.purpose||""}`)) return "button";
-  if(r.distName) return "orb";                                  // an explicit travel token → the comet reads it best
-  return "scope";                                               // plain / spring / staggered — scope shows the curve, ride-dot & the cascade
+  if(r.s>0) return "cascade";                                   // a sequence → show its rhythm
+  return "orb";                                                 // plain / spring / travel → the comet
 }
-// seed the bench: each probe previews its intent in the lens that fits its
-// character (enter → scope leads on the flagship). A second intent that also
-// resolves to scope falls to orb, so the bench opens with variety, not a wall
-// of identical scope tiles. cascade stays a one-click manual reach.
+// the mechanic lenses can't show a general intent (and vice-versa) — so a
+// re-point only re-lenses when one of these is involved; scope/orb/cascade can
+// show any plain/spring/staggered intent and are kept, preserving bench variety.
+const SPECIALIST_LENS = new Set(["scrub","viewtransition","scrollreveal","acc","button"]);
+// seed the bench: probe 0 leads on the flagship scope (the curve + ride-dot),
+// the rest open in the lens that fits their intent — so the bench opens varied
+// (scope · orb · orb · button for the default enter/exit/move/hover).
 const SEED_INTENTS=[intents[0].id, intents[1].id, intents[2].id, intents[4].id];
-let seedUsedScope=false;
-probes = SEED_INTENTS.map(id=>{
-  let k = defaultLensFor(findIntent(id));
-  if(k==="scope"){ if(seedUsedScope) k="orb"; else seedUsedScope=true; }
-  return {kind:k, intent:id};
-});
+probes = SEED_INTENTS.map((id,idx)=>({ kind: idx===0 ? "scope" : defaultLensFor(findIntent(id)), intent:id }));
 
 // ---------- render: duration ladder ----------
 const maxMs = () => Math.max(...durations.map(d=>d.ms));
@@ -1104,9 +1104,14 @@ document.addEventListener("change", e=>{
   if(sc==="ivt"){ const bb=bindOf(intents[i]); if(t.checked) bb.vt={...VT_DEFAULT}; else delete bb.vt; rerenderAll(); }
   if(sc==="ivttype"){ const bb=bindOf(intents[i]); if(bb.vt) bb.vt.type=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="ieff"){ bindOf(intents[i]).effectsEase=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
-  // re-point a probe: follow the new intent's best lens, unless the user has
-  // explicitly chosen a lens for this probe (explicit choice always wins)
-  if(sc==="probe"){ probes[i].intent=t.value; if(!probes[i].lensSet) probes[i].kind=defaultLensFor(findIntent(t.value)); renderBench(); writeURL(); }
+  // re-point a probe: keep its current lens if that lens can still show the new
+  // intent (general lenses show any plain/spring/staggered intent) — only
+  // re-lens when a specialist mechanic is involved on either side, so the bench
+  // keeps its variety instead of collapsing. An explicit choice always wins.
+  if(sc==="probe"){ probes[i].intent=t.value;
+    if(!probes[i].lensSet){ const need=defaultLensFor(findIntent(t.value));
+      if(SPECIALIST_LENS.has(need) || SPECIALIST_LENS.has(probes[i].kind)) probes[i].kind=need; }
+    renderBench(); writeURL(); }
   if(sc==="pkind"){ probes[i].kind=t.value; probes[i].lensSet=true; renderBench(); writeURL(); }
   if(sc==="mname"){ const s=(t.value.trim())||modes[i].name; modes[i].name=uniqueName(s,modes,i); rerenderAll(); }
 });

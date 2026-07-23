@@ -22,8 +22,8 @@ const orb1 = await page.locator('.probe[data-i="1"] .orb').evaluate(el => getCom
 assert('probe 1 (exit) orb red', orb1 === 'rgb(224, 139, 127)');
 const orb2 = await page.locator('.probe[data-i="2"] .orb').evaluate(el => getComputedStyle(el).backgroundColor);
 assert('probe 2 (move) orb amber', orb2 === 'rgb(233, 184, 114)');
-// changing a probe's intent recolours it (and follows exit's default lens —
-// read the probe's --accent directly so the check is lens-agnostic)
+// changing a probe's intent recolours it (the orb lens is kept — it can show
+// exit fine — so read the probe's --accent directly, lens-agnostic)
 await page.locator('.probe[data-i="2"] .probe__sel').selectOption({ label: 'exit' });
 const acc2b = await page.locator('.probe[data-i="2"]').evaluate(el => getComputedStyle(el).getPropertyValue('--accent').trim());
 assert('repoint probe → recolours to exit red', acc2b === '#e08b7f');

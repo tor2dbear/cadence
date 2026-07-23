@@ -7,7 +7,7 @@ shows the deployed semver plus the commit it was built from, stamped at deploy.
 
 ## [0.9.13] — 2026-07-23
 
-### Changed — the default lens now fits the intent
+### Changed — the default lens now fits the intent (without collapsing the bench)
 - **Each probe opens in the lens that actually previews its intent.** The bench
   used to seed `scope + 3× orb` regardless of what each intent did — so a hover
   intent, a scroll-scrub intent and a spring all showed as identical travelling
@@ -16,14 +16,18 @@ shows the deployed semver plus the commit it was built from, stamped at deploy.
   lens by the intent's **defining trait**: structural mechanics win first
   (`scroll·scrub` → scrub, `view transition` → vt, in-view reveal → `scroll·in-view`,
   a height/width reflow → `accordion·reflow`), then a named press/hover gesture →
-  `button·press`, then an explicit travel token → `orb`, else the flagship
-  **scope** (which already carries the curve, the ride-dot, spring overshoot,
-  the animated property *and* the stagger).
-- **Re-pointing a probe follows the new intent** — so enabling e.g. scroll-scrub
-  on an intent and pointing a probe at it *shows it in the scrub lens*, instead
-  of leaving you to hunt for the right lens. An **explicit** lens choice is
-  respected: once you pick a lens for a probe, re-pointing keeps it.
-- The default bench now opens `scope · orb · orb · button` (enter / exit / move /
+  `button·press`, then a sequence (stagger) → `cascade`, else the everyday
+  **orb** (its comet reads travel + easing, and its trailing echoes even show a
+  spring's overshoot). **scope** is the deliberate *inspect-the-curve / ride-dot*
+  lens — it leads probe 0 but is never a catch-all, so the bench stays varied
+  rather than collapsing to one lens on a spring-heavy system.
+- **Re-pointing a probe keeps its current lens when that lens can still show the
+  new intent** (any general lens shows a plain / spring / staggered intent) —
+  only a specialist mechanic on either side re-lenses. So enabling scroll-scrub
+  on an intent and pointing a probe at it *shows it in the scrub lens*, while
+  moving between ordinary intents preserves the bench's variety. An **explicit**
+  lens choice always wins: once you pick a lens for a probe, re-pointing keeps it.
+- The default bench opens `scope · orb · orb · button` (enter / exit / move /
   hover) — `hover → button·press` in particular is finally honest. Old share
   links are unaffected (they carry their own saved lenses).
 

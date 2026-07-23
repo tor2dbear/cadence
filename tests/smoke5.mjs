@@ -60,13 +60,16 @@ const lk = await p3.locator('.probe__kind').evaluateAll(els => els.map(e => e.va
 assert('legacy link: kinds fall back to the seeded defaults',
   JSON.stringify(lk) === JSON.stringify(['scope', 'orb', 'orb', 'button']));
 
-// re-pointing a probe follows the new intent's character (unless the lens was
-// chosen explicitly). probe 1 is seeded orb (unlocked).
+// re-pointing keeps the probe's lens when it can still show the new intent
+// (variety preserved); a specialist mechanic on either side re-lenses. probe 1
+// is seeded orb (unlocked).
 const kindOf = i => page.locator('.probe__kind').nth(i).inputValue();
+await page.locator('.probe__sel').nth(1).selectOption({ label: 'move' });
+assert('re-point → general intent keeps the current lens (stays orb)', (await kindOf(1)) === 'orb');
 await page.locator('.probe__sel').nth(1).selectOption({ label: 'hover' });
-assert('re-point → hover picks the button (press) lens', (await kindOf(1)) === 'button');
-await page.locator('.probe__sel').nth(1).selectOption({ label: 'enter' });
-assert('re-point → enter falls back to scope (stagger shows there)', (await kindOf(1)) === 'scope');
+assert('re-point → hover switches to the button (press) lens', (await kindOf(1)) === 'button');
+await page.locator('.probe__sel').nth(1).selectOption({ label: 'exit' });
+assert('re-point off a press intent drops the button lens (back to orb)', (await kindOf(1)) === 'orb');
 // an explicit lens choice locks: re-pointing afterwards keeps it
 await page.locator('.probe__kind').nth(2).selectOption('cascade');
 await page.locator('.probe__sel').nth(2).selectOption({ label: 'hover' });
