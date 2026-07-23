@@ -365,12 +365,11 @@ html.boot-tool #landing{display:none}
    the whole curve is never shown. Full-bleed: it breaks out of the centred
    column to span the whole viewport, sitting below all copy (z-index:-1 in the
    landing's isolated stacking context). */
-/* height is also capped against width (64vw): the backdrop is a 2:1 SVG sliced
-   to fill its box, so a TALL box (portrait phones/tablets) over-zooms it and
-   the moving band grows wider than the visible window — the fade dies and the
-   accent lands as a solid bar. Capping height keeps the box near ~1.6:1 at any
-   width, so the band always reads as a band. On desktop 84vh wins (unchanged). */
-.lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,64vw,820px);
+/* height is also capped against width (108vw) so the field covers a decent band
+   on narrow/portrait screens (down through the CTAs) without running the whole
+   page. The generative comets are short discrete strokes, so a tall/zoomed box
+   no longer risks the old solid-bar artefact. On desktop 84vh wins (unchanged). */
+.lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,108vw,820px);
   z-index:-1;pointer-events:none;overflow:hidden}
 .ltr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 /* generative trace field (built by JS). Each comet is five accent segments
