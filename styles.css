@@ -402,28 +402,31 @@ html.boot-tool #landing{display:none}
    preserveAspectRatio=meet, so it always fits (no clipping off-screen).
    Toggled against variant A via ?hero= on the landing (JS sets data-hero). */
 .lce-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.lce-base{fill:none;stroke:color-mix(in srgb,var(--ink) 7%,transparent);stroke-width:1;stroke-dasharray:2 3.5}
-.lce-curve{fill:none;stroke:color-mix(in srgb,var(--ink) 16%,transparent);stroke-width:1.6;stroke-linecap:round}
-.lce-handle{stroke:color-mix(in srgb,var(--accent) 24%,transparent);stroke-width:1}
-.lce-anchor{fill:color-mix(in srgb,var(--ink) 20%,transparent)}
-.lce-ctrl{fill:color-mix(in srgb,var(--accent) 40%,transparent)}
+/* lighter + thinner than before, so the editor recedes behind the copy */
+.lce-base{fill:none;stroke:color-mix(in srgb,var(--ink) 6%,transparent);stroke-width:.9;stroke-dasharray:2 3.5}
+.lce-curve{fill:none;stroke:color-mix(in srgb,var(--ink) 11%,transparent);stroke-width:1.2;stroke-linecap:round}
+.lce-handle{stroke:color-mix(in srgb,var(--accent) 16%,transparent);stroke-width:.7}
+.lce-anchor{fill:color-mix(in srgb,var(--ink) 22%,transparent)}
+/* control points are ring knobs filled with the bg, so the handle line tucks
+   cleanly under them instead of running through the dot */
+.lce-ctrl{fill:var(--bg);stroke:color-mix(in srgb,var(--accent) 40%,transparent);stroke-width:.5}
 .lce-live{transform-box:fill-box;transform-origin:center}
 @media (prefers-reduced-motion:no-preference){
   /* the zoom/pan is timed to the SMIL morph (same 26s): it snaps to a new
      framing DURING each morph window, then only drifts a hair while the curve
      holds. A little overshoot easing matches the morph's bounce. */
-  .lce-live{animation:lcePan 26s cubic-bezier(.3,1.25,.55,1) infinite}
+  .lce-live{animation:lcePan 26s cubic-bezier(.28,1.3,.5,1) infinite}
 }
 @keyframes lcePan{
   0%    {transform:translate(0,0) scale(1)}
-  28%   {transform:translate(-1.2%,.8%) scale(1.02)}    /* hold A — a hair of drift */
-  30%   {transform:translate(-1.2%,.8%) scale(1.02)}
-  38.5% {transform:translate(-6.5%,4.5%) scale(1.2)}    /* morph A→B: snap the framing */
-  60%   {transform:translate(-7.4%,5%) scale(1.21)}     /* hold B — a hair of drift */
-  62%   {transform:translate(-7.4%,5%) scale(1.21)}
-  70.5% {transform:translate(7.5%,-3.5%) scale(.88)}    /* morph B→C: snap */
-  92%   {transform:translate(8.3%,-4%) scale(.87)}      /* hold C — a hair of drift */
-  94%   {transform:translate(8.3%,-4%) scale(.87)}
+  32%   {transform:translate(-1.2%,.8%) scale(1.02)}    /* hold A — a hair of drift */
+  34%   {transform:translate(-1.2%,.8%) scale(1.02)}
+  38%   {transform:translate(-6.5%,4.5%) scale(1.2)}    /* morph A→B: snap the framing */
+  65%   {transform:translate(-7.4%,5%) scale(1.21)}     /* hold B — a hair of drift */
+  67%   {transform:translate(-7.4%,5%) scale(1.21)}
+  71%   {transform:translate(7.5%,-3.5%) scale(.88)}    /* morph B→C: snap */
+  96%   {transform:translate(8.3%,-4%) scale(.87)}      /* hold C — a hair of drift */
+  98%   {transform:translate(8.3%,-4%) scale(.87)}
   100%  {transform:translate(0,0) scale(1)}             /* morph C→A: snap back */
 }
 /* the switch: A (traces) by default, B (editor) with ?hero=editor, both with ?hero=both */
