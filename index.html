@@ -53,22 +53,20 @@
   <div class="lherobg" aria-hidden="true">
     <!-- variant A (default): thin easing curves traced by a comet + fading away -->
     <svg class="ltr-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice">
-      <!-- the comet is a stack of accent segments that share one leading edge:
-           where they overlap it's brightest, tapering to faint where only the
-           longest reaches — the overlap COUNT makes the gradient fade. Swept by
-           CSS stroke-dashoffset (no SMIL, so it animates in every browser),
-           over a faint grey guide. pathLength=1000 normalises all three curves
-           so one keyframe drives them. -->
+      <!-- the comet is a bright accent head (e1) with fainter segments (e2..e5)
+           that LAG behind it — each starts a beat later, so it sits further back
+           along the curve — easing accent → grey → gone. Nothing is shown
+           permanently; between passes the curve is bare. Swept by CSS
+           stroke-dashoffset (no SMIL, so it animates in every browser).
+           pathLength=1000 normalises all three curves so one keyframe drives
+           them; a big dash gap parks the comet off the end most of the cycle. -->
       <defs>
         <path id="ltrp1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
         <path id="ltrp2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
         <path id="ltrp3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
       </defs>
-      <use class="ltr-trail ltr--1" href="#ltrp1" />
       <use class="ltr-echo ltr-e1 ltr--1" href="#ltrp1" /><use class="ltr-echo ltr-e2 ltr--1" href="#ltrp1" /><use class="ltr-echo ltr-e3 ltr--1" href="#ltrp1" /><use class="ltr-echo ltr-e4 ltr--1" href="#ltrp1" /><use class="ltr-echo ltr-e5 ltr--1" href="#ltrp1" />
-      <use class="ltr-trail ltr--2" href="#ltrp2" />
       <use class="ltr-echo ltr-e1 ltr--2" href="#ltrp2" /><use class="ltr-echo ltr-e2 ltr--2" href="#ltrp2" /><use class="ltr-echo ltr-e3 ltr--2" href="#ltrp2" /><use class="ltr-echo ltr-e4 ltr--2" href="#ltrp2" /><use class="ltr-echo ltr-e5 ltr--2" href="#ltrp2" />
-      <use class="ltr-trail ltr--3" href="#ltrp3" />
       <use class="ltr-echo ltr-e1 ltr--3" href="#ltrp3" /><use class="ltr-echo ltr-e2 ltr--3" href="#ltrp3" /><use class="ltr-echo ltr-e3 ltr--3" href="#ltrp3" /><use class="ltr-echo ltr-e4 ltr--3" href="#ltrp3" /><use class="ltr-echo ltr-e5 ltr--3" href="#ltrp3" />
     </svg>
     <!-- variant B (?hero=editor): the bezier editor, one easing at a time with

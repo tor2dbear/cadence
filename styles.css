@@ -373,38 +373,40 @@ html.boot-tool #landing{display:none}
 .lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,64vw,820px);
   z-index:-1;pointer-events:none;overflow:hidden}
 .ltr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-/* a faint grey guide under each curve, then the comet: five accent segments
-   that share a leading edge (dash lengths grow e1→e5). Where all five overlap
-   it's brightest; further back fewer reach, so the overlap COUNT tapers the
-   opacity into a smooth fade — the "gradient" without a real gradient, so it
-   can be swept by CSS stroke-dashoffset (animates in every browser, unlike the
-   old SMIL gradient which sat frozen + solid where SMIL wasn't supported). */
-.ltr-trail,.ltr-echo{fill:none;stroke-linecap:round}
-.ltr-trail{stroke:color-mix(in srgb,var(--ink) 6%,transparent);stroke-width:1.1}
-.ltr-echo{stroke:var(--accent);stroke-width:1.5;opacity:0}   /* invisible until swept */
-.ltr-e1{stroke-dasharray:46 3000}    /* short bright tip — all 5 overlap here */
-.ltr-e2{stroke-dasharray:94 3000}
-.ltr-e3{stroke-dasharray:148 3000}
-.ltr-e4{stroke-dasharray:204 3000}
-.ltr-e5{stroke-dasharray:262 3000}   /* longest, faintest — the tail */
+/* the comet: a bright accent head (e1) with fainter segments trailing behind,
+   easing accent → grey → gone. Each segment is the same short dash; the tail
+   ones LAG (a later animation-delay = further back along the curve), so the
+   taper direction is unambiguous. Swept by CSS stroke-dashoffset (animates in
+   every browser, unlike the old SMIL gradient that froze solid). A big dash gap
+   parks the comet off the path end for most of the cycle → sparse, and nothing
+   is shown permanently (no always-on guide). */
+.ltr-echo{fill:none;stroke-linecap:round;stroke-width:1.5;stroke-dasharray:44 3000}
+.ltr-e1{stroke:var(--accent);opacity:.85}                                 /* bright head */
+.ltr-e2{stroke:var(--accent);opacity:.5}
+.ltr-e3{stroke:var(--accent);opacity:.3}
+.ltr-e4{stroke:color-mix(in srgb,var(--ink) 30%,transparent);opacity:.55}  /* easing to grey */
+.ltr-e5{stroke:color-mix(in srgb,var(--ink) 20%,transparent);opacity:.4}   /* faint grey tail */
 @media (prefers-reduced-motion:no-preference){
-  /* one keyframe drives all curves (pathLength normalises them); per-curve dur
-     + negative delay desync them so ~one comet shows at a time, sparse. */
-  .ltr-echo{animation:ltrComet 24s linear infinite}
-  .ltr--2.ltr-echo{animation-duration:29s;animation-delay:-13s}
-  .ltr--3.ltr-echo{animation-duration:26s;animation-delay:-19s}
+  /* one keyframe drives every curve (pathLength normalises them); tail layers
+     lag e1 by a beat each (sit further back), curves desync via dur + phase */
+  .ltr-echo{animation:ltrSweep 24s linear infinite}
+  .ltr-e2{animation-delay:.16s}.ltr-e3{animation-delay:.32s}.ltr-e4{animation-delay:.48s}.ltr-e5{animation-delay:.64s}
+  .ltr--2.ltr-echo{animation-duration:29s}
+  .ltr--2.ltr-e1{animation-delay:-13s}.ltr--2.ltr-e2{animation-delay:-12.84s}.ltr--2.ltr-e3{animation-delay:-12.68s}.ltr--2.ltr-e4{animation-delay:-12.52s}.ltr--2.ltr-e5{animation-delay:-12.36s}
+  .ltr--3.ltr-echo{animation-duration:26s}
+  .ltr--3.ltr-e1{animation-delay:-19s}.ltr--3.ltr-e2{animation-delay:-18.84s}.ltr--3.ltr-e3{animation-delay:-18.68s}.ltr--3.ltr-e4{animation-delay:-18.52s}.ltr--3.ltr-e5{animation-delay:-18.36s}
 }
-/* the segment stack sweeps across (leading edge first), fades in briefly, then
-   parks off the end invisible for the rest of the cycle → sparse traces */
-@keyframes ltrComet{
-  0%   {stroke-dashoffset:262;opacity:0}
-  3%   {opacity:.26}
-  25%  {stroke-dashoffset:-1000;opacity:.26}
-  29%  {opacity:0}
-  100% {stroke-dashoffset:-1000;opacity:0}
+/* the comet sweeps across in the first quarter, then parks off the end (huge
+   gap → invisible) for the rest of the cycle */
+@keyframes ltrSweep{
+  0%   {stroke-dashoffset:80}
+  25%  {stroke-dashoffset:-1120}
+  100% {stroke-dashoffset:-1120}
 }
-/* mobile: the height cap already keeps it a band; thin + ease it a touch so it
-   stays a quiet texture behind the headline */
+/* reduced motion: no sweep, so hide the comet (else a static chunk parks at the
+   path start) — nothing is drawn */
+@media (prefers-reduced-motion:reduce){ .ltr-echo{opacity:0} }
+/* mobile: the height cap already keeps it a band; thin it a touch */
 @media (max-width:720px){ .ltr-echo{stroke-width:1.2} }
 /* variant B — a live bezier editor: the curve morphs with its handles (SMIL in
    the markup) while the whole thing slowly zooms + pans (CSS). It sits in the
