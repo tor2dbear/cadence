@@ -373,57 +373,15 @@ html.boot-tool #landing{display:none}
 .lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,64vw,820px);
   z-index:-1;pointer-events:none;overflow:hidden}
 .ltr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-/* the comet: five accent segments that all share the SAME leading edge (the
-   head) and reach back by growing lengths (--Li). So the head has all five
-   overlapping = brightest, and the coverage drops one layer at a time going
-   back = a clean monotonic taper (no beading — earlier the segments were
-   staggered, giving alternating 1/2 coverage that read as "not lined up").
-   Each layer's dashoffset = its length − the shared head position, so the head
-   stays common as it sweeps: calc(var(--Li) − <head>). All on one path, so
-   they're perfectly collinear. Swept by CSS stroke-dashoffset (animates in
-   every browser); a big dash gap parks it off the end most of the cycle. */
-/* --Lb = each segment's base length; --k scales all five together (set per pass
-   by JS so a faster comet is longer). Effective length = --Lb * --k. */
-.ltr-echo{fill:none;stroke-linecap:round;stroke-width:1.5;stroke:var(--accent);opacity:.24;--k:1;
-  stroke-dasharray:calc(var(--Lb) * var(--k) * 1px) 3000px;stroke-dashoffset:9999px}
-.ltr-e1{--Lb:26}    /* short bright tip — all 5 here */
-.ltr-e2{--Lb:60}
-.ltr-e3{--Lb:104}
-.ltr-e4{--Lb:154}
-.ltr-e5{--Lb:210}   /* longest, faintest — the tail */
-/* the trace: a faint grey line the comet draws on behind its head (revealed by
-   stroke-dashoffset in step with the sweep), which then tones out slowly over
-   the rest of the cycle — the lingering "spår" that fades to nothing. */
-.ltr-trail{fill:none;stroke-linecap:round;stroke-width:1.1;stroke-dasharray:1000 1000;
-  stroke:color-mix(in srgb,var(--ink) 20%,transparent);opacity:0}
-@media (prefers-reduced-motion:no-preference){
-  /* one keyframe drives every curve (pathLength normalises them); all five
-     layers of a curve run in lockstep (the taper is from length, not timing);
-     curves desync via duration + phase */
-  .ltr-echo{animation:ltrHead 24s linear infinite}
-  .ltr-trail{animation:ltrTrace 24s linear infinite}
-  .ltr--2.ltr-echo,.ltr--2.ltr-trail{animation-duration:29s;animation-delay:-13s}
-  .ltr--3.ltr-echo,.ltr--3.ltr-trail{animation-duration:26s;animation-delay:-19s}
-}
-/* comet: the shared head sweeps across in the first quarter (each layer offset
-   by its own length so the leading edges coincide), then parks off the end */
-@keyframes ltrHead{
-  0%   {stroke-dashoffset:calc(var(--Lb) * var(--k) * 1px + 60px)}    /* head just before the start */
-  25%  {stroke-dashoffset:calc(var(--Lb) * var(--k) * 1px - 1100px)}  /* head past the end */
-  100% {stroke-dashoffset:calc(var(--Lb) * var(--k) * 1px - 1100px)}  /* parked off, invisible */
-}
-/* trace: draw on behind the head over the same first quarter, then tone out
-   slowly (~11s) and stay gone until the next pass */
-@keyframes ltrTrace{
-  0%   {stroke-dashoffset:1000;opacity:.4}   /* undrawn */
-  25%  {stroke-dashoffset:0;opacity:.4}       /* fully drawn behind the comet */
-  70%  {stroke-dashoffset:0;opacity:0}        /* slow fade to nothing */
-  100% {stroke-dashoffset:0;opacity:0}
-}
-/* reduced motion: no sweep — comet + trace stay hidden */
-@media (prefers-reduced-motion:reduce){ .ltr-echo,.ltr-trail{opacity:0} }
-/* mobile: the height cap already keeps it a band; thin it a touch */
-@media (max-width:720px){ .ltr-echo{stroke-width:1.2} }
+/* generative trace field (built by JS). Each comet is five accent segments
+   sharing one leading edge (grouped in a <g>), giving the clean monotonic taper;
+   each leaves a very faint grey trail that lingers ~a minute then fades. Kept
+   faint so the accumulating web stays behind the copy. */
+.ltr-gcomet{fill:none;stroke-linecap:round;stroke-width:1.5;stroke:var(--accent);opacity:.24}
+.ltr-gtrail{fill:none;stroke-linecap:round;stroke-width:1.1;stroke-dasharray:1000 1000;
+  stroke:color-mix(in srgb,var(--ink) 18%,transparent)}
+/* mobile: the height cap already keeps it a band; thin the comets a touch */
+@media (max-width:720px){ .ltr-gcomet{stroke-width:1.2} }
 /* variant B — a live bezier editor: the curve morphs with its handles and the
    camera zooms + pans, both SMIL on one timeline (markup) so they stay in sync.
    It sits in the open space to the RIGHT of the copy (desktop only),

@@ -1378,18 +1378,38 @@ function exitTool(){
     // the editor morphs via SMIL, so honour reduced-motion by pausing it at its
     // initial frame (its CSS zoom/pan + the CSS trace comet are already gated)
     if(reduce){ const es=document.querySelector(".lce-svg"); if(es&&es.pauseAnimations) es.pauseAnimations(); }
-    // give each trace comet a slightly random speed each pass, and tie its
-    // length to that speed (faster → longer streak, like a real comet). Pure
-    // CSS can't vary per-iteration, so re-roll at each animationiteration; the
-    // taper/shape stays CSS (--k scales all five segment lengths together).
-    if(!reduce){ [["1",24],["2",29],["3",26]].forEach(([n,base])=>{
-      const segs=[...document.querySelectorAll(".ltr--"+n+".ltr-echo")];
-      if(!segs.length) return;
-      const roll=()=>{ const sp=0.7+Math.random()*0.75;              // speed factor 0.70–1.45
-        const dur=(base/sp).toFixed(2)+"s";                          // faster ⇒ shorter cycle
-        segs.forEach(el=>{ el.style.animationDuration=dur; el.style.setProperty("--k",sp.toFixed(3)); }); }; // faster ⇒ larger --k ⇒ longer
-      segs[0].addEventListener("animationiteration",roll); roll();
-    }); }
+    // generative trace field: comets sweep RANDOM easing-curve paths (varied
+    // shape + position), each leaving a very faint grey trail that lingers ~a
+    // minute then fades — so the backdrop is an ever-changing web of lines,
+    // never the same twice. All WAAPI (no SMIL); skipped for reduced-motion.
+    if(!reduce){ (function(){
+      const svg=document.querySelector(".ltr-svg"); if(!svg) return;
+      const NS="http://www.w3.org/2000/svg";
+      let field=svg.querySelector(".ltr-field");
+      if(!field){ field=document.createElementNS(NS,"g"); field.setAttribute("class","ltr-field"); svg.appendChild(field); }
+      const W=1000,H=500,LIFE=66000,CAP=16,R=(a,b)=>a+Math.random()*(b-a),trails=[];
+      const randPath=()=>{ const y0=R(30,H-30),y3=R(20,H-70),x1=R(120,430),y1=R(0,H),x2=R(540,830),y2=R(0,H);
+        return "M-40,"+(y0|0)+" C"+(x1|0)+","+(y1|0)+" "+(x2|0)+","+(y2|0)+" "+(W+40)+","+(y3|0); };
+      const spawn=()=>{ const d=randPath(),sp=R(0.7,1.5),sweep=3400/sp,k=sp;   // faster ⇒ shorter sweep + longer comet
+        // the lingering grey trail: drawn on behind the head, then a long fade
+        const tr=document.createElementNS(NS,"path");
+        tr.setAttribute("d",d); tr.setAttribute("pathLength","1000"); tr.setAttribute("class","ltr-gtrail");
+        tr.style.strokeDashoffset="1000"; field.appendChild(tr); trails.push(tr);
+        while(trails.length>CAP){ const o=trails.shift(); if(o){ o.getAnimations&&o.getAnimations().forEach(a=>a.cancel()); o.remove(); } }
+        const reveal=tr.animate([{strokeDashoffset:1000,opacity:.3},{strokeDashoffset:0,opacity:.3}],{duration:sweep,easing:"linear",fill:"forwards"});
+        reveal.onfinish=()=>{ const f=tr.animate([{opacity:.3},{opacity:0}],{duration:LIFE,easing:"linear",fill:"forwards"});
+          f.onfinish=()=>{ tr.remove(); const i=trails.indexOf(tr); if(i>=0) trails.splice(i,1); }; };
+        // the comet: five accent segments sharing one leading edge (overlap → taper)
+        const g=document.createElementNS(NS,"g");
+        [26,60,104,154,210].forEach(base=>{ const s=document.createElementNS(NS,"path");
+          s.setAttribute("d",d); s.setAttribute("pathLength","1000"); s.setAttribute("class","ltr-gcomet");
+          const L=base*k; s.style.strokeDasharray=L+" 3000";
+          s.animate([{strokeDashoffset:L+60},{strokeDashoffset:L-1080}],{duration:sweep,easing:"linear",fill:"forwards"});
+          g.appendChild(s); });
+        field.appendChild(g); setTimeout(()=>g.remove(),sweep+150);
+      };
+      (function loop(){ if(!document.hidden) spawn(); setTimeout(loop,R(3200,7000)); })();
+    })(); }
   }catch(_){}
   const start=document.getElementById("startTool");
   if(start) start.addEventListener("click",enterTool);

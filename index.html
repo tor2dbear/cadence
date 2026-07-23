@@ -51,28 +51,14 @@
   <!-- full-bleed hero backdrop: one arc at a time glides along an (invisible)
        easing curve. Spans the viewport (breaks out of the centred column). -->
   <div class="lherobg" aria-hidden="true">
-    <!-- variant A (default): thin easing curves traced by a comet + fading away -->
+    <!-- variant A (default): a generative trace field -->
     <svg class="ltr-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice">
-      <!-- comet = a bright accent head (e1) with four fainter segments (e2..e5)
-           that LAG behind it (a later animation-delay = further back along the
-           curve), so it tapers head → tail in the travel direction. As it goes
-           it draws on a faint grey trace (ltr-trail, revealed by stroke-dashoffset
-           right behind the head) which then TONES OUT slowly over the rest of the
-           cycle — so the colour dissolves to grey and the grey lingers, then
-           fades to nothing. Nothing is shown permanently. All CSS
-           stroke-dashoffset (no SMIL → animates everywhere); pathLength=1000
-           normalises the three curves to shared keyframes. -->
-      <defs>
-        <path id="ltrp1" pathLength="1000" d="M-50,210 C250,210 400,50 1050,25" />
-        <path id="ltrp2" pathLength="1000" d="M-50,370 C350,370 450,150 1050,110" />
-        <path id="ltrp3" pathLength="1000" d="M-50,494 C200,494 560,320 1050,270" />
-      </defs>
-      <use class="ltr-trail ltr--1" href="#ltrp1" />
-      <use class="ltr-echo ltr-e1 ltr--1" href="#ltrp1" /><use class="ltr-echo ltr-e2 ltr--1" href="#ltrp1" /><use class="ltr-echo ltr-e3 ltr--1" href="#ltrp1" /><use class="ltr-echo ltr-e4 ltr--1" href="#ltrp1" /><use class="ltr-echo ltr-e5 ltr--1" href="#ltrp1" />
-      <use class="ltr-trail ltr--2" href="#ltrp2" />
-      <use class="ltr-echo ltr-e1 ltr--2" href="#ltrp2" /><use class="ltr-echo ltr-e2 ltr--2" href="#ltrp2" /><use class="ltr-echo ltr-e3 ltr--2" href="#ltrp2" /><use class="ltr-echo ltr-e4 ltr--2" href="#ltrp2" /><use class="ltr-echo ltr-e5 ltr--2" href="#ltrp2" />
-      <use class="ltr-trail ltr--3" href="#ltrp3" />
-      <use class="ltr-echo ltr-e1 ltr--3" href="#ltrp3" /><use class="ltr-echo ltr-e2 ltr--3" href="#ltrp3" /><use class="ltr-echo ltr-e3 ltr--3" href="#ltrp3" /><use class="ltr-echo ltr-e4 ltr--3" href="#ltrp3" /><use class="ltr-echo ltr-e5 ltr--3" href="#ltrp3" />
+      <!-- JS sweeps comets along RANDOM easing-curve paths (varied shape +
+           position), each leaving a very faint grey trail that lingers ~a minute
+           then fades — so the backdrop is an ever-changing web of lines, never
+           the same twice. Empty here; filled by JS (WAAPI, no SMIL). Skipped for
+           reduced-motion, leaving a calm bare backdrop. -->
+      <g class="ltr-field"></g>
     </svg>
     <!-- variant B (?hero=editor): the bezier editor, one easing at a time with
          its handles fading in. Both show with ?hero=both. -->

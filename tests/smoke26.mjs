@@ -43,33 +43,22 @@ assert('easing curve draws via clip-path, not a mismatched stroke-dash',
 const springKf = (css.match(/@keyframes ltSpring\{[^\n]*/) || [''])[0];
 assert('spring tile travels the full track via left, not a fixed translateX',
   /left:calc\(100% - 22px\)/.test(springKf) && !/translateX/.test(springKf));
-// variant A — traces: each of 3 curves is a 5-segment CSS comet (bright accent
-// head → grey tail), swept by CSS (NOT SMIL, which froze in some browsers), and
-// nothing is drawn permanently (no always-on grey guide)
-assert('traces: 3 curves, each a 5-segment accent comet + a grey trace it draws on',
-  /class="lherobg"/.test(html)
-  && (html.match(/class="ltr-echo ltr-e\d ltr--/g) || []).length === 15
-  && (html.match(/class="ltr-trail ltr--/g) || []).length === 3);
-assert('the comet is CSS-swept (no SMIL, no gradient) and the trace tones out slowly',
-  !/<animateTransform/.test(html) && !/url\(#ltg/.test(html)
-  && /@keyframes ltrHead\{[\s\S]*?stroke-dashoffset/.test(css)
-  && /\.ltr-echo\{[^}]*stroke:var\(--accent\)/.test(css)
-  && /@keyframes ltrTrace\{[\s\S]*?opacity:0[\s\S]*?\}/.test(css)
-  && /\.ltr-trail\{[^}]*opacity:0\}/.test(css));
-// the five segments share one leading edge (offset by their own length) so the
-// taper is monotonic — no beading / "not lined up" look
-assert('comet segments share a leading edge (dashoffset = length − head), a clean taper',
-  /\.ltr-e1\{--Lb:\d+\}/.test(css) && /\.ltr-e5\{--Lb:\d+\}/.test(css)
-  && /stroke-dashoffset:calc\(var\(--Lb\) \* var\(--k\) \* 1px \+ 60px\)/.test(css)
-  && /stroke-dashoffset:calc\(var\(--Lb\) \* var\(--k\) \* 1px - 1100px\)/.test(css));
-// each pass gets a randomised speed (animationDuration) with length tied to it (--k)
+// variant A — traces: a GENERATIVE field. JS sweeps comets along random
+// easing-curve paths (WAAPI, no SMIL), each leaving a faint grey trail that
+// lingers ~a minute then fades → an ever-changing web, never fixed curves
 const js = read('cadence.js');
-assert('the comet re-rolls a random speed + length each pass (JS, reduced-motion-safe)',
-  /animationiteration/.test(js) && /animationDuration/.test(js)
-  && /setProperty\("--k"/.test(js) && /Math\.random\(\)/.test(js));
-assert('the comet is reduced-motion-gated (parked → nothing is drawn)',
-  /@media \(prefers-reduced-motion:reduce\)\{\s*\.ltr-echo,\.ltr-trail\{opacity:0\}/.test(css)
-  && /@media \(prefers-reduced-motion:no-preference\)\{[\s\S]*?\.ltr-echo\{animation:ltrHead/.test(css));
+assert('traces: a generative field container, not fixed curves',
+  /class="lherobg"/.test(html)
+  && /class="ltr-field"/.test(html)
+  && !/ltr-echo/.test(html) && !/id="ltrp/.test(html));
+assert('the field spawns comets on random paths with long-lingering trails (WAAPI, no SMIL)',
+  /ltr-field/.test(js) && /createElementNS/.test(js) && /Math\.random/.test(js)
+  && /\.animate\(/.test(js) && /ltr-gtrail/.test(js) && /ltr-gcomet/.test(js)
+  && !/<animateTransform/.test(html));
+assert('the field is reduced-motion-gated + styled faint (accent comet, faint grey trail)',
+  /if\(!reduce\)\{\s*\(function\(\)\{[\s\S]*?ltr-field/.test(js)
+  && /\.ltr-gcomet\{[^}]*stroke:var\(--accent\)/.test(css)
+  && /\.ltr-gtrail\{[\s\S]*?color-mix\(in srgb,var\(--ink\)/.test(css));
 // variant B — a live editor that morphs + zoom/pans, BOTH SMIL on one timeline
 // (the viewBox animation shares the morph's keyTimes), so they stay in sync;
 // temporary A/B switch (?hero) coexists with the traces
