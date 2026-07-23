@@ -411,12 +411,22 @@ html.boot-tool #landing{display:none}
 .lce-ctrl{fill:color-mix(in srgb,var(--accent) 40%,transparent)}
 .lce-live{transform-box:fill-box;transform-origin:center}
 @media (prefers-reduced-motion:no-preference){
-  .lce-live{animation:lcePan 27s ease-in-out infinite}   /* zoom + pan; the morph is SMIL */
+  /* the zoom/pan is timed to the SMIL morph (same 26s): it snaps to a new
+     framing DURING each morph window, then only drifts a hair while the curve
+     holds. A little overshoot easing matches the morph's bounce. */
+  .lce-live{animation:lcePan 26s cubic-bezier(.3,1.25,.55,1) infinite}
 }
 @keyframes lcePan{
-  0%,100%{transform:translate(0,0) scale(1)}
-  32%{transform:translate(-7%,5%) scale(1.24)}
-  64%{transform:translate(8%,-4%) scale(.86)}
+  0%    {transform:translate(0,0) scale(1)}
+  28%   {transform:translate(-1.2%,.8%) scale(1.02)}    /* hold A — a hair of drift */
+  30%   {transform:translate(-1.2%,.8%) scale(1.02)}
+  38.5% {transform:translate(-6.5%,4.5%) scale(1.2)}    /* morph A→B: snap the framing */
+  60%   {transform:translate(-7.4%,5%) scale(1.21)}     /* hold B — a hair of drift */
+  62%   {transform:translate(-7.4%,5%) scale(1.21)}
+  70.5% {transform:translate(7.5%,-3.5%) scale(.88)}    /* morph B→C: snap */
+  92%   {transform:translate(8.3%,-4%) scale(.87)}      /* hold C — a hair of drift */
+  94%   {transform:translate(8.3%,-4%) scale(.87)}
+  100%  {transform:translate(0,0) scale(1)}             /* morph C→A: snap back */
 }
 /* the switch: A (traces) by default, B (editor) with ?hero=editor, both with ?hero=both */
 .lherobg .lce-svg{display:none}
