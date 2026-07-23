@@ -88,7 +88,7 @@ const KINDS = [
 ];
 const CASC_N = 6;    // items in the stagger timeline
 const SCOPE_N = 5;   // demo elements in the scope lens
-const ORB_TRAIL = 6; // trailing echoes behind the comet head (orb lens)
+const ORB_TRAIL = 9; // trailing echoes behind the comet head (orb lens)
 // how each animated property reads on the scope demo elements
 const SCOPE_ANIM = {
   opacity:  {props:["opacity"],   before:{opacity:"0"}, after:{opacity:"1"}},
@@ -340,7 +340,7 @@ function renderBench(){
       // easing you can see. Echoes fade + shrink toward the tail.
       let echoes="";
       for(let i=1;i<=ORB_TRAIL;i++){ const t=i/ORB_TRAIL;
-        echoes+=`<i class="orb-echo" style="opacity:${(0.4*(1-t*0.9)).toFixed(3)};transform:scale(${(1-0.5*t).toFixed(2)})"></i>`; }
+        echoes+=`<i class="orb-echo" style="opacity:${(0.52*(1-t*0.72)).toFixed(3)};transform:scale(${(1-0.42*t).toFixed(2)})"></i>`; }
       stage=`<span class="orb-base"></span><span class="orb-track"><span class="orb-rail"><div class="orb"></div>${echoes}</span></span>`;
     }
     if(p.kind==="cascade"){
@@ -480,7 +480,7 @@ function play(i){
     // stretches through the fast part of the easing and retracts at the ends.
     const rail=root.querySelector(".orb-rail");
     const dots=[...rail.querySelectorAll(".orb, .orb-echo")]; // head first, then echoes
-    const START="14px", END="calc(100% - 40px)", step=Math.max(6,(parseInt(r.d)||200)/22);
+    const START="14px", END="calc(100% - 40px)", step=Math.max(9,(parseInt(r.d)||200)/15);
     const setTrans=()=>dots.forEach((el,i)=>{ el.style.transition=`left ${r.d} ${r.e} ${i*step}ms`; });
     dots.forEach(el=>{ el.style.transition="none"; el.style.left=START; });
     void rail.offsetWidth; setTrans();
