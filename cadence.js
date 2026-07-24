@@ -1415,9 +1415,10 @@ function exitTool(){
         const reveal=tr.animate(pos.map(p=>({strokeDashoffset:1000-p,opacity:op})),{duration:sweep,easing:"linear",fill:"forwards"});
         reveal.onfinish=()=>{ const f=tr.animate([{opacity:op},{opacity:0}],{duration:life,easing:"linear",fill:"forwards"});
           f.onfinish=()=>{ tr.remove(); const i=trails.indexOf(tr); if(i>=0) trails.splice(i,1); }; };
-        // the comet: five accent segments sharing one leading edge (overlap → taper)
+        // the comet: ten low-opacity accent segments sharing one leading edge — the
+        // overlap count fades it smoothly (short bright head → long light tail → grey)
         const g=document.createElementNS(NS,"g");
-        [13,30,52,77,105].forEach(base=>{ const s=document.createElementNS(NS,"path");
+        [5,14,25,37,50,64,78,90,100,105].forEach(base=>{ const s=document.createElementNS(NS,"path");
           s.setAttribute("d",d); s.setAttribute("pathLength","1000"); s.setAttribute("class","ltr-gcomet");
           const L=base*k; s.style.strokeDasharray=L+" 3000";
           s.animate(pos.map(p=>({strokeDashoffset:L-p})),{duration:sweep,easing:"linear",fill:"forwards"});
