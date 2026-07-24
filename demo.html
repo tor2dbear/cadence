@@ -10,8 +10,8 @@
 <meta name="robots" content="noindex, follow" />
 <meta name="author" content="Torbjörn Hedberg" />
 <link rel="canonical" href="https://cadence.tor2dbear.com/demo" />
-<meta name="theme-color" content="#e7dfce" media="(prefers-color-scheme: light)" />
-<meta name="theme-color" content="#141210" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#e6e8ee" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#111318" media="(prefers-color-scheme: dark)" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Cadence" />
 <meta property="og:title" content="Cadence — live demo" />
@@ -40,17 +40,20 @@
 @font-face{font-family:"JetBrains Mono";src:url("fonts/jetbrains-mono-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:"JetBrains Mono";src:url("fonts/jetbrains-mono-500.woff2") format("woff2");font-weight:500;font-style:normal;font-display:swap}
 :root{
-  /* Sand / Ink-navy identity — light. A slightly deeper sand frames the
-     product shell like a stage; navy is the accent, the toast a dark chip. */
-  --bg:#e7dfce; --surface:#f4eee1; --surface-2:#eae1cf; --card:#fbf7ef;
-  --ink:#211d15; --ink-dim:#655f51; --ink-faint:#9a9079; --line:#e0d6c1;
-  --accent:#22356e; --accent-strong:#1a2a5c; --accent-soft:#e4e2ee; --on-accent:#f6f1e6;
+  /* The demo is deliberately OFF the Cadence identity — a cool slate + indigo
+     "product" palette, so it reads as an external app the motion tokens are
+     applied to, not the (warm sand) tool chrome. Only the colour skin differs;
+     the motion tokens below are shared. A cool slate frames the shell like a
+     stage; indigo is the accent, the toast a dark slate chip. */
+  --bg:#e6e8ee; --surface:#f6f7fb; --surface-2:#e4e7ef; --card:#ffffff;
+  --ink:#1c2030; --ink-dim:#585d70; --ink-faint:#9296a8; --line:#dcdfe8;
+  --accent:#4f46c4; --accent-strong:#3d34a8; --accent-soft:#e6e4f6; --on-accent:#ffffff;
   --ok:#2f8a5f;
-  --stage-ink:#655f51; --stage-line:#cbbfa6; --stage-tagbg:#e0d7c4;
-  --toast-bg:#211d15; --toast-ink:#f2ece0;
-  --toast-tag-bg:rgba(255,255,255,.10); --toast-tag-ink:#c9c1b0; --toast-tag-accent:#9fb0ef;
-  --onacc-tag-bg:rgba(255,255,255,.16); --onacc-tag-ink:#e7e9f6;
-  --scrim:rgba(33,29,21,.42);
+  --stage-ink:#585d70; --stage-line:#c9cdda; --stage-tagbg:#dde0e9;
+  --toast-bg:#1c2030; --toast-ink:#eef0f6;
+  --toast-tag-bg:rgba(255,255,255,.10); --toast-tag-ink:#c2c6d4; --toast-tag-accent:#a9a3ee;
+  --onacc-tag-bg:rgba(255,255,255,.16); --onacc-tag-ink:#ecebfa;
+  --scrim:rgba(28,32,48,.42);
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
   /* motion fallbacks so a bare demo.html still animates before any token lands */
   --role-enter-duration:220ms; --role-enter-ease:cubic-bezier(0.22,1,0.36,1); --role-enter-stagger:70ms;
@@ -60,14 +63,14 @@
   --role-emph-duration:500ms;  --role-emph-ease:cubic-bezier(0.22,1,0.36,1);
 }
 @media (prefers-color-scheme:dark){:root{
-  --bg:#141210; --surface:#221e17; --surface-2:#2b271d; --card:#26221a;
-  --ink:#ece5d6; --ink-dim:#a79d8a; --ink-faint:#79705f; --line:#39332a;
-  --accent:#8ea2e8; --accent-strong:#a6b6ef; --accent-soft:#2a2c3a; --on-accent:#191712;
+  --bg:#111318; --surface:#1b1e26; --surface-2:#242833; --card:#1f232c;
+  --ink:#e7e9f2; --ink-dim:#9aa0b2; --ink-faint:#6b7180; --line:#2e323d;
+  --accent:#8b91f5; --accent-strong:#a6abff; --accent-soft:#262a3c; --on-accent:#111318;
   --ok:#6fbf95;
-  --stage-ink:#a79d8a; --stage-line:#39332a; --stage-tagbg:#2a261d;
-  --toast-bg:#2f2a20; --toast-ink:#ece5d6;
-  --toast-tag-bg:rgba(255,255,255,.10); --toast-tag-ink:#c9c1b0; --toast-tag-accent:#a6b6ef;
-  --onacc-tag-bg:rgba(0,0,0,.16); --onacc-tag-ink:#1c2140;
+  --stage-ink:#9aa0b2; --stage-line:#2e323d; --stage-tagbg:#232733;
+  --toast-bg:#282c3a; --toast-ink:#e7e9f2;
+  --toast-tag-bg:rgba(255,255,255,.10); --toast-tag-ink:#c2c6d4; --toast-tag-accent:#a6abff;
+  --onacc-tag-bg:rgba(0,0,0,.16); --onacc-tag-ink:#1c1e40;
   --scrim:rgba(0,0,0,.55);
 }}
 html,body{margin:0}

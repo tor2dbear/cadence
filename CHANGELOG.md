@@ -5,6 +5,19 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.24] — 2026-07-24
+
+### Changed — the demo wears its own "external product" palette
+- **The live demo is re-skinned off the Cadence identity.** It now uses a cool
+  **slate + indigo** product palette (light + dark) instead of the tool's warm
+  sand/navy, so it reads as an *external* app the motion tokens are applied to —
+  not the tool's own chrome. This also makes the docked live-preview separate
+  cleanly from the warm editor. Only the colour skin changes; the motion tokens
+  are shared, which quietly shows the system is brand-agnostic.
+- `smoke26` guards that the demo carries its own product palette (cool slate +
+  indigo, not the sand tool) while still self-hosting fonts and staying
+  dual-theme.
+
 ## [0.9.23] — 2026-07-24
 
 ### Changed — the live-preview dock is redesigned
