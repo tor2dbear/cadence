@@ -1371,8 +1371,9 @@ function exitTool(){
 }
 (function initLanding(){
   setBootClass();
-  // hero backdrop A/B switch (temporary, for picking a direction): ?hero=editor
-  // shows the bezier-editor motif, ?hero=both overlays both; default is traces.
+  // hero backdrop: the generative comet field is the shipped default. The bezier
+  // editor motif is kept (not shipped by default) behind ?hero=editor; ?hero=both
+  // overlays them. So the launch experience is comet-only, editor preserved.
   try{ const hv=new URLSearchParams(location.search).get("hero");
     const bg=document.querySelector(".lherobg"); if(hv&&bg) bg.setAttribute("data-hero",hv);
     // the editor morphs via SMIL, so honour reduced-motion by pausing it at its

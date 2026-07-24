@@ -388,7 +388,8 @@ html.boot-tool #landing{display:none}
 /* variant B — a live bezier editor: the curve morphs with its handles and the
    camera zooms + pans, both SMIL on one timeline (markup) so they stay in sync.
    It sits in the open space to the RIGHT of the copy (desktop only),
-   preserveAspectRatio=meet so it fits its box. Toggled via ?hero= (data-hero). */
+   preserveAspectRatio=meet so it fits its box. NOT shipped by default — kept
+   behind ?hero=editor (the comet field is the default); ?hero=both overlays. */
 .lce-svg{position:absolute;top:16%;right:2%;left:auto;width:44%;height:60%;overflow:visible}
 /* lighter + thinner than before, so the editor recedes behind the copy */
 .lce-base{fill:none;stroke:color-mix(in srgb,var(--ink) 6%,transparent);stroke-width:.9;stroke-dasharray:2 3.5}

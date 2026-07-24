@@ -61,7 +61,7 @@ assert('the field is reduced-motion-gated + styled faint (accent comet, faint gr
   && /\.ltr-gtrail\{[\s\S]*?color-mix\(in srgb,var\(--ink\)/.test(css));
 // variant B — a live editor that morphs + zoom/pans, BOTH SMIL on one timeline
 // (the viewBox animation shares the morph's keyTimes), so they stay in sync;
-// temporary A/B switch (?hero) coexists with the traces
+// kept behind ?hero=editor (comet field is the shipped default)
 // shape morph (21s = 3 beats) and viewBox zoom (28s = 4 beats) are separate SMIL
 // on a shared 7s beat, so transitions coincide (synced) but the shape↔zoom
 // pairing keeps shifting (3 and 4 coprime) — no CSS lcePan drift
