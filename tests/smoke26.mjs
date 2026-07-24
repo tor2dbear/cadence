@@ -55,8 +55,8 @@ assert('the field spawns comets on random paths with long-lingering trails (WAAP
   /ltr-field/.test(js) && /createElementNS/.test(js) && /Math\.random/.test(js)
   && /\.animate\(/.test(js) && /ltr-gtrail/.test(js) && /ltr-gcomet/.test(js)
   && !/<animateTransform/.test(html));
-assert('the field is reduced-motion-gated + styled faint (accent comet, faint grey trail)',
-  /if\(!reduce\)\{\s*\(function\(\)\{[\s\S]*?ltr-field/.test(js)
+assert('the field is gated (reduced-motion + editor-only variant) + styled faint',
+  /if\(!reduce && hv!=="editor"\)\{\s*\(function\(\)\{[\s\S]*?ltr-field/.test(js)
   && /\.ltr-gcomet\{[^}]*stroke:var\(--accent\)/.test(css)
   && /\.ltr-gtrail\{[\s\S]*?color-mix\(in srgb,var\(--ink\)/.test(css));
 // variant B — a live editor that morphs + zoom/pans, BOTH SMIL on one timeline

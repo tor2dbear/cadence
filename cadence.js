@@ -1396,8 +1396,10 @@ function exitTool(){
     // generative trace field: comets sweep RANDOM easing-curve paths (varied
     // shape + position), each leaving a very faint grey trail that lingers ~a
     // minute then fades — so the backdrop is an ever-changing web of lines,
-    // never the same twice. All WAAPI (no SMIL); skipped for reduced-motion.
-    if(!reduce){ (function(){
+    // never the same twice. All WAAPI (no SMIL); skipped for reduced-motion, and
+    // skipped entirely for the editor-only variant (?hero=editor hides .ltr-svg,
+    // so there's nothing to draw into).
+    if(!reduce && hv!=="editor"){ (function(){
       const svg=document.querySelector(".ltr-svg"); if(!svg) return;
       const NS="http://www.w3.org/2000/svg";
       let field=svg.querySelector(".ltr-field");
