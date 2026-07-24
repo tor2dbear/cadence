@@ -236,7 +236,22 @@
   <div class="brand"><a class="brandhome" id="brandHome" href="index.html" title="Back to the intro" aria-label="Cadence — back to the intro"><svg class="logomark logomark--anim" viewBox="0 0 32 32" width="22" height="22" aria-hidden="true" focusable="false"><path class="lm-guide" fill="none" stroke-width="1.5" stroke-linecap="round" d="M8,23 C10.5,13.5 19,10 24,9"><animate attributeName="d" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="M8,23 C10.5,13.5 19,10 24,9;M8,23 C13.5,21.5 21.5,16 24,9;M8,23 C9.5,15.5 22.5,8 24,9;M8,23 C10.5,13.5 19,10 24,9"/></path><circle class="lm-dot" cx="8" cy="23" r="2.5"/><circle class="lm-dot" cx="11.31" cy="16.35" r="2.5"><animate attributeName="cx" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="11.31;14.6;11.67;11.31"/><animate attributeName="cy" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="16.35;19.9;16.66;16.35"/></circle><circle class="lm-dot" cx="17.01" cy="11.58" r="2.5"><animate attributeName="cx" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="17.01;20.17;17.32;17.01"/><animate attributeName="cy" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="11.58;15.18;11.88;11.58"/></circle><circle class="lm-head" cx="24" cy="9" r="3"/></svg>cadence</a></div>
   <span class="tag">a motion <em>system</em> designer — scales, intents, and a swappable bench</span>
   <div class="header-actions">
-    <select class="loadsys" id="loadSystem" aria-label="Load a design system's motion palette"></select>
+    <select class="loadsys" id="loadSystem" aria-label="Load a system — a preset or one you saved"></select>
+    <button class="demobtn sysbtn" id="reloadSys" title="Reload the selected system — discard your edits and restore its values" aria-label="Reload the selected system" hidden>↻</button>
+    <span class="sysmenu">
+      <button class="demobtn" id="saveSys" title="Save the current system to this browser" aria-haspopup="dialog" aria-expanded="false">Save</button>
+      <div class="sysmenu__pop" id="sysPop" role="dialog" aria-label="Save system" hidden>
+        <label class="sysmenu__lbl" for="sysName">System name</label>
+        <input class="sysmenu__in" id="sysName" type="text" maxlength="40" placeholder="My system" autocomplete="off" spellcheck="false" />
+        <div class="sysmenu__row"><button class="demolink" id="sysSaveNew">Save as new</button></div>
+        <div class="sysmenu__row sysmenu__saved" id="sysSavedRow" hidden>
+          <button class="demobtn" id="sysUpdate">Update</button>
+          <button class="demobtn sysmenu__del" id="sysDelete">Delete</button>
+        </div>
+        <p class="sysmenu__hint">Saved in this browser only.</p>
+        <p class="sysmenu__err" id="sysErr" hidden>Couldn't save — storage is full or blocked.</p>
+      </div>
+    </span>
     <button class="demobtn" id="exportToggle" title="Open the export panel — CSS, JSON, Tailwind, Style Dictionary, TS">Export</button>
     <button class="demobtn" id="previewToggle" title="Dock the live demo beside the editor — it re-times live as you edit">Preview</button>
     <a class="demolink" id="demoLink" href="demo.html" target="_blank" rel="noopener" title="Open the live demo in a new tab — tile it beside the editor and it re-times live">▶ Live demo</a>

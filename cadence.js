@@ -1269,23 +1269,97 @@ document.getElementById("share").addEventListener("click",()=>{
   const b=document.getElementById("share"); b.textContent="Link copied ✓"; setTimeout(()=>b.textContent="Copy share link",1400);
 });
 
-// load-a-system picker: populate from TEMPLATES, apply on choose
-(function initLoader(){
+// systems picker: built-in Presets (from TEMPLATES) + "My systems" you save to
+// THIS browser (localStorage — no backend, true to the static-site thesis).
+// Choosing one loads it and keeps it selected so the picker shows the active
+// system; Save names + stores the current state; ↻ Reload restores the selected
+// system's values (undo your edits — this also covers re-applying a preset,
+// which a plain <select> can't re-fire once it's already selected).
+(function initSystems(){
   const sel=document.getElementById("loadSystem");
   if(!sel) return;
-  sel.innerHTML=`<option value="">Load a system…</option>`+
-    Object.keys(TEMPLATES).map(k=>`<option value="${k}">${k}</option>`).join("");
-  sel.addEventListener("change",()=>{
-    const t=TEMPLATES[sel.value];
-    if(!t) return;                         // the "Load a system…" placeholder
-    // keep the picked option selected so the dropdown SHOWS which system is
-    // loaded — the old reset to the placeholder hid it, so you couldn't tell a
-    // system had loaded (worst on mobile, where the change lands off-screen
-    // above a sticky header). Deep-clone via JSON (templates are plain data),
-    // NOT structuredClone — that's absent on older Safari/webviews and would
-    // throw into the silent catch below, making the load a no-op there.
-    try{ applyState(JSON.parse(JSON.stringify(t))); rerenderAll(); }catch(_){}
-  });
+  const reloadBtn=document.getElementById("reloadSys");
+  const saveBtn=document.getElementById("saveSys"), pop=document.getElementById("sysPop");
+  const nameIn=document.getElementById("sysName"), saveNew=document.getElementById("sysSaveNew");
+  const savedRow=document.getElementById("sysSavedRow"), updBtn=document.getElementById("sysUpdate"), delBtn=document.getElementById("sysDelete");
+  const LS="cadence:systems";
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const err=document.getElementById("sysErr");
+  const readSaved=()=>{ try{ return JSON.parse(localStorage.getItem(LS))||[]; }catch(_){ return []; } };
+  // report success so callers don't close the dialog as if a full/blocked
+  // localStorage write had persisted (it silently hadn't)
+  const writeSaved=a=>{ try{ localStorage.setItem(LS,JSON.stringify(a)); return true; }catch(_){ return false; } };
+  const uid=()=>Date.now().toString(36)+Math.floor(Math.random()*46656).toString(36);
+  // preset options keep the plain template key as their value (so a shared
+  // selectOption('Material 3 · Google') still works); saved ones use an s:<id>
+  function populate(keep){
+    const mine=readSaved();
+    const presets=`<optgroup label="Presets">`+
+      Object.keys(TEMPLATES).map(k=>`<option value="${esc(k)}">${esc(k)}</option>`).join("")+`</optgroup>`;
+    const mineGrp=mine.length?`<optgroup label="My systems">`+
+      mine.map(s=>`<option value="s:${esc(s.id)}">${esc(s.name)}</option>`).join("")+`</optgroup>`:"";
+    sel.innerHTML=`<option value="">Load a system…</option>`+presets+mineGrp;
+    if(keep!=null) sel.value=keep;
+    sync();
+  }
+  const currentSaved=()=>{ const v=sel.value; return v.slice(0,2)==="s:"?readSaved().find(s=>s.id===v.slice(2)):null; };
+  const currentLabel=()=>{ const o=sel.options[sel.selectedIndex]; return o?o.text:""; };
+  function apply(state){ try{ applyState(JSON.parse(JSON.stringify(state))); rerenderAll(); }catch(_){} }
+  function loadValue(v){
+    if(!v) return;
+    if(v.slice(0,2)==="s:"){ const s=readSaved().find(x=>x.id===v.slice(2)); if(s) apply(s.state); }
+    else{ const t=TEMPLATES[v]; if(t) apply(t); }
+  }
+  function sync(){ if(reloadBtn) reloadBtn.hidden=!sel.value; }
+  sel.addEventListener("change",()=>{ loadValue(sel.value); sync(); });
+  if(reloadBtn) reloadBtn.addEventListener("click",()=>loadValue(sel.value));
+  // save popover
+  function openPop(open){
+    if(!pop) return;
+    if(open){
+      const cs=currentSaved();
+      nameIn.value = cs ? cs.name : (sel.value ? currentLabel() : "");
+      if(savedRow) savedRow.hidden=!cs;
+      if(err) err.hidden=true;
+      pop.style.left="0px"; pop.hidden=false; if(saveBtn) saveBtn.setAttribute("aria-expanded","true");
+      // the header wraps, so Save can sit anywhere on its row; nudge the popover
+      // left if it would spill off the right edge (body is overflow-x:clip, so
+      // any spill would be unreachable) without pushing it off the left
+      const r=pop.getBoundingClientRect();
+      const shift=Math.max(0, Math.min(r.right-(window.innerWidth-8), r.left-8));
+      if(shift>0) pop.style.left=(-shift)+"px";
+      setTimeout(()=>{ nameIn.focus(); nameIn.select(); },0);
+    }else{ pop.hidden=true; if(saveBtn) saveBtn.setAttribute("aria-expanded","false"); }
+  }
+  const showErr=()=>{ if(err) err.hidden=false; };
+  if(saveBtn) saveBtn.addEventListener("click",e=>{ e.stopPropagation(); openPop(pop.hidden); });
+  if(pop) pop.addEventListener("click",e=>e.stopPropagation());
+  document.addEventListener("click",()=>{ if(pop&&!pop.hidden) openPop(false); });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&pop&&!pop.hidden) openPop(false); });
+  function saveAsNew(){
+    const name=(nameIn.value||"").trim()||"My system";
+    const list=readSaved(), id=uid();
+    list.push({id,name,state:stateObj()});
+    if(!writeSaved(list)){ showErr(); return; }   // keep the dialog open on failure
+    populate("s:"+id); openPop(false);
+  }
+  function update(){
+    const cs=currentSaved(); if(!cs) return;
+    const list=readSaved(), it=list.find(s=>s.id===cs.id);
+    if(it){ it.name=(nameIn.value||"").trim()||cs.name; it.state=stateObj(); }
+    if(!writeSaved(list)){ showErr(); return; }
+    populate("s:"+cs.id); openPop(false);
+  }
+  function remove(){
+    const cs=currentSaved(); if(!cs) return;
+    if(!writeSaved(readSaved().filter(s=>s.id!==cs.id))){ showErr(); return; }
+    populate(""); openPop(false);
+  }
+  if(nameIn) nameIn.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); (currentSaved()?update:saveAsNew)(); } });
+  if(saveNew) saveNew.addEventListener("click",saveAsNew);
+  if(updBtn) updBtn.addEventListener("click",update);
+  if(delBtn) delBtn.addEventListener("click",remove);
+  populate();
 })();
 
 // live-demo preview: an iframe of demo.html seeded with the current system; it
@@ -1297,11 +1371,15 @@ let openPreview=()=>{};
   const pv=document.getElementById("preview"), tog=document.getElementById("previewToggle");
   const cl=document.getElementById("previewClose"), fr=document.getElementById("previewFrame"), pop=document.getElementById("previewPop");
   if(!pv||!tog||!fr) return;
-  // keep the dock's top aligned to the sticky header's bottom (it can wrap on
-  // resize), so the floating card starts below the header, not over it
+  // keep the dock's top aligned to the sticky header's bottom. The header wraps
+  // (on resize, and when the fonts load and re-flow the toolbar), so track its
+  // real height with a ResizeObserver — a one-off measure could catch the
+  // pre-wrap height and leave the dock overlapping a taller, wrapped header.
   const hdr=document.querySelector("header.top");
   const setHH=()=>{ if(hdr) document.documentElement.style.setProperty("--header-h", hdr.offsetHeight+"px"); };
   setHH(); addEventListener("resize",setHH);
+  if(hdr && window.ResizeObserver) new ResizeObserver(setHH).observe(hdr);
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(setHH);
   const setP=on=>{
     if(on){
       setHH();   // the tool header has no height until the tool view is shown

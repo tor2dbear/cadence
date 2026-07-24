@@ -5,6 +5,21 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.10.0] — 2026-07-24
+
+### Added — save & name your own systems
+- **You can now save systems to your browser and come back to them.** A new
+  **Save** control names the current system and stores it (`localStorage` — no
+  account, no backend, true to the static-site thesis). The picker splits into
+  **Presets** and **My systems**, so you can keep several named systems side by
+  side, reopen them, **Update** (also renames), or **Delete** them.
+- **A ↻ Reload button restores the selected system's values** — undo your edits
+  back to the saved (or preset) state. It also re-applies a preset that a plain
+  `<select>` can't re-fire once it's already selected (the Codex follow-up
+  from #38).
+- Guarded end to end in `smoke33` (save → appears under My systems → reload
+  restores → persists across a page reload → delete).
+
 ## [0.9.25] — 2026-07-24
 
 ### Fixed
