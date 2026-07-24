@@ -51,48 +51,28 @@ checks is the differentiator — tools generate, they don't judge.
 
 ## Roadmap
 
-- ✅ Draggable bézier editor (author curves directly, not just presets).
-- ✅ Editable ladder — add/remove/rename duration steps and easings.
-- Custom probes — "bring your own component" into the bench. *(Partly there: a
-  swappable set of abstract instruments in the bench + a full `demo.html`
-  surface of real components; "bring your **own** markup" is still open.)*
-- ✅ Shareable system via URL state (encode the whole token set in the link).
-- ✅ More export targets: Tailwind config, Style Dictionary, JS/TS objects.
-- ✅ Opinion layer, matured: extracted to a pure, DOM-free `systemRead(system)`
-  module; findings ranked worst-first by severity; each warning carries a
-  one-line fix, most with a one-click **Apply**; a **comparative read** that
-  benchmarks the live system against the shipped design-system corpus (ladder
-  growth + tempo vs Material, Carbon, Fluent, …).
-- Import an existing palette of motion and critique it — the "reverse-engineer
-  the art direction" angle. *(Partly there: "Load a system" seeds from real
-  framework palettes and the read runs on whatever's loaded, and the comparative
-  read benchmarks against them. Still open: paste/import your **own** external
-  tokens, not just the built-in templates.)*
-- *(Also shipped, not originally listed: springs → CSS `linear()`, motion-mode
-  axis, stagger + cascade lens, property axis, distance/travel primitive +
-  velocity check, tempo, reduced-motion, a live demo surface, "Load a system".)*
+Planned work now lives in **`roadmap/`** — one markdown file per item ("puck"),
+with YAML frontmatter (`title`, `status`, `updated`, …) and a free-form body for
+goal/research/open questions. Status flows `inbox → now / next / later → done`.
+See `roadmap/README.md` for the convention (shared with the `pia-terminal` repo,
+so both feed the same multi-repo overview). `ls roadmap/` for the current board.
 
-### Candidates that add a backend — a conscious fork from static-only
+Open pucks at a glance: `opinion-layer-as-a-service` and `import-external-palette`
+(next), `bring-your-own-markup` and `security-headers` (later), `apply-undo`
+(inbox). Anything that adds a backend (the service, the headers) is a **conscious
+fork from static-only** — it breaks the "plain static site, no build" rule, so
+weigh it against the portfolio-code readability the static footprint buys.
 
-These break the "plain static site, no build" rule, so they're a deliberate
-branch, not default scope. Weigh them against the portfolio-code readability the
-static footprint buys.
+Already shipped (kept as history): draggable bézier editor; editable ladder
+(add/remove/rename durations + easings); shareable system via URL state; export
+to Tailwind / Style Dictionary / JS+TS; the matured opinion layer (pure
+`system-read.js`, ranked findings, one-click Apply, comparative read — see the
+`opinion-layer-system-read` puck); plus springs → CSS `linear()`, motion-mode
+axis, stagger + cascade lens, property axis, distance/travel + velocity check,
+tempo, reduced-motion, a live demo surface, and "Load a system".
 
-- **Opinion layer as a service.** The pure logic is already extracted — the
-  system-read checks live in `system-read.js`, no DOM, browser-global +
-  CommonJS. What's left is to expose it as a serverless endpoint so a CI step or
-  an agent can POST a motion system and get its warnings back — "block the build
-  if exit is slower than enter." Given the current stack (Cloudflare in front of
-  Pages), a **Cloudflare Worker** is the natural host (free tier ~100k req/day,
-  separate bucket). An **MCP wrapper** over the same function makes the critique
-  callable from an editor/agent — the one genuinely agent-shaped part of Cadence.
-- **Security-header hardening.** CSP + `frame-ancestors 'self'` on `demo.html`
-  (so nobody else can iframe the demo), stricter `Cache-Control`. Cheap, doesn't
-  touch the app — set at the Cloudflare layer, since Pages can't send custom
-  headers. Really a config task, parked here so it isn't forgotten.
-- **Hosting note:** Cloudflare Pages already covers the hosting needs, including
-  per-branch deploy previews (a preview URL lands on every PR). No reason to move
-  the site; weigh the static-vs-backend tradeoff only for the Worker above.
+**Hosting note:** Cloudflare Pages already covers hosting, including per-branch
+deploy previews (a preview URL lands on every PR). No reason to move the site.
 
 ## Directions explored and ruled out (so we don't re-loop)
 

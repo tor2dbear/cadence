@@ -114,7 +114,9 @@ Roadmap (stays static): bring-your-**own** markup into the bench; import an
 **external** motion palette (paste your own tokens) and run the system-read over
 it — the "reverse-engineer the art direction" angle. (The built-in palettes are
 already covered: "Load a system" seeds from them and the comparative read
-benchmarks against them.)
+benchmarks against them.) Planned work is tracked as one file per item under
+[`roadmap/`](roadmap/) — see [`roadmap/README.md`](roadmap/README.md) for the
+convention.
 
 Candidates that would add a backend (a conscious fork from static-only):
 the **opinion layer as a service** — the pure system-read is already extracted
