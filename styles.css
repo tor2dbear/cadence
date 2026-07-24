@@ -380,7 +380,9 @@ html.boot-tool #landing{display:none}
    accumulating web stays behind the copy. */
 .ltr-gcomet{fill:none;stroke-linecap:round;stroke-width:1.5;stroke:var(--accent);opacity:.1}
 .ltr-gtrail{fill:none;stroke-linecap:round;stroke-width:1.1;stroke-dasharray:1000 1000;
-  stroke:color-mix(in srgb,var(--ink) 18%,transparent)}
+  /* a navy-leaning grey (tinted toward the accent) so the comet's faint tail
+     melts into it in HUE too, not just opacity — the head stays pure accent */
+  stroke:color-mix(in srgb,color-mix(in srgb,var(--accent) 42%,var(--ink)) 18%,transparent)}
 /* mobile: the height cap already keeps it a band; thin the comets a touch */
 @media (max-width:720px){ .ltr-gcomet{stroke-width:1.2} }
 /* variant B — a live bezier editor: the curve morphs with its handles and the
