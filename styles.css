@@ -70,6 +70,25 @@ header.top .demobtn{background:var(--panel-2);color:var(--ink-dim);border:1px so
 header.top .demobtn:hover{border-color:var(--accent);color:var(--ink)}
 header.top .demolink{background:var(--accent);color:var(--on-accent);border:1px solid var(--accent);border-radius:8px;font-family:var(--mono);font-size:11px;padding:5px 10px;cursor:pointer;text-decoration:none;font-weight:600;white-space:nowrap}
 header.top .demolink:hover{filter:brightness(1.08)}
+/* save / "my systems": a small popover to name + store the current system in
+   this browser (localStorage). ↻ reloads the selected system (undo edits). */
+header.top .sysbtn{padding:5px 8px;line-height:1}
+.sysmenu{position:relative;display:inline-flex}
+.sysmenu__pop{position:absolute;top:calc(100% + 8px);left:0;z-index:40;width:230px;max-width:calc(100vw - 24px);
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--dock-shadow);
+  padding:12px;display:flex;flex-direction:column;gap:9px}
+.sysmenu__pop[hidden]{display:none}
+.sysmenu__lbl{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}
+.sysmenu__in{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--ink);
+  font-family:var(--sans);font-size:13px;padding:7px 9px;width:100%;box-sizing:border-box}
+.sysmenu__in:focus{outline:2px solid var(--accent);outline-offset:1px}
+.sysmenu__row{display:flex;gap:8px}
+.sysmenu__row[hidden]{display:none}
+.sysmenu__row .demolink{flex:1;text-align:center}
+.sysmenu__row .demobtn{flex:1;text-align:center}
+.sysmenu__del{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.sysmenu__del:hover{border-color:var(--warn);color:var(--warn)}
+.sysmenu__hint{margin:2px 0 0;font-family:var(--mono);font-size:10px;color:var(--ink-faint)}
 
 /* live-demo preview overlay */
 .preview{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;background:rgba(8,9,11,.72);backdrop-filter:blur(3px)}
