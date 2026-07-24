@@ -679,7 +679,7 @@ const modeNote = () => modes.length>1 ? ` · mode: ${modes[activeMode].name}` : 
 function buildCSS(){
   // name banner: metadata as a comment only (never a token). Escaped — the name
   // can come from an imported file and this output is injected as innerHTML.
-  const nm=currentName?" — "+currentName.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])):" — motion system";
+  const nm=currentName?" — "+currentName.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])).replace(/\*\/|\/\*/g,""):" — motion system";
   let s=`<span class="cm">/* Cadence${nm} */</span>\n:root{\n`;
   s+=`  <span class="cm">/* primitives · durations */</span>\n`;
   durations.forEach(d=>s+=`  <span class="tk">--motion-duration-${d.name}</span>: ${d.ms}ms;\n`);
@@ -1045,30 +1045,36 @@ function applyEncoded(raw){
   const full = Array.isArray(o.d) && Array.isArray(o.e) && Array.isArray(o.i);
   applyState(full ? o : JSON.parse(JSON.stringify(expandDiff(o))));
 }
+// names/refs enter the model here (from a template, a shared URL, or an
+// imported file) and are later interpolated into the CSS export's innerHTML and
+// into `/* … */` comments. Strip the only chars that could break out — HTML
+// (`<>&`) or a CSS comment (`*/`, `/*`) — so an untrusted system can't inject
+// script or active CSS. Legit token names never contain these.
+const safeName = s => String(s).replace(/[<>&]/g,"").replace(/\*\/|\/\*/g,"");
 // mutate the model in place from a parsed state object; throws on malformed input
 function applyState(o){
   if(!o||!Array.isArray(o.d)||!Array.isArray(o.e)||!Array.isArray(o.i)) throw new Error("bad state");
-  const d = o.d.map(x=>({name:String(x[0]),ms:+x[1]||200}));
+  const d = o.d.map(x=>({name:safeName(x[0]),ms:+x[1]||200}));
   const e = o.e.map(x=> x[1]==="spring"
-    ? {name:String(x[0]),type:"spring",spring:{stiffness:+x[2]||170,damping:+x[3]||12}}
-    : {name:String(x[0]),type:"cubic",bez:[+x[1],+x[2],+x[3],+x[4]]});
+    ? {name:safeName(x[0]),type:"spring",spring:{stiffness:+x[2]||170,damping:+x[3]||12}}
+    : {name:safeName(x[0]),type:"cubic",bez:[+x[1],+x[2],+x[3],+x[4]]});
   // modes: new links carry `m`; legacy links imply a single "default" mode.
-  const md = Array.isArray(o.m)&&o.m.length ? o.m.map(n=>({name:String(n)})) : [{name:"default"}];
+  const md = Array.isArray(o.m)&&o.m.length ? o.m.map(n=>({name:safeName(n)})) : [{name:"default"}];
   const it = o.i.map(x=>{
     // new: [name, purpose, [[dur,ease],...]]  ·  legacy: [name, dur, ease, purpose]
     const binds = Array.isArray(x[2])
-      ? x[2].map(b=>{ const o={dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0,prop:String(b[3]||"all")}; if(b[4]) o.effectsEase=String(b[4]); if(b[5]) o.distance=String(b[5]); if(typeof b[6]!=="undefined" && +b[6]>=0) o.reveal=Math.max(0,Math.min(100,+b[6])); if(Array.isArray(b[7])){ o.scrub={tl:String(b[7][0]||"view"),range:String(b[7][1]||"cover"),fx:String(b[7][2]||"progress")}; delete o.reveal; } if(Array.isArray(b[8])){ o.vt={type:String(b[8][0]||"root")}; } return o; })
-      : [{dur:String(x[1]),ease:String(x[2]),stagger:0,prop:"all"}];
-    const purpose = Array.isArray(x[2]) ? String(x[1]||"") : String(x[3]||"");
+      ? x[2].map(b=>{ const o={dur:safeName(b[0]),ease:safeName(b[1]),stagger:+b[2]||0,prop:safeName(b[3]||"all")}; if(b[4]) o.effectsEase=safeName(b[4]); if(b[5]) o.distance=safeName(b[5]); if(typeof b[6]!=="undefined" && +b[6]>=0) o.reveal=Math.max(0,Math.min(100,+b[6])); if(Array.isArray(b[7])){ o.scrub={tl:safeName(b[7][0]||"view"),range:safeName(b[7][1]||"cover"),fx:safeName(b[7][2]||"progress")}; delete o.reveal; } if(Array.isArray(b[8])){ o.vt={type:safeName(b[8][0]||"root")}; } return o; })
+      : [{dur:safeName(x[1]),ease:safeName(x[2]),stagger:0,prop:"all"}];
+    const purpose = Array.isArray(x[2]) ? safeName(x[1]||"") : safeName(x[3]||"");
     // pad/trim bindings so every intent has exactly one per mode
     while(binds.length<md.length) binds.push({...binds[binds.length-1]});
     binds.length=md.length;
-    return {id:nid(),name:String(x[0]),purpose,binds};
+    return {id:nid(),name:safeName(x[0]),purpose,binds};
   });
   if(!d.length||!e.length||!it.length) throw new Error("empty scale");
   // distance scale: new links carry `x`; legacy/template links fall back to the default set
   const dist = Array.isArray(o.x)&&o.x.length
-    ? o.x.map(x=>({name:String(x[0]),px:Math.max(0,Math.min(1000,+x[1]||0))}))
+    ? o.x.map(x=>({name:safeName(x[0]),px:Math.max(0,Math.min(1000,+x[1]||0))}))
     : [{name:"nudge",px:8},{name:"inline",px:48},{name:"panel",px:240},{name:"screen",px:720}];
   durations=d; easings=e; intents=it; modes=md; distances=dist;
   activeMode=Math.max(0,Math.min(modes.length-1, +o.am||0));
@@ -1352,19 +1358,19 @@ document.getElementById("share").addEventListener("click",()=>{
     const list=readSaved(), id=uid();
     list.push({id,name,state:stateObj()});
     if(!writeSaved(list)){ showErr(); return; }   // keep the dialog open on failure
-    populate("s:"+id); refreshName(); openPop(false);
+    populate("s:"+id); refreshName(); render(); openPop(false);   // render() so the export banner reflects the new name
   }
   function update(){
     const cs=currentSaved(); if(!cs) return;
     const list=readSaved(), it=list.find(s=>s.id===cs.id);
     if(it){ it.name=(nameIn.value||"").trim()||cs.name; it.state=stateObj(); }
     if(!writeSaved(list)){ showErr(); return; }
-    populate("s:"+cs.id); refreshName(); openPop(false);
+    populate("s:"+cs.id); refreshName(); render(); openPop(false);
   }
   function remove(){
     const cs=currentSaved(); if(!cs) return;
     if(!writeSaved(readSaved().filter(s=>s.id!==cs.id))){ showErr(); return; }
-    populate(""); refreshName(); openPop(false);
+    populate(""); refreshName(); render(); openPop(false);
   }
   if(nameIn) nameIn.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); (currentSaved()?update:saveAsNew)(); } });
   if(saveNew) saveNew.addEventListener("click",saveAsNew);
@@ -1392,7 +1398,7 @@ document.getElementById("share").addEventListener("click",()=>{
       try{
         const o=JSON.parse(String(rd.result));
         const state=(o&&o.state&&typeof o.state==="object")?o.state:o;
-        const nm=(o&&typeof o.name==="string"&&o.name.trim())?o.name.trim().slice(0,40):"";
+        const nm=(o&&typeof o.name==="string"&&o.name.trim())?safeName(o.name.trim()).slice(0,40):"";
         applyState(JSON.parse(JSON.stringify(state)));   // throws on a bad shape (before we touch currentName)
         currentName=nm; rerenderAll();                   // name before the re-render so the banner is current
         nameIn.value=nm; sel.value="";                   // it's not a saved/preset entry yet
