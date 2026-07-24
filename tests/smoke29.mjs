@@ -43,6 +43,20 @@ const midY = (page, sel) => page.locator(sel).evaluate(el => { const b = el.getB
   assert('demo has a footer', await foot.count() === 1);
   assert('demo footer links to the designer', await foot.locator('a[href="index.html"]').count() === 1);
   assert('demo footer offers a contact link', await foot.locator('a[href^="mailto:"]').count() === 1);
+  // the Members list re-cascades on Replay: rows snap back to hidden then
+  // stagger in again (removing/re-adding `.in` alone can't restart a CSS
+  // transition — the rows are still at their end value at the reflow)
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(700);                 // let the initial cascade settle
+  const rowOp = i => page.evaluate(n => getComputedStyle(document.querySelectorAll('#memberList .row')[n]).opacity, i);
+  assert('list is visible before replay', await rowOp(3) === '1');
+  await page.click('#replay');
+  await page.waitForTimeout(10);
+  const snapped = await rowOp(3);                 // reset to hidden
+  await page.waitForTimeout(700);
+  const settled = await rowOp(3);                 // cascaded back in
+  assert('Replay actually re-plays the list cascade (snaps hidden → settles visible)',
+    parseFloat(snapped) < 0.2 && settled === '1');
   await page.close();
 }
 

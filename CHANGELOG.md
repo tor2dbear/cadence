@@ -5,6 +5,17 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.25] — 2026-07-24
+
+### Fixed
+- **The demo's "Replay" (and "Play sequence") now actually re-play the member
+  list cascade.** The reveal is a CSS *transition*, but `revealList()` used the
+  CSS *animation* restart trick (remove/re-add `.in` around a reflow) — at the
+  reflow the rows were still at their end value, so re-adding `.in` changed
+  nothing and the cascade never re-ran. Now it snaps the rows back to the hidden
+  start with transitions momentarily off, then re-enables them and adds `.in`,
+  so the staggered cascade replays every time. Guarded in smoke29.
+
 ## [0.9.24] — 2026-07-24
 
 ### Changed — the demo wears its own "external product" palette
