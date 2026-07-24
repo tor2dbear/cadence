@@ -94,6 +94,9 @@ const msgs = out => out.map(f => f.msg).join("\n");
   s.modes = [{ name: "default" }, { name: "reduced" }];
   s.intents = s.intents.map(it => ({ ...it, binds: [it.binds[0], { ...it.binds[0] }] }));  // reduced == default
   assert("no-op reduced mode warns", /won't calm anything/.test(msgs(systemRead(s))));
+  // …and it still warns while the reduced mode is the active one (the check
+  // reads bind 0 vs bind rmi, so it must not depend on activeMode)
+  assert("no-op reduced mode warns even while it's active", /won't calm anything/.test(msgs(systemRead({ ...s, activeMode: 1 }))));
   // and once it genuinely dampens, the warning clears
   const s2 = base();
   s2.modes = [{ name: "default" }, { name: "reduced" }];

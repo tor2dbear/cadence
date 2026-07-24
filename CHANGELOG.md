@@ -23,6 +23,20 @@ shows the deployed semver plus the commit it was built from, stamped at deploy.
   through the existing model-mutation + `rerenderAll` path, so state, share links
   and the live preview stay in sync for free.
 
+### Fixed (review follow-ups)
+- **Rebalance now works on a ladder that was dragged out of order.** The
+  unevenness check reads the ladder in array order, but rebalance assigned the
+  even progression in sorted order without reordering the array — so a jumbled
+  ladder (e.g. `[100, 900, 110]`) stayed uneven after Apply. It now sorts the
+  ladder ascending first, so the array the check reads is the one that's evened.
+- **Dropping a duplicate easing re-points the effects track too.** Apply (and
+  the manual remove-easing button) rewrote only `ease`, leaving a split intent's
+  `effectsEase` pointing at the deleted curve — a dangling `var(--motion-ease-…)`
+  in the CSS export and a lost split on share-link reload. Both tracks re-point now.
+- **The no-op reduced-mode warning shows while that mode is active.** It was
+  suppressed whenever the reduced mode was the selected one, even though the
+  check never depended on the active mode.
+
 ## [0.9.19] — 2026-07-24
 
 ### Added — the comparative read

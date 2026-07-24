@@ -40,10 +40,40 @@ const evened = await page.evaluate(() => {
 });
 assert('rebalanced ladder has a near-constant step', evened <= 1.9);
 
-// ---- 4. Apply writes through to the URL/state (share + preview stay in sync) ----
+// ---- 4. rebalance works even when the ladder was dragged out of order ----
+await page.evaluate(() => {
+  durations.length = 0;
+  durations.push({ name: 'a', ms: 100 }, { name: 'b', ms: 900 }, { name: 'c', ms: 110 });  // non-monotonic
+  rerenderAll();
+});
+assert('out-of-order ladder warns as uneven', /ladder is uneven/.test(await hintsText()));
+await page.locator('.rd', { hasText: 'ladder is uneven' }).locator('.rd__apply').click();
+assert('rebalance clears the warning even out of order', !/ladder is uneven/.test(await hintsText()));
+const arrayOrderSpread = await page.evaluate(() => {
+  const ms = durations.map(d => d.ms);                 // ARRAY order, as the check reads it
+  const r = ms.slice(1).map((v, i) => v / ms[i]);
+  return Math.max(...r) / Math.min(...r);
+});
+assert('rebalanced ladder is even in array order', arrayOrderSpread <= 1.9);
+
+// ---- 5. dropEasing re-points a split intent's effects track (no dangling ref) ----
+await page.evaluate(() => {
+  easings.push({ name: 'twin', type: 'cubic', bez: [0.2, 0, 0.2, 1] });  // duplicate of "standard"
+  const b = bindOf(intents.find(x => x.name === 'move'));
+  b.ease = 'twin'; b.effectsEase = 'twin';                                // split, both on the doomed curve
+  rerenderAll();
+});
+await page.locator('.rd', { hasText: 'nearly identical' }).locator('.rd__apply').click();
+const dangling = await page.evaluate(() => {
+  const names = new Set(easings.map(e => e.name));
+  return intents.some(it => it.binds.some(b => (b.ease && !names.has(b.ease)) || (b.effectsEase && !names.has(b.effectsEase))));
+});
+assert('no binding references a deleted easing after dropEasing', !dangling);
+
+// ---- 6. Apply writes through to the URL/state (share + preview stay in sync) ----
 assert('applying a fix stamps state into the hash', /#./.test(await page.evaluate(() => location.hash)));
 
-// ---- 5. no console errors across the interactions ----
+// ---- 7. no console errors across the interactions ----
 assert('no console errors during apply flow', errors.length === 0);
 
 await browser.close();

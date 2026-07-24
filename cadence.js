@@ -624,14 +624,18 @@ function ensureLinearEasing(){
 }
 // redistribute the ladder as a clean geometric progression between its own
 // min and max (names untouched — intents reference by name), so the step
-// ratio is constant. Endpoints are pinned; interior rungs snap to 10ms.
+// ratio is constant. The unevenness check reads the ladder in ARRAY order, so
+// sort the array ascending first — otherwise a ladder dragged out of order
+// (e.g. [100,900,110]) would get even values assigned in sorted order but stay
+// jagged in array order, and the warning wouldn't clear. Endpoints are pinned;
+// interior rungs snap to 10ms.
 function rebalanceLadder(){
   if(durations.length<3) return;
-  const asc=[...durations].sort((a,b)=>a.ms-b.ms);
-  const lo=asc[0].ms, hi=asc[asc.length-1].ms, n=asc.length;
+  durations.sort((a,b)=>a.ms-b.ms);
+  const lo=durations[0].ms, hi=durations[durations.length-1].ms, n=durations.length;
   if(!(lo>0) || hi<=lo) return;
   const r=Math.pow(hi/lo, 1/(n-1));
-  asc.forEach((d,k)=>{ d.ms = k===0 ? lo : k===n-1 ? hi : Math.max(10, Math.round(lo*Math.pow(r,k)/10)*10); });
+  durations.forEach((d,k)=>{ d.ms = k===0 ? lo : k===n-1 ? hi : Math.max(10, Math.round(lo*Math.pow(r,k)/10)*10); });
 }
 function applyFix(a){
   if(!a) return;
@@ -645,7 +649,13 @@ function applyFix(a){
     case "dropEasing":     { const idx=easings.findIndex(e=>e.name===a.ease);
       if(idx>=0 && easings.length>1 && easings.some(e=>e.name===a.into)){
         easings.splice(idx,1);
-        intents.forEach(x=>x.binds.forEach(bd=>{ if(bd.ease===a.ease) bd.ease=a.into; }));
+        // re-point BOTH tracks — ease and the effects-split easing — or a split
+        // intent keeps a reference to the now-deleted curve (render silently
+        // falls back, but CSS export + the share link would carry a dangling name).
+        intents.forEach(x=>x.binds.forEach(bd=>{
+          if(bd.ease===a.ease) bd.ease=a.into;
+          if(bd.effectsEase===a.ease) bd.effectsEase=a.into;
+        }));
       } break; }
     case "rebalanceLadder": rebalanceLadder(); break;
     default: return;
@@ -1168,7 +1178,7 @@ document.addEventListener("click", e=>{
   if(sc==="drm"){ if(durations.length>1){ const g=durations[i].name; durations.splice(i,1);
       const fb=durations[0].name; intents.forEach(it=>it.binds.forEach(b=>{if(b.dur===g)b.dur=fb;})); rerenderAll(); } }
   if(sc==="erm"){ if(easings.length>1){ const g=easings[i].name; easings.splice(i,1);
-      const fb=easings[0].name; intents.forEach(it=>it.binds.forEach(b=>{if(b.ease===g)b.ease=fb;})); rerenderAll(); } }
+      const fb=easings[0].name; intents.forEach(it=>it.binds.forEach(b=>{if(b.ease===g)b.ease=fb; if(b.effectsEase===g)b.effectsEase=fb;})); rerenderAll(); } }
   if(sc==="xrm"){ if(distances.length>1){ const g=distances[i].name; distances.splice(i,1);
       intents.forEach(it=>it.binds.forEach(b=>{if(b.distance===g)delete b.distance;})); rerenderAll(); } }
   if(sc==="mset"){ activeMode=Math.max(0,Math.min(modes.length-1,i)); rerenderAll(); }

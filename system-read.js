@@ -175,9 +175,12 @@
 
     // 11. reduced-motion mode that does nothing — opt-in (only fires once a
     //     "reduced" mode exists), so the default read stays quiet. A reduced
-    //     mode whose every binding equals the default mode is dead weight.
+    //     mode whose every binding equals the default mode is dead weight. The
+    //     comparison always reads bind 0 vs bind rmi, so it holds regardless of
+    //     which mode is active (including while the reduced mode itself is being
+    //     edited).
     const rmi = ctx.modes.findIndex(m => m.name === "reduced");
-    if (rmi >= 0 && rmi !== ctx.activeMode) {
+    if (rmi >= 0) {
       const changes = intents.some(it => {
         const base = it.binds[0], r = it.binds[Math.min(rmi, it.binds.length - 1)];
         if (!base || !r || r === base) return false;
