@@ -82,6 +82,7 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
   assert('demo iframe present', !!frame);
   if (frame) assert('iframe rendered the shell', await frame.locator('.shell').count() === 1);
   await page.click('#previewClose');
+  await page.locator('#preview').waitFor({ state: 'hidden' });   // exit animation, then hide
   assert('preview overlay closes', await page.locator('#preview').isHidden());
   assert('no console/page errors (editor+preview)', errors.length === 0);
   if (errors.length) console.log('ERRORS:', errors);

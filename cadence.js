@@ -1292,9 +1292,28 @@ let openPreview=()=>{};
   const pv=document.getElementById("preview"), tog=document.getElementById("previewToggle");
   const cl=document.getElementById("previewClose"), fr=document.getElementById("previewFrame"), pop=document.getElementById("previewPop");
   if(!pv||!tog||!fr) return;
+  // keep the dock's top aligned to the sticky header's bottom (it can wrap on
+  // resize), so the floating card starts below the header, not over it
+  const hdr=document.querySelector("header.top");
+  const setHH=()=>{ if(hdr) document.documentElement.style.setProperty("--header-h", hdr.offsetHeight+"px"); };
+  setHH(); addEventListener("resize",setHH);
   const setP=on=>{
-    if(on && (pv.hidden || !fr.src)){ const enc=encodeStateFull(); fr.src="demo.html#"+enc; if(pop) pop.href="demo.html#"+enc; }
-    pv.hidden=!on; document.body.classList.toggle("previewing", on);
+    if(on){
+      setHH();   // the tool header has no height until the tool view is shown
+      if(pv.hidden || !fr.src){ const enc=encodeStateFull(); fr.src="demo.html#"+enc; if(pop) pop.href="demo.html#"+enc; }
+      pv.classList.remove("preview--out"); pv.hidden=false;
+      document.body.classList.add("previewing");
+    } else {
+      document.body.classList.remove("previewing");
+      if(reduce){ pv.hidden=true; return; }
+      // play the exit animation, then hide once it ends (or a safety timeout)
+      pv.classList.add("preview--out");
+      let done=false;
+      const finish=()=>{ if(done) return; done=true; pv.hidden=true; pv.classList.remove("preview--out"); pv.removeEventListener("animationend",onEnd); };
+      const onEnd=e=>{ if(e.target===pv) finish(); };
+      pv.addEventListener("animationend",onEnd);
+      setTimeout(finish,300);
+    }
   };
   openPreview=()=>setP(true);
   tog.addEventListener("click",()=>setP(pv.hidden));
@@ -1393,6 +1412,9 @@ function exitTool(){
     // the editor morphs via SMIL, so honour reduced-motion by pausing it at its
     // initial frame (its CSS zoom/pan + the CSS trace comet are already gated)
     if(reduce){ const es=document.querySelector(".lce-svg"); if(es&&es.pauseAnimations) es.pauseAnimations(); }
+    // the brand logomark is a live easing curve (SMIL); freeze it on its first
+    // frame under reduced-motion — the static favicon shows this same frame
+    if(reduce){ document.querySelectorAll(".logomark--anim").forEach(m=>{ if(m.pauseAnimations) m.pauseAnimations(); }); }
     // generative trace field: comets sweep RANDOM easing-curve paths (varied
     // shape + position), each leaving a very faint grey trail that lingers ~a
     // minute then fades — so the backdrop is an ever-changing web of lines,
