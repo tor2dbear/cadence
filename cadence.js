@@ -597,16 +597,60 @@ function benchmarkCorpus(){
       modes:[{name:"default"}], activeMode:0,
     }));
 }
+let lastRead=[];   // the most recent findings, so an Apply click can look up its op by index
 function critique(){
   const out = CadenceSystemRead.systemRead(systemSnapshot(), {corpus:benchmarkCorpus()});   // ranked, worst-first
-  document.getElementById("hints").innerHTML = out.map(h=>{
+  lastRead = out;
+  document.getElementById("hints").innerHTML = out.map((h,idx)=>{
     const fix = h.fix ? `<span class="rd__fix"> → ${h.fix}</span>` : "";
-    return `<div class="rd ${h.status}"><span class="ic">${h.icon}</span><span>${h.msg}${fix}</span></div>`;
+    // deterministic fixes carry an op → offer to apply it in one click
+    const label = (h.fix||"").replace(/"/g,"&quot;");
+    const btn = h.apply ? ` <button class="rd__apply" data-scope="fix" data-i="${idx}" aria-label="Apply fix: ${label}">Apply</button>` : "";
+    return `<div class="rd ${h.status}"><span class="ic">${h.icon}</span><span>${h.msg}${fix}${btn}</span></div>`;
   }).join("");
   // a persistent read-at-a-glance badge in the section header (P3 visibility)
   const warns=out.filter(h=>h.status==="warn").length;
   const badge=document.getElementById("hintCount");
   if(badge){ badge.textContent = warns ? `${warns} to review` : "all clear"; badge.className = "hintcount"+(warns?" warn":""); }
+}
+// ---------- apply a system-read fix (one click: mutate the model, re-read) ----------
+// return the name of a linear easing, adding one if the set has none
+function ensureLinearEasing(){
+  const lin = easings.find(e=>e.type==="cubic" && e.bez && Math.abs(e.bez[0])<.05 && Math.abs(e.bez[1])<.05 && Math.abs(e.bez[2]-1)<.05 && Math.abs(e.bez[3]-1)<.05);
+  if(lin) return lin.name;
+  const name=uniqueName("linear",easings);
+  easings.push({name,type:"cubic",bez:[0,0,1,1]});
+  return name;
+}
+// redistribute the ladder as a clean geometric progression between its own
+// min and max (names untouched — intents reference by name), so the step
+// ratio is constant. Endpoints are pinned; interior rungs snap to 10ms.
+function rebalanceLadder(){
+  if(durations.length<3) return;
+  const asc=[...durations].sort((a,b)=>a.ms-b.ms);
+  const lo=asc[0].ms, hi=asc[asc.length-1].ms, n=asc.length;
+  if(!(lo>0) || hi<=lo) return;
+  const r=Math.pow(hi/lo, 1/(n-1));
+  asc.forEach((d,k)=>{ d.ms = k===0 ? lo : k===n-1 ? hi : Math.max(10, Math.round(lo*Math.pow(r,k)/10)*10); });
+}
+function applyFix(a){
+  if(!a) return;
+  const it = a.intent!=null ? intents.find(x=>x.name===a.intent) : null;
+  const b = it ? bindOf(it) : null;
+  switch(a.op){
+    case "setStagger":     if(b) b.stagger=a.ms; break;
+    case "setDur":         if(b && durations.some(d=>d.name===a.dur)) b.dur=a.dur; break;
+    case "collapseSplit":  if(b) delete b.effectsEase; break;
+    case "linearizeScrub": if(b) b.ease=ensureLinearEasing(); break;
+    case "dropEasing":     { const idx=easings.findIndex(e=>e.name===a.ease);
+      if(idx>=0 && easings.length>1 && easings.some(e=>e.name===a.into)){
+        easings.splice(idx,1);
+        intents.forEach(x=>x.binds.forEach(bd=>{ if(bd.ease===a.ease) bd.ease=a.into; }));
+      } break; }
+    case "rebalanceLadder": rebalanceLadder(); break;
+    default: return;
+  }
+  rerenderAll();   // re-render everything, re-run the read, restamp the URL
 }
 
 // ---------- export ----------
@@ -1117,6 +1161,7 @@ document.addEventListener("click", e=>{
   const playT=e.target.closest("[data-play]");
   if(playT){ play(+playT.dataset.play); return; }
   const t=e.target, sc=t.dataset.scope, i=+t.dataset.i;
+  if(sc==="fix"){ const f=lastRead[i]; if(f) applyFix(f.apply); return; }
   if(sc==="imore"){ intents[i].open=!intents[i].open; renderIntents(); }
   if(sc==="irm"){ if(intents.length>1){ const gone=intents[i].id; intents.splice(i,1);
       probes.forEach(p=>{if(p.intent===gone)p.intent=intents[0].id;}); rerenderAll(); } }

@@ -73,14 +73,22 @@
     const ctx = makeCtx(system);
     const { durations, easings, intents, durMs, distPx, easeObj, bindOf } = ctx;
     const out = [];
-    const push = (status, sev, msg, fix) => out.push({ status, sev, icon: iconFor[sev], msg, fix: fix || null });
+    // `apply` (optional) is a machine-readable version of `fix`: a one-click
+    // operation the app can run to actually make the change. Params reference
+    // scale slots by NAME (not index) so a fix survives reordering. Deterministic
+    // fixes carry one; genuinely ambiguous ones (which knob?) stay text-only.
+    const push = (status, sev, msg, fix, apply) => out.push({ status, sev, icon: iconFor[sev], msg, fix: fix || null, apply: apply || null });
+    // largest ladder rung strictly below / at-most a duration — used to pick a
+    // concrete target when a fix means "drop onto a shorter step".
+    const rungBelow  = ms => { const c = ctx.durations.filter(d => +d.ms <  ms).sort((a, b) => b.ms - a.ms)[0]; return c ? c.name : null; };
+    const rungAtMost = ms => { const c = ctx.durations.filter(d => +d.ms <= ms).sort((a, b) => b.ms - a.ms)[0]; return c ? c.name : null; };
 
     // 1. ladder evenness — needs ≥2 steps to form a ratio; guard the empty/one
     //    case so a single-rung ladder can't produce NaN (was a latent bug).
     if (durations.length >= 2) {
       const ratios = durations.slice(1).map((d, i) => +d.ms / +durations[i].ms);
       const spread = Math.max(...ratios) / Math.min(...ratios);
-      if (spread > 1.9) push("warn", NIT, `Your duration ladder is uneven — step ratios run ${Math.min(...ratios).toFixed(2)}× to ${Math.max(...ratios).toFixed(2)}×. A ladder that grows at a steadier rate feels more like one scale.`, "Aim for a roughly constant step (~1.5× each rung).");
+      if (spread > 1.9) push("warn", NIT, `Your duration ladder is uneven — step ratios run ${Math.min(...ratios).toFixed(2)}× to ${Math.max(...ratios).toFixed(2)}×. A ladder that grows at a steadier rate feels more like one scale.`, "Even out the ladder to a constant step.", { op: "rebalanceLadder" });
       else push("ok", OK, "Duration ladder grows at a fairly even rate — it reads as one considered scale.");
     }
 
@@ -99,33 +107,39 @@
         if (ds <= 12 && dc <= 1.2) dup = [ea.name, eb.name];
       }
     }
-    if (dup) push("warn", WARN, `“${dup[0]}” and “${dup[1]}” are nearly identical curves. A tight easing set is easier to apply consistently — trim one.`, "Delete one and point its users at the other.");
+    if (dup) push("warn", WARN, `“${dup[0]}” and “${dup[1]}” are nearly identical curves. A tight easing set is easier to apply consistently — trim one.`, `Delete “${dup[1]}” and point its users at “${dup[0]}”.`, { op: "dropEasing", ease: dup[1], into: dup[0] });
     else push("ok", OK, `${easings.length} distinct easings — a lean, legible set.`);
 
     // 3. enter/exit asymmetry
     const en = intents.find(x => /enter|open|in$/i.test(x.name)), ex = intents.find(x => /exit|close|out$/i.test(x.name));
     if (en && ex) {
       const de = durMs(bindOf(en).dur), dx = durMs(bindOf(ex).dur);
-      if (Math.abs(de - dx) < 40) push("warn", WARN, `“${en.name}” and “${ex.name}” resolve to near-equal durations (${de}/${dx}ms). Real motion is asymmetric — exits should be quicker so leaving feels decisive.`, "Drop the exit onto a shorter duration than the enter.");
+      const quicker = rungBelow(de);   // largest rung under the enter, to speed the exit up
+      const exFix = quicker ? { op: "setDur", intent: ex.name, dur: quicker } : null;
+      if (Math.abs(de - dx) < 40) push("warn", WARN, `“${en.name}” and “${ex.name}” resolve to near-equal durations (${de}/${dx}ms). Real motion is asymmetric — exits should be quicker so leaving feels decisive.`, "Drop the exit onto a shorter duration than the enter.", exFix);
       else if (dx < de) push("ok", OK, `“${ex.name}” (${dx}ms) is quicker than “${en.name}” (${de}ms) — leaving feels decisive.`);
-      else push("warn", DEFECT, `“${ex.name}” (${dx}ms) is slower than “${en.name}” (${de}ms). The user already chose to dismiss; a slow exit drags.`, "Swap the exit onto a duration below the enter's.");
+      else push("warn", DEFECT, `“${ex.name}” (${dx}ms) is slower than “${en.name}” (${de}ms). The user already chose to dismiss; a slow exit drags.`, "Swap the exit onto a duration below the enter's.", exFix);
     }
 
     // 4. long-duration budget
     const longIntent = intents.find(x => durMs(bindOf(x).dur) > 550);
-    if (longIntent) push("warn", WARN, `“${longIntent.name}” resolves to ${durMs(bindOf(longIntent).dur)}ms. Past ~550ms motion starts to feel like waiting — reserve the top of the ladder for large travel only.`, "Move it down the ladder unless it covers a long distance.");
+    if (longIntent) {
+      const under = rungAtMost(550);
+      const longFix = (under && under !== bindOf(longIntent).dur) ? { op: "setDur", intent: longIntent.name, dur: under } : null;
+      push("warn", WARN, `“${longIntent.name}” resolves to ${durMs(bindOf(longIntent).dur)}ms. Past ~550ms motion starts to feel like waiting — reserve the top of the ladder for large travel only.`, "Move it down the ladder unless it covers a long distance.", longFix);
+    }
 
     // 5. stagger budget (measured against a 5-item list)
     const staggered = intents.filter(x => +bindOf(x).stagger > 0).sort((a, b) => +bindOf(b).stagger - +bindOf(a).stagger)[0];
     if (staggered) {
       const st = +bindOf(staggered).stagger, lead = st * 4;
-      if (lead > 500) push("warn", WARN, `“${staggered.name}” staggers ${st}ms — across a 5-item list the last item waits ${lead}ms to even start. Long staggers make lists drag; keep the lead under ~500ms.`, "Lower the stagger so a 5-item lead stays under ~500ms.");
+      if (lead > 500) push("warn", WARN, `“${staggered.name}” staggers ${st}ms — across a 5-item list the last item waits ${lead}ms to even start. Long staggers make lists drag; keep the lead under ~500ms.`, "Lower the stagger so a 5-item lead stays under ~500ms.", { op: "setStagger", intent: staggered.name, ms: 120 });
       else push("ok", OK, `“${staggered.name}” staggers ${st}ms — a 5-item list cascades over ${lead}ms, brisk enough to read as one gesture.`);
     }
 
     // 6. spatial/effects split that hasn't diverged is just noise
     const idleSplit = intents.find(x => { const b = bindOf(x); return b.effectsEase && b.effectsEase === b.ease; });
-    if (idleSplit) push("warn", NIT, `“${idleSplit.name}” is split into spatial · effects but both use the same easing. Diverge them (e.g. a spring for position, a flat curve for opacity) or collapse the split.`, "Give the effects track its own easing, or remove the split.");
+    if (idleSplit) push("warn", NIT, `“${idleSplit.name}” is split into spatial · effects but both use the same easing. Diverge them (e.g. a spring for position, a flat curve for opacity) or collapse the split.`, "Give the effects track its own easing, or collapse the split.", { op: "collapseSplit", intent: idleSplit.name });
 
     // 7. distance / velocity — only when an intent opts into a travel distance
     const withDist = intents.map(x => { const b = bindOf(x); if (!b.distance) return null;
@@ -143,7 +157,7 @@
     const revIntents = intents.filter(x => typeof bindOf(x).reveal === "number");
     if (revIntents.length) {
       const revStag = revIntents.find(x => +bindOf(x).stagger > 0);
-      if (revStag) push("warn", NIT, `“${revStag.name}” is a scroll reveal carrying a ${+bindOf(revStag).stagger}ms stagger. Native scroll-driven gives each item its own timeline, so the stagger only lands in the JS fallback — the two paths won't look identical. Drop the stagger, or accept the split.`, "Drop the stagger for a consistent native/JS reveal.");
+      if (revStag) push("warn", NIT, `“${revStag.name}” is a scroll reveal carrying a ${+bindOf(revStag).stagger}ms stagger. Native scroll-driven gives each item its own timeline, so the stagger only lands in the JS fallback — the two paths won't look identical. Drop the stagger, or accept the split.`, "Drop the stagger for a consistent native/JS reveal.", { op: "setStagger", intent: revStag.name, ms: 0 });
       else push("ok", OK, `${revIntents.length} scroll reveal${revIntents.length > 1 ? "s" : ""} — exported as native CSS scroll-driven with an IntersectionObserver fallback for browsers without it (Firefox today).`);
     }
 
@@ -151,7 +165,7 @@
     const scrubIntents = intents.filter(x => bindOf(x).scrub);
     if (scrubIntents.length) {
       const nonLin = scrubIntents.find(x => { const e = easeObj(bindOf(x).ease); return !(e && e.bez && isLinearBez(e.bez)); });
-      if (nonLin) push("warn", NIT, `“${nonLin.name}” scrubs with a non-linear easing — the motion speeds up and slows down against your scroll. That reads as intentional for a reveal-style scrub, but parallax/progress usually want a linear curve for a true 1:1 feel.`, "Use a linear curve for a true 1:1 scrub.");
+      if (nonLin) push("warn", NIT, `“${nonLin.name}” scrubs with a non-linear easing — the motion speeds up and slows down against your scroll. That reads as intentional for a reveal-style scrub, but parallax/progress usually want a linear curve for a true 1:1 feel.`, "Use a linear curve for a true 1:1 scrub.", { op: "linearizeScrub", intent: nonLin.name });
       else push("ok", OK, `${scrubIntents.length} scroll scrub${scrubIntents.length > 1 ? "s" : ""} — native scroll-driven (no duration; the range is the axis) with a scroll-position fallback for browsers without it.`);
     }
 

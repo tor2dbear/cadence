@@ -139,3 +139,49 @@ const msgs = out => out.map(f => f.msg).join("\n");
     assert("flatter-than-the-field ladder warns", out.some(f => f.status === "warn" && /flatter than every reference/.test(f.msg)));
   }
 }
+
+// 9. one-click apply — the deterministic fixes carry a machine-readable op
+{
+  const find = (out, re) => out.find(f => re.test(f.msg));
+
+  // a long stagger → setStagger op with a lead-safe value
+  {
+    const s = base();
+    s.intents = [{ name: "list", binds: [{ dur: "base", ease: "standard", stagger: 200, prop: "all" }] }];
+    const f = find(systemRead(s), /staggers 200ms/);
+    assert("long stagger carries a setStagger op", f.apply && f.apply.op === "setStagger" && f.apply.ms * 4 <= 500);
+  }
+
+  // an uneven ladder → rebalanceLadder op
+  {
+    const s = base();
+    s.durations = [{ name: "a", ms: 100 }, { name: "b", ms: 110 }, { name: "c", ms: 900 }];
+    assert("uneven ladder carries a rebalance op", find(systemRead(s), /ladder is uneven/).apply.op === "rebalanceLadder");
+  }
+
+  // duplicate easings → dropEasing op naming which to drop and what to keep
+  {
+    const s = base();
+    s.easings = s.easings.concat([{ name: "twin", type: "cubic", bez: [0.2, 0, 0.2, 1] }]);  // == standard
+    const f = find(systemRead(s), /nearly identical/);
+    assert("duplicate easing carries a dropEasing op", f.apply.op === "dropEasing" && f.apply.ease && f.apply.into);
+  }
+
+  // a slow exit → setDur op pointing at a rung below the enter
+  {
+    const s = base();
+    s.intents = [intent("enter", "slow", "emphasized"), intent("exit", "slower", "accelerate")];  // 300 vs 500
+    const f = find(systemRead(s), /slower than/);
+    assert("slow exit carries a setDur op onto a shorter rung", f.apply.op === "setDur" && f.apply.intent === "exit");
+  }
+
+  // every op-bearing finding is a warning that also keeps its prose fix
+  {
+    const s = base();
+    s.durations = [{ name: "a", ms: 100 }, { name: "b", ms: 110 }, { name: "c", ms: 900 }];
+    const out = systemRead(s);
+    assert("apply only on warnings, always with prose too",
+      out.filter(f => f.apply).every(f => f.status === "warn" && f.fix));
+    assert("all-clears never carry an apply op", out.filter(f => f.status === "ok").every(f => f.apply === null));
+  }
+}

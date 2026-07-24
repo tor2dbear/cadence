@@ -5,6 +5,24 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.20] — 2026-07-24
+
+### Added — one-click apply
+- **The deterministic fixes are now one click.** Every warning already carried a
+  plain-language fix; the eight deterministic ones now carry a machine-readable
+  op too and render an **Apply** button. Click it and the model changes, the
+  read re-runs, and the URL/preview restamp — no hunting for the right control.
+  Covered: even out an uneven ladder (geometric rebalance), trim a duplicate
+  easing (and re-point everything that used it), drop a slow/near-equal exit onto
+  a shorter rung, move an over-budget duration down the ladder, tame a long
+  stagger, collapse an idle spatial/effects split, drop a scroll-reveal's stagger,
+  and linearise a non-linear scrub. The two genuinely ambiguous fixes
+  (velocity — which knob? — and a no-op reduced mode) stay text-only, on purpose.
+- The op lives in the pure module as an `apply` field on each finding
+  (`{op, …}`, params by name so a fix survives reordering); `cadence.js` runs it
+  through the existing model-mutation + `rerenderAll` path, so state, share links
+  and the live preview stay in sync for free.
+
 ## [0.9.19] — 2026-07-24
 
 ### Added — the comparative read

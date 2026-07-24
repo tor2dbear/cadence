@@ -102,7 +102,9 @@ actually calm anything. It also runs a **comparative read** — benchmarking the
 live system against the field of real design systems it ships (ladder growth and
 overall tempo vs Material, Carbon, Fluent, …), so the numbers get a reference
 frame ("steeper than every reference system"). Findings are **ranked worst-first**
-by severity, and each warning carries a one-line **fix** — the read tells you
+by severity, and each warning carries a one-line **fix** — most of them with a
+one-click **Apply** that makes the change for you (rebalance the ladder, trim a
+duplicate easing, drop a slow exit onto a shorter step, …). The read tells you
 what to do, not only what's wrong. The logic lives in `system-read.js` as a pure,
 DOM-free `systemRead(system, {corpus})` (browser global + CommonJS), so the
 identical critique runs in the app, in a headless unit test, and — see below — as
