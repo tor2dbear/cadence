@@ -1,4 +1,6 @@
 import { chromium } from 'playwright';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 const BASE = new URL('../index.html', import.meta.url).href;
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -12,6 +14,12 @@ await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
 // picker present + populated (11 systems + placeholder = 12 options)
 const opts = await page.locator('#loadSystem option').count();
 assert('picker has 12 options (placeholder + 11)', opts === 12);
+
+// the loader must deep-clone with JSON, not structuredClone — the latter is
+// absent on older Safari/webviews and threw into a silent catch, so loading a
+// system did nothing there while it worked on desktop
+const src = readFileSync(fileURLToPath(new URL('../cadence.js', import.meta.url)), 'utf8');
+assert('load-a-system avoids structuredClone (older-Safari safe)', !/structuredClone\s*\(/.test(src));
 
 // the Material 3 Expressive template loads real springs
 await page.selectOption('#loadSystem', 'Material 3 Expressive · Google');
@@ -32,9 +40,9 @@ for (const [name, n] of Object.entries(expect)) {
   const e = await page.locator('#easings .ecard').count();
   const nameShown = await page.locator('#easings .ecard__name').first().inputValue();
   const hash = await page.evaluate(() => location.hash.length);
-  const backToPlaceholder = await page.locator('#loadSystem').inputValue();
-  assert(`${name} → ${e} easings, url updated, picker reset`,
-    e === n && hash > 1 && backToPlaceholder === '');
+  const pickerShows = await page.locator('#loadSystem').inputValue();
+  assert(`${name} → ${e} easings, url updated, picker shows the loaded system`,
+    e === n && hash > 1 && pickerShows === name);
 }
 
 // loading a template makes a shareable URL that round-trips on fresh load

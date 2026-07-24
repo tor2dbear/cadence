@@ -127,6 +127,10 @@ body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacS
              transform var(--role-enter-duration) var(--role-enter-ease);
   transition-delay:calc(var(--i) * var(--role-enter-stagger))}
 .list.reveal.in .row{opacity:1;transform:none}
+/* replay: snap the rows back to the hidden start with transitions off, so the
+   cascade actually re-plays (removing/re-adding `.in` alone can't reset a
+   transition — at the reflow the rows are still at their end value) */
+.list.noanim .row{transition:none}
 
 /* accordion — expands in place with `move` (grid-rows 0fr→1fr) */
 .acc__row{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
@@ -462,7 +466,10 @@ window.addEventListener("hashchange",()=>applyHash(location.hash));
 /* ---- dumb component interactions (fake state only) ---- */
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 // list reveal (retriggerable)
-function revealList(){ const l=$("#memberList"); l.classList.remove("in"); void l.offsetWidth; l.classList.add("in"); }
+function revealList(){ const l=$("#memberList");
+  l.classList.add("noanim"); l.classList.remove("in"); void l.offsetWidth;   // snap to the hidden start
+  l.classList.remove("noanim"); void l.offsetWidth;                          // re-enable transitions
+  l.classList.add("in"); }                                                   // cascade in
 $("#replay").addEventListener("click",revealList);
 // tabs: slide the underline (move) + swap the panel through a View Transition
 const reduced=matchMedia("(prefers-reduced-motion:reduce)").matches;
