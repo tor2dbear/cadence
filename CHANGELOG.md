@@ -5,6 +5,25 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.11.0] — 2026-07-24
+
+### Added — import & export a system as a file
+- **Export a system as a self-describing `.cadence.json` file** (Save popover →
+  Export file): a small wrapper — `{ cadence, name, savedAt, state }` — around
+  the full state. Commit it to your repo, back it up, or move it between
+  machines and teammates without an account. This is the durable, portable
+  "save" that fits the static-site thesis (the codebase is the source of truth).
+- **Import a `.cadence.json` file** (Save popover → Import file) to load it, with
+  its name prefilled so you can drop it straight into "My systems". Import is
+  **strict about being a Cadence system** — the state shape is validated, so a
+  non-Cadence file is rejected with a clear message rather than a silent no-op —
+  but tolerant of format: it also accepts a bare state object.
+- **The system's name now rides along in the CSS export** as a comment banner
+  (`/* Cadence — Acme motion */`) — metadata only, never a token or a variable
+  name, and it stays out of the URL and the token exports.
+- Guarded in `smoke34` (export → file shape → re-import applies + names →
+  reject junk → CSS name banner).
+
 ## [0.10.0] — 2026-07-24
 
 ### Added — save & name your own systems

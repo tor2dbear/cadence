@@ -40,6 +40,10 @@ const nid = () => "i"+(idc++);
 // global axis so one intent resolves to a different (duration, easing) per mode.
 let modes = [{name:"default"}];
 let activeMode = 0;
+// the name of the system currently loaded (preset key, saved name, or imported
+// file name); "" when built from scratch. Metadata only — never a token, never
+// part of stateObj/the URL. Used for the export-file + the export comment banner.
+let currentName = "";
 // which CSS property an intent animates (Primer/Atlassian treat this as a
 // first-class attribute). "all" is the neutral default.
 const PROPS = ["all","opacity","transform","color","background-color","height","width"];
@@ -673,7 +677,10 @@ const isIdent = k => /^[a-z_$][\w$]*$/i.test(k);   // safe as a bare object key?
 const modeNote = () => modes.length>1 ? ` · mode: ${modes[activeMode].name}` : "";
 // CSS keeps syntax-highlight spans (innerHTML); the rest are plain text.
 function buildCSS(){
-  let s=`<span class="cm">/* Cadence — motion system */</span>\n:root{\n`;
+  // name banner: metadata as a comment only (never a token). Escaped — the name
+  // can come from an imported file and this output is injected as innerHTML.
+  const nm=currentName?" — "+currentName.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])).replace(/\*\/|\/\*/g,""):" — motion system";
+  let s=`<span class="cm">/* Cadence${nm} */</span>\n:root{\n`;
   s+=`  <span class="cm">/* primitives · durations */</span>\n`;
   durations.forEach(d=>s+=`  <span class="tk">--motion-duration-${d.name}</span>: ${d.ms}ms;\n`);
   const hasSpring=easings.some(e=>e.type==="spring");
@@ -1038,30 +1045,36 @@ function applyEncoded(raw){
   const full = Array.isArray(o.d) && Array.isArray(o.e) && Array.isArray(o.i);
   applyState(full ? o : JSON.parse(JSON.stringify(expandDiff(o))));
 }
+// names/refs enter the model here (from a template, a shared URL, or an
+// imported file) and are later interpolated into the CSS export's innerHTML and
+// into `/* … */` comments. Strip the only chars that could break out — HTML
+// (`<>&`) or a CSS comment (`*/`, `/*`) — so an untrusted system can't inject
+// script or active CSS. Legit token names never contain these.
+const safeName = s => String(s).replace(/[<>&]/g,"").replace(/\*\/|\/\*/g,"");
 // mutate the model in place from a parsed state object; throws on malformed input
 function applyState(o){
   if(!o||!Array.isArray(o.d)||!Array.isArray(o.e)||!Array.isArray(o.i)) throw new Error("bad state");
-  const d = o.d.map(x=>({name:String(x[0]),ms:+x[1]||200}));
+  const d = o.d.map(x=>({name:safeName(x[0]),ms:+x[1]||200}));
   const e = o.e.map(x=> x[1]==="spring"
-    ? {name:String(x[0]),type:"spring",spring:{stiffness:+x[2]||170,damping:+x[3]||12}}
-    : {name:String(x[0]),type:"cubic",bez:[+x[1],+x[2],+x[3],+x[4]]});
+    ? {name:safeName(x[0]),type:"spring",spring:{stiffness:+x[2]||170,damping:+x[3]||12}}
+    : {name:safeName(x[0]),type:"cubic",bez:[+x[1],+x[2],+x[3],+x[4]]});
   // modes: new links carry `m`; legacy links imply a single "default" mode.
-  const md = Array.isArray(o.m)&&o.m.length ? o.m.map(n=>({name:String(n)})) : [{name:"default"}];
+  const md = Array.isArray(o.m)&&o.m.length ? o.m.map(n=>({name:safeName(n)})) : [{name:"default"}];
   const it = o.i.map(x=>{
     // new: [name, purpose, [[dur,ease],...]]  ·  legacy: [name, dur, ease, purpose]
     const binds = Array.isArray(x[2])
-      ? x[2].map(b=>{ const o={dur:String(b[0]),ease:String(b[1]),stagger:+b[2]||0,prop:String(b[3]||"all")}; if(b[4]) o.effectsEase=String(b[4]); if(b[5]) o.distance=String(b[5]); if(typeof b[6]!=="undefined" && +b[6]>=0) o.reveal=Math.max(0,Math.min(100,+b[6])); if(Array.isArray(b[7])){ o.scrub={tl:String(b[7][0]||"view"),range:String(b[7][1]||"cover"),fx:String(b[7][2]||"progress")}; delete o.reveal; } if(Array.isArray(b[8])){ o.vt={type:String(b[8][0]||"root")}; } return o; })
-      : [{dur:String(x[1]),ease:String(x[2]),stagger:0,prop:"all"}];
-    const purpose = Array.isArray(x[2]) ? String(x[1]||"") : String(x[3]||"");
+      ? x[2].map(b=>{ const o={dur:safeName(b[0]),ease:safeName(b[1]),stagger:+b[2]||0,prop:safeName(b[3]||"all")}; if(b[4]) o.effectsEase=safeName(b[4]); if(b[5]) o.distance=safeName(b[5]); if(typeof b[6]!=="undefined" && +b[6]>=0) o.reveal=Math.max(0,Math.min(100,+b[6])); if(Array.isArray(b[7])){ o.scrub={tl:safeName(b[7][0]||"view"),range:safeName(b[7][1]||"cover"),fx:safeName(b[7][2]||"progress")}; delete o.reveal; } if(Array.isArray(b[8])){ o.vt={type:safeName(b[8][0]||"root")}; } return o; })
+      : [{dur:safeName(x[1]),ease:safeName(x[2]),stagger:0,prop:"all"}];
+    const purpose = Array.isArray(x[2]) ? safeName(x[1]||"") : safeName(x[3]||"");
     // pad/trim bindings so every intent has exactly one per mode
     while(binds.length<md.length) binds.push({...binds[binds.length-1]});
     binds.length=md.length;
-    return {id:nid(),name:String(x[0]),purpose,binds};
+    return {id:nid(),name:safeName(x[0]),purpose,binds};
   });
   if(!d.length||!e.length||!it.length) throw new Error("empty scale");
   // distance scale: new links carry `x`; legacy/template links fall back to the default set
   const dist = Array.isArray(o.x)&&o.x.length
-    ? o.x.map(x=>({name:String(x[0]),px:Math.max(0,Math.min(1000,+x[1]||0))}))
+    ? o.x.map(x=>({name:safeName(x[0]),px:Math.max(0,Math.min(1000,+x[1]||0))}))
     : [{name:"nudge",px:8},{name:"inline",px:48},{name:"panel",px:240},{name:"screen",px:720}];
   durations=d; easings=e; intents=it; modes=md; distances=dist;
   activeMode=Math.max(0,Math.min(modes.length-1, +o.am||0));
@@ -1282,6 +1295,7 @@ document.getElementById("share").addEventListener("click",()=>{
   const saveBtn=document.getElementById("saveSys"), pop=document.getElementById("sysPop");
   const nameIn=document.getElementById("sysName"), saveNew=document.getElementById("sysSaveNew");
   const savedRow=document.getElementById("sysSavedRow"), updBtn=document.getElementById("sysUpdate"), delBtn=document.getElementById("sysDelete");
+  const expBtn=document.getElementById("sysExport"), impBtn=document.getElementById("sysImport"), fileIn=document.getElementById("sysFile");
   const LS="cadence:systems";
   const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const err=document.getElementById("sysErr");
@@ -1311,7 +1325,10 @@ document.getElementById("share").addEventListener("click",()=>{
     else{ const t=TEMPLATES[v]; if(t) apply(t); }
   }
   function sync(){ if(reloadBtn) reloadBtn.hidden=!sel.value; }
-  sel.addEventListener("change",()=>{ loadValue(sel.value); sync(); });
+  // track the active system name (metadata for the export-file + CSS banner):
+  // the picker's label — a preset key or a saved name — or "" for the placeholder
+  const refreshName=()=>{ currentName = sel.value ? currentLabel() : ""; };
+  sel.addEventListener("change",()=>{ refreshName(); loadValue(sel.value); sync(); });  // name before the re-render so the banner is current
   if(reloadBtn) reloadBtn.addEventListener("click",()=>loadValue(sel.value));
   // save popover
   function openPop(open){
@@ -1331,7 +1348,7 @@ document.getElementById("share").addEventListener("click",()=>{
       setTimeout(()=>{ nameIn.focus(); nameIn.select(); },0);
     }else{ pop.hidden=true; if(saveBtn) saveBtn.setAttribute("aria-expanded","false"); }
   }
-  const showErr=()=>{ if(err) err.hidden=false; };
+  const showErr=(msg)=>{ if(err){ err.textContent=msg||"Couldn't save — storage is full or blocked."; err.hidden=false; } };
   if(saveBtn) saveBtn.addEventListener("click",e=>{ e.stopPropagation(); openPop(pop.hidden); });
   if(pop) pop.addEventListener("click",e=>e.stopPropagation());
   document.addEventListener("click",()=>{ if(pop&&!pop.hidden) openPop(false); });
@@ -1341,25 +1358,61 @@ document.getElementById("share").addEventListener("click",()=>{
     const list=readSaved(), id=uid();
     list.push({id,name,state:stateObj()});
     if(!writeSaved(list)){ showErr(); return; }   // keep the dialog open on failure
-    populate("s:"+id); openPop(false);
+    populate("s:"+id); refreshName(); render(); openPop(false);   // render() so the export banner reflects the new name
   }
   function update(){
     const cs=currentSaved(); if(!cs) return;
     const list=readSaved(), it=list.find(s=>s.id===cs.id);
     if(it){ it.name=(nameIn.value||"").trim()||cs.name; it.state=stateObj(); }
     if(!writeSaved(list)){ showErr(); return; }
-    populate("s:"+cs.id); openPop(false);
+    populate("s:"+cs.id); refreshName(); render(); openPop(false);
   }
   function remove(){
     const cs=currentSaved(); if(!cs) return;
     if(!writeSaved(readSaved().filter(s=>s.id!==cs.id))){ showErr(); return; }
-    populate(""); openPop(false);
+    populate(""); refreshName(); render(); openPop(false);
   }
   if(nameIn) nameIn.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); (currentSaved()?update:saveAsNew)(); } });
   if(saveNew) saveNew.addEventListener("click",saveAsNew);
   if(updBtn) updBtn.addEventListener("click",update);
   if(delBtn) delBtn.addEventListener("click",remove);
-  populate();
+
+  // ---- portability: a self-describing .cadence.json file (name + full state) ----
+  // The FILE carries the name (metadata); the URL/token exports stay name-free.
+  function exportFile(){
+    const name=(currentName || (nameIn&&nameIn.value.trim()) || "Untitled").slice(0,60);
+    const doc={cadence:1,name,savedAt:new Date().toISOString().slice(0,10),state:stateObj()};
+    const blob=new Blob([JSON.stringify(doc,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob), a=document.createElement("a");
+    const slug=name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"system";
+    a.href=url; a.download=slug+".cadence.json"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  // Import is STRICT about being a Cadence system (applyState validates the
+  // state shape and throws otherwise → a clear message, never a silent no-op),
+  // but tolerant of format: our {cadence,name,state} wrapper OR a bare state.
+  function importFile(f){
+    const rd=new FileReader();
+    rd.onerror=()=>{ showErr("Couldn't read that file."); fileIn.value=""; };
+    rd.onload=()=>{
+      try{
+        const o=JSON.parse(String(rd.result));
+        const state=(o&&o.state&&typeof o.state==="object")?o.state:o;
+        const nm=(o&&typeof o.name==="string"&&o.name.trim())?safeName(o.name.trim()).slice(0,40):"";
+        applyState(JSON.parse(JSON.stringify(state)));   // throws on a bad shape (before we touch currentName)
+        currentName=nm; rerenderAll();                   // name before the re-render so the banner is current
+        nameIn.value=nm; sel.value="";                   // it's not a saved/preset entry yet
+        if(savedRow) savedRow.hidden=true; if(err) err.hidden=true; sync();
+      }catch(_){ showErr("That's not a Cadence system file."); }
+      fileIn.value="";                                   // let the same file re-import
+    };
+    rd.readAsText(f);
+  }
+  if(expBtn) expBtn.addEventListener("click",exportFile);
+  if(impBtn&&fileIn) impBtn.addEventListener("click",()=>fileIn.click());
+  if(fileIn) fileIn.addEventListener("change",()=>{ const f=fileIn.files&&fileIn.files[0]; if(f) importFile(f); });
+
+  populate(); refreshName();
 })();
 
 // live-demo preview: an iframe of demo.html seeded with the current system; it
