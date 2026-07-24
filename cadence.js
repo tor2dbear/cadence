@@ -1277,9 +1277,14 @@ document.getElementById("share").addEventListener("click",()=>{
     Object.keys(TEMPLATES).map(k=>`<option value="${k}">${k}</option>`).join("");
   sel.addEventListener("change",()=>{
     const t=TEMPLATES[sel.value];
-    sel.value="";                          // reset so re-picking the same one re-fires
-    if(!t) return;
-    try{ applyState(structuredClone(t)); rerenderAll(); }catch(_){}
+    if(!t) return;                         // the "Load a system…" placeholder
+    // keep the picked option selected so the dropdown SHOWS which system is
+    // loaded — the old reset to the placeholder hid it, so you couldn't tell a
+    // system had loaded (worst on mobile, where the change lands off-screen
+    // above a sticky header). Deep-clone via JSON (templates are plain data),
+    // NOT structuredClone — that's absent on older Safari/webviews and would
+    // throw into the silent catch below, making the load a no-op there.
+    try{ applyState(JSON.parse(JSON.stringify(t))); rerenderAll(); }catch(_){}
   });
 })();
 

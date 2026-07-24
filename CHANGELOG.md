@@ -15,6 +15,14 @@ shows the deployed semver plus the commit it was built from, stamped at deploy.
   nothing and the cascade never re-ran. Now it snaps the rows back to the hidden
   start with transitions momentarily off, then re-enables them and adds `.in`,
   so the staggered cascade replays every time. Guarded in smoke29.
+- **"Load a system" now shows which system is loaded, and works on older
+  Safari.** The picker reset itself back to the "Load a system…" placeholder on
+  every pick, so you couldn't tell a system had loaded (worst on mobile, where
+  the token change lands off-screen above the sticky header) — it now keeps the
+  chosen system selected. It also deep-cloned the template with
+  `structuredClone`, which is absent on older Safari/webviews and threw into a
+  silent catch (the load did nothing there); switched to the JSON clone the rest
+  of the file uses. Guarded in smoke6.
 
 ## [0.9.24] — 2026-07-24
 
