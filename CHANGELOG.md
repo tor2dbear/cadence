@@ -5,6 +5,24 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.23] — 2026-07-24
+
+### Changed — the live-preview dock is redesigned
+- **The dock animates with the tool's own motion language.** Opening plays the
+  `enter` intent (base · emphasized), closing plays `exit` (fast · accelerate),
+  and the editor's reflow eases in step; reduced-motion skips it. The tool now
+  eats its own dog food instead of popping the panel in instantly.
+- **It's a floating card, docked below the header.** The panel starts under the
+  app header (tracked via a live `--header-h`) instead of covering it, and is
+  inset from the viewport edges with rounded corners and a soft, warm elevation
+  (`--dock-shadow`) — a built-in surface, not a black-shadowed slab jammed to
+  the edge. A gutter separates it from the intents column.
+- **De-duplicated chrome.** The dock bar is now a quiet "Preview" role-label
+  rather than a second "Live demo — …" header competing with the demo's own
+  header inside the frame.
+- `smoke24` gains guards for the floating-card geometry and the de-duplicated
+  label; `smoke18`/`smoke24` wait for the exit animation before asserting hidden.
+
 ## [0.9.22] — 2026-07-24
 
 ### Changed — the brand mark is a live easing curve

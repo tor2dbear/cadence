@@ -38,8 +38,21 @@ assert('body marked previewing', await previewing());
 const w = await page.locator('#preview').evaluate(el => el.offsetWidth);
 assert('preview is docked (a side pane, not full-width)', w > 300 && w < 680);
 assert('editor stays visible beside the dock', await page.locator('#toolview .wrap').isVisible());
+// the dock is a floating card: below the header (not jammed to the top over it)
+// and inset from the viewport edges, not flush
+const box = await page.locator('#preview').evaluate(el => {
+  const r = el.getBoundingClientRect();
+  return { top: Math.round(r.top), rightGap: Math.round(window.innerWidth - r.right), bottomGap: Math.round(window.innerHeight - r.bottom) };
+});
+assert('dock sits below the header and inset from the edges (a floating card)',
+  box.top > 40 && box.rightGap >= 6 && box.bottomGap >= 6);
+// its chrome is a quiet role-label, not a second "Live demo" header competing
+// with the demo's own header inside the frame
+assert('dock chrome is a quiet "Preview" label (de-duplicated header)',
+  (await page.locator('.preview__ttl').innerText()).trim().toLowerCase() === 'preview');
 // close returns to editor-only
 await page.locator('#previewClose').click();
+await page.locator('#preview').waitFor({ state: 'hidden' });   // exit animation, then hide
 assert('preview closes', await page.locator('#preview').isHidden());
 assert('previewing cleared on close', !(await previewing()));
 
