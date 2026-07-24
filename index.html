@@ -250,6 +250,11 @@
         </div>
         <p class="sysmenu__hint">Saved in this browser only.</p>
         <p class="sysmenu__err" id="sysErr" hidden>Couldn't save — storage is full or blocked.</p>
+        <div class="sysmenu__io">
+          <button class="demobtn" id="sysExport" title="Download this system as a .cadence.json file — commit it, or re-import it anywhere">Export file</button>
+          <button class="demobtn" id="sysImport" title="Load a system from a .cadence.json file">Import file</button>
+        </div>
+        <input type="file" id="sysFile" accept="application/json,.json" hidden />
       </div>
     </span>
     <button class="demobtn" id="exportToggle" title="Open the export panel — CSS, JSON, Tailwind, Style Dictionary, TS">Export</button>
