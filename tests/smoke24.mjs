@@ -39,7 +39,11 @@ const w = await page.locator('#preview').evaluate(el => el.offsetWidth);
 assert('preview is docked (a side pane, not full-width)', w > 300 && w < 680);
 assert('editor stays visible beside the dock', await page.locator('#toolview .wrap').isVisible());
 // the dock is a floating card: below the header (not jammed to the top over it)
-// and inset from the viewport edges, not flush
+// and inset from the viewport edges, not flush. Let the fonts settle (they
+// re-flow / wrap the header, which drives --header-h) and the slide-in
+// transform finish before measuring, so we read the resting geometry.
+await page.evaluate(() => document.fonts.ready);
+await page.waitForTimeout(320);
 const box = await page.locator('#preview').evaluate(el => {
   const r = el.getBoundingClientRect();
   return { top: Math.round(r.top), rightGap: Math.round(window.innerWidth - r.right), bottomGap: Math.round(window.innerHeight - r.bottom) };

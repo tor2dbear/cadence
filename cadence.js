@@ -1371,11 +1371,15 @@ let openPreview=()=>{};
   const pv=document.getElementById("preview"), tog=document.getElementById("previewToggle");
   const cl=document.getElementById("previewClose"), fr=document.getElementById("previewFrame"), pop=document.getElementById("previewPop");
   if(!pv||!tog||!fr) return;
-  // keep the dock's top aligned to the sticky header's bottom (it can wrap on
-  // resize), so the floating card starts below the header, not over it
+  // keep the dock's top aligned to the sticky header's bottom. The header wraps
+  // (on resize, and when the fonts load and re-flow the toolbar), so track its
+  // real height with a ResizeObserver — a one-off measure could catch the
+  // pre-wrap height and leave the dock overlapping a taller, wrapped header.
   const hdr=document.querySelector("header.top");
   const setHH=()=>{ if(hdr) document.documentElement.style.setProperty("--header-h", hdr.offsetHeight+"px"); };
   setHH(); addEventListener("resize",setHH);
+  if(hdr && window.ResizeObserver) new ResizeObserver(setHH).observe(hdr);
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(setHH);
   const setP=on=>{
     if(on){
       setHH();   // the tool header has no height until the tool view is shown
