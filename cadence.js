@@ -1400,7 +1400,19 @@ function exitTool(){
         tr.setAttribute("d",d); tr.setAttribute("pathLength","1000"); tr.setAttribute("class","ltr-gtrail");
         tr.style.strokeDashoffset="1000"; field.appendChild(tr); trails.push(tr);
         while(trails.length>CAP){ const o=trails.shift(); if(o){ o.getAnimations&&o.getAnimations().forEach(a=>a.cancel()); o.remove(); } }
-        const reveal=tr.animate([{strokeDashoffset:1000,opacity:op},{strokeDashoffset:0,opacity:op}],{duration:sweep,easing:"linear",fill:"forwards"});
+        // the comet's ALONG-PATH speed follows the easing the curve draws: advance
+        // its x linearly, so it zips through steep sections and lingers on flat
+        // ones — like the value the easing would animate. Build the head's
+        // normalised-position schedule by sampling the path and inverting x→pos.
+        const K=24; let pos;
+        try{ const gl=tr.getTotalLength(),N=40,xs=[],ps=[];
+          for(let i=0;i<=N;i++){ const pt=tr.getPointAtLength(gl*i/N); xs.push(pt.x); ps.push(1000*i/N); }
+          const x0=xs[0],xN=xs[N]; pos=[];
+          for(let j=0;j<=K;j++){ const tx=x0+(xN-x0)*j/K; let i=1; while(i<N&&xs[i]<tx)i++;
+            const u=(tx-xs[i-1])/((xs[i]-xs[i-1])||1); pos.push(ps[i-1]+(ps[i]-ps[i-1])*u); }
+        }catch(e){ pos=[]; for(let j=0;j<=K;j++) pos.push(1000*j/K); }   // fallback: uniform speed
+        // trail reveals right behind the head, on the same schedule
+        const reveal=tr.animate(pos.map(p=>({strokeDashoffset:1000-p,opacity:op})),{duration:sweep,easing:"linear",fill:"forwards"});
         reveal.onfinish=()=>{ const f=tr.animate([{opacity:op},{opacity:0}],{duration:life,easing:"linear",fill:"forwards"});
           f.onfinish=()=>{ tr.remove(); const i=trails.indexOf(tr); if(i>=0) trails.splice(i,1); }; };
         // the comet: five accent segments sharing one leading edge (overlap → taper)
@@ -1408,7 +1420,7 @@ function exitTool(){
         [13,30,52,77,105].forEach(base=>{ const s=document.createElementNS(NS,"path");
           s.setAttribute("d",d); s.setAttribute("pathLength","1000"); s.setAttribute("class","ltr-gcomet");
           const L=base*k; s.style.strokeDasharray=L+" 3000";
-          s.animate([{strokeDashoffset:L+60},{strokeDashoffset:L-1080}],{duration:sweep,easing:"linear",fill:"forwards"});
+          s.animate(pos.map(p=>({strokeDashoffset:L-p})),{duration:sweep,easing:"linear",fill:"forwards"});
           g.appendChild(s); });
         field.appendChild(g); setTimeout(()=>g.remove(),sweep+150);
       };
