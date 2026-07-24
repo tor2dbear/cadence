@@ -5,6 +5,104 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.20] — 2026-07-24
+
+### Added — one-click apply
+- **The deterministic fixes are now one click.** Every warning already carried a
+  plain-language fix; the eight deterministic ones now carry a machine-readable
+  op too and render an **Apply** button. Click it and the model changes, the
+  read re-runs, and the URL/preview restamp — no hunting for the right control.
+  Covered: even out an uneven ladder (geometric rebalance), trim a duplicate
+  easing (and re-point everything that used it), drop a slow/near-equal exit onto
+  a shorter rung, move an over-budget duration down the ladder, tame a long
+  stagger, collapse an idle spatial/effects split, drop a scroll-reveal's stagger,
+  and linearise a non-linear scrub. The two genuinely ambiguous fixes
+  (velocity — which knob? — and a no-op reduced mode) stay text-only, on purpose.
+- The op lives in the pure module as an `apply` field on each finding
+  (`{op, …}`, params by name so a fix survives reordering); `cadence.js` runs it
+  through the existing model-mutation + `rerenderAll` path, so state, share links
+  and the live preview stay in sync for free.
+
+### Fixed (review follow-ups)
+- **Rebalance now works on a ladder that was dragged out of order.** The
+  unevenness check reads the ladder in array order, but rebalance assigned the
+  even progression in sorted order without reordering the array — so a jumbled
+  ladder (e.g. `[100, 900, 110]`) stayed uneven after Apply. It now sorts the
+  ladder ascending first, so the array the check reads is the one that's evened.
+- **Dropping a duplicate easing re-points the effects track too.** Apply (and
+  the manual remove-easing button) rewrote only `ease`, leaving a split intent's
+  `effectsEase` pointing at the deleted curve — a dangling `var(--motion-ease-…)`
+  in the CSS export and a lost split on share-link reload. Both tracks re-point now.
+- **The no-op reduced-mode warning shows while that mode is active.** It was
+  suppressed whenever the reduced mode was the selected one, even though the
+  check never depended on the active mode.
+- **Apply targets an intent by index, not name.** Intent names aren't unique
+  (two `custom` intents, or a rename), so resolving a fix by name could change
+  the wrong intent and leave the warning standing. Ops now carry the intent's
+  index (name kept for the label only).
+- **The no-op reduced-mode check compares resolved values.** It compared token
+  names, so a reduced binding pointing at a differently-named token that
+  resolves to the same ms/curve (two rungs dragged to the same value) read as a
+  real change and hid the warning. It now compares resolved duration and easing.
+- **The exit fix now clears the asymmetry threshold.** Apply picked the largest
+  rung *below* the enter, which — with rungs like 190/200 — could land only 10ms
+  under and re-trip the near-equal warning. It now targets a rung at least 40ms
+  under the enter, and omits the button when none qualifies.
+- **Duplicate-spring detection compares rendered curves, not raw damping.** An
+  absolute damping gap of ~1 means very different things at high vs low damping
+  (160/2 vs 160/3 is a 50% shift), so the old threshold could flag — and offer
+  to delete — genuinely distinct springs. It now samples both spring curves and
+  compares their shape.
+
+## [0.9.19] — 2026-07-24
+
+### Added — the comparative read
+- **The system read now benchmarks against real design systems.** Until now the
+  critique judged in a vacuum. It now measures the live system against the field
+  of shipped palettes it already carries (Material 3, Carbon, Fluent, Polaris,
+  Primer, Spectrum, …) and positions it: *"Your duration ladder grows ~1.5× per
+  step — in the range real systems use (Material 3 1.5×, Carbon 1.6×)."* Two
+  characteristics are compared — **ladder growth** (the geometric-mean step of
+  the duration ladder) and **overall tempo** (the typical resolved intent
+  duration). When the system sits inside the field the line is informational;
+  when it's steeper or flatter than *every* reference, it's flagged with a fix.
+  This is the "reverse-engineer the art direction" angle: the numbers get a
+  reference frame.
+- The comparison lives in the pure module (`fingerprint(system)` +
+  `systemRead(system, {corpus})`), so it's opt-in and testable — the corpus is
+  passed in, not reached for. `cadence.js` builds it from the shipped templates.
+
+## [0.9.18] — 2026-07-24
+
+### Changed — the opinion layer grows up
+- **The system read is now a pure, headless module (`system-read.js`).** The
+  whole critique used to live inside `critique()` in `cadence.js`, reaching for
+  globals and writing `innerHTML` in the same breath. It's now a DOM-free
+  `systemRead(system)` that takes an explicit snapshot and returns structured
+  findings — so the *same* critique runs three ways: in the app, in a headless
+  unit test (`tests/smoke31.mjs` requires it directly), and, per the roadmap,
+  behind a serverless/MCP endpoint where a CI step POSTs a system and gets its
+  warnings back. `cadence.js` just builds the snapshot and renders.
+- **Findings are ranked, worst-first.** Every observation now carries a
+  severity (`0` all-clear → `3` real defect); the read sorts by it, so problems
+  surface above the all-clears instead of sitting in check order. A slow exit
+  (the drag defect) leads the list.
+- **From diagnosis to prescription.** Each warning now carries a one-line
+  **fix** — *"→ Drop the exit onto a shorter duration than the enter."* — shown
+  after the observation, so the read tells you what to *do*, not only what's
+  wrong.
+
+### Fixed — coverage gaps in the read
+- **A one-rung duration ladder no longer produces `NaN`.** With fewer than two
+  steps there's no ratio to take; the check now guards that case instead of
+  quietly reading `-Infinity/Infinity`.
+- **Duplicate springs are caught.** The redundancy check compared cubic control
+  points only, so two near-identical springs slipped through. Springs are now
+  compared by physics (near-equal stiffness/damping).
+- **A no-op reduced-motion mode is called out.** A `reduced` mode whose bindings
+  resolve to the same durations, easings and staggers as the default won't calm
+  anything — the read now says so (opt-in, so the default stays quiet).
+
 ## [0.9.17] — 2026-07-23
 
 ### Fixed

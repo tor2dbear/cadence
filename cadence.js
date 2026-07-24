@@ -578,79 +578,92 @@ function startBenchIdle(){
 }
 
 // ---------- system read (the opinion layer) ----------
+// A snapshot of the live model in the shape system-read.js expects. Passing an
+// explicit object (rather than the checks reaching for globals) is what lets the
+// same critique run headless — in a unit test or, per the roadmap, as a service.
+function systemSnapshot(){
+  return { durations, distances, easings, intents, modes, activeMode };
+}
+// the shipped design-system templates, as system snapshots, so the read can
+// benchmark the live system against the field ("steeper than Material's").
+// Excludes the Cadence starter — we compare against real, shipped systems only.
+function benchmarkCorpus(){
+  return Object.entries(TEMPLATES)
+    .filter(([name])=>name!=="Cadence starter")
+    .map(([name,t])=>({
+      name: name.split(" · ")[0],
+      durations: t.d.map(([n,ms])=>({name:n,ms})),
+      intents: t.i.map(([n,dur,ease])=>({name:n,binds:[{dur,ease,stagger:0,prop:"all"}]})),
+      modes:[{name:"default"}], activeMode:0,
+    }));
+}
+let lastRead=[];   // the most recent findings, so an Apply click can look up its op by index
 function critique(){
-  const out=[];
-  // 1. ladder evenness
-  const ratios = durations.slice(1).map((d,i)=>d.ms/durations[i].ms);
-  const spread = Math.max(...ratios)/Math.min(...ratios);
-  if(spread>1.9) out.push(["warn","~",`Your duration ladder is uneven — step ratios run ${Math.min(...ratios).toFixed(2)}× to ${Math.max(...ratios).toFixed(2)}×. A ladder that grows at a steadier rate feels more like one scale.`]);
-  else out.push(["ok","✓","Duration ladder grows at a fairly even rate — it reads as one considered scale."]);
-  // 2. easing redundancy
-  let dup=null;
-  for(let a=0;a<easings.length;a++)for(let b=a+1;b<easings.length;b++){
-    const ea=easings[a],eb=easings[b];
-    if(!ea.bez||!eb.bez) continue;   // redundancy check compares cubic curves only
-    const d=ea.bez.reduce((s,v,k)=>s+Math.abs(v-eb.bez[k]),0);
-    if(d<0.15) dup=[ea.name,eb.name];
-  }
-  if(dup) out.push(["warn","!",`“${dup[0]}” and “${dup[1]}” are nearly identical curves. A tight easing set is easier to apply consistently — trim one.`]);
-  else out.push(["ok","✓",`${easings.length} distinct easings — a lean, legible set.`]);
-  // 3. enter/exit asymmetry
-  const en=intents.find(x=>/enter|open|in$/i.test(x.name)), ex=intents.find(x=>/exit|close|out$/i.test(x.name));
-  if(en&&ex){
-    const de=durMs(bindOf(en).dur),dx=durMs(bindOf(ex).dur);
-    if(Math.abs(de-dx)<40) out.push(["warn","≠",`“${en.name}” and “${ex.name}” resolve to near-equal durations (${de}/${dx}ms). Real motion is asymmetric — exits should be quicker so leaving feels decisive.`]);
-    else if(dx<de) out.push(["ok","✓",`“${ex.name}” (${dx}ms) is quicker than “${en.name}” (${de}ms) — leaving feels decisive.`]);
-    else out.push(["warn","!",`“${ex.name}” (${dx}ms) is slower than “${en.name}” (${de}ms). The user already chose to dismiss; a slow exit drags.`]);
-  }
-  // 4. long-duration budget
-  const longIntent = intents.find(x=>durMs(bindOf(x).dur)>550);
-  if(longIntent) out.push(["warn","!",`“${longIntent.name}” resolves to ${durMs(bindOf(longIntent).dur)}ms. Past ~550ms motion starts to feel like waiting — reserve the top of the ladder for large travel only.`]);
-  // 5. stagger budget (measured against a 5-item list)
-  const staggered = intents.filter(x=>+bindOf(x).stagger>0).sort((a,b)=>+bindOf(b).stagger-+bindOf(a).stagger)[0];
-  if(staggered){ const st=+bindOf(staggered).stagger, lead=st*4;
-    if(lead>500) out.push(["warn","!",`“${staggered.name}” staggers ${st}ms — across a 5-item list the last item waits ${lead}ms to even start. Long staggers make lists drag; keep the lead under ~500ms.`]);
-    else out.push(["ok","✓",`“${staggered.name}” staggers ${st}ms — a 5-item list cascades over ${lead}ms, brisk enough to read as one gesture.`]);
-  }
-  // 6. spatial/effects split that hasn't diverged is just noise
-  const idleSplit = intents.find(x=>{ const b=bindOf(x); return b.effectsEase && b.effectsEase===b.ease; });
-  if(idleSplit) out.push(["warn","!",`“${idleSplit.name}” is split into spatial · effects but both use the same easing. Diverge them (e.g. a spring for position, a flat curve for opacity) or collapse the split.`]);
-  // 7. distance / velocity — only when an intent opts into a travel distance
-  const withDist = intents.map(x=>{ const b=bindOf(x); if(!b.distance) return null;
-    const px=distPx(b.distance); if(px==null) return null;
-    const ms=durMs(b.dur); return {name:x.name, px, ms, v:px/Math.max(1,ms)}; }).filter(Boolean);
-  if(withDist.length){
-    const fast=withDist.slice().sort((a,b)=>b.v-a.v)[0];
-    const slow=withDist.slice().sort((a,b)=>a.v-b.v)[0];
-    if(fast.v>5) out.push(["warn","!",`“${fast.name}” covers ${fast.px}px in ${fast.ms}ms — that's ${fast.v.toFixed(1)}px/ms, fast enough to read as a jump rather than a move. Slow it down or shorten the travel.`]);
-    else if(slow.v<0.4 && slow.px>=64) out.push(["warn","~",`“${slow.name}” crawls ${slow.px}px over ${slow.ms}ms (${slow.v.toFixed(2)}px/ms). Long, slow travel reads as sluggish — tighten the duration or the distance.`]);
-    else out.push(["ok","✓",`Travel speeds read naturally — “${fast.name}” moves ${fast.px}px in ${fast.ms}ms (${fast.v.toFixed(1)}px/ms), in the range the eye tracks as motion.`]);
-  }
-  // 8. scroll reveals — only when an intent opts in (keeps the default read quiet)
-  const revIntents = intents.filter(x=>typeof bindOf(x).reveal==="number");
-  if(revIntents.length){
-    const staggered = revIntents.find(x=>+bindOf(x).stagger>0);
-    if(staggered) out.push(["warn","~",`“${staggered.name}” is a scroll reveal carrying a ${+bindOf(staggered).stagger}ms stagger. Native scroll-driven gives each item its own timeline, so the stagger only lands in the JS fallback — the two paths won't look identical. Drop the stagger, or accept the split.`]);
-    else out.push(["ok","✓",`${revIntents.length} scroll reveal${revIntents.length>1?"s":""} — exported as native CSS scroll-driven with an IntersectionObserver fallback for browsers without it (Firefox today).`]);
-  }
-  // 9. scroll scrubs — flag non-linear easing (scrub speed then fights the scroll)
-  const scrubIntents = intents.filter(x=>bindOf(x).scrub);
-  if(scrubIntents.length){
-    const isLin=e=>e.bez && Math.abs(e.bez[0])<.05 && Math.abs(e.bez[1])<.05 && Math.abs(e.bez[2]-1)<.05 && Math.abs(e.bez[3]-1)<.05;
-    const nonLin = scrubIntents.find(x=>!isLin(easeObj(bindOf(x).ease)));
-    if(nonLin) out.push(["warn","~",`“${nonLin.name}” scrubs with a non-linear easing — the motion speeds up and slows down against your scroll. That reads as intentional for a reveal-style scrub, but parallax/progress usually want a linear curve for a true 1:1 feel.`]);
-    else out.push(["ok","✓",`${scrubIntents.length} scroll scrub${scrubIntents.length>1?"s":""} — native scroll-driven (no duration; the range is the axis) with a scroll-position fallback for browsers without it.`]);
-  }
-  // 10. view transitions — opt-in; VT's only knobs are duration + easing
-  const vtIntents = intents.filter(x=>bindOf(x).vt);
-  if(vtIntents.length){
-    out.push(["ok","✓",`${vtIntents.length} view transition${vtIntents.length>1?"s":""} — same-document VT is Baseline (Chrome/Edge 111+, Safari 18+, Firefox 144+). The recipe feature-detects startViewTransition and honours reduced-motion, so unsupported browsers just swap instantly.`]);
-  }
-  document.getElementById("hints").innerHTML = out.map(h=>`<div class="rd ${h[0]}"><span class="ic">${h[1]}</span><span>${h[2]}</span></div>`).join("");
+  const out = CadenceSystemRead.systemRead(systemSnapshot(), {corpus:benchmarkCorpus()});   // ranked, worst-first
+  lastRead = out;
+  document.getElementById("hints").innerHTML = out.map((h,idx)=>{
+    const fix = h.fix ? `<span class="rd__fix"> → ${h.fix}</span>` : "";
+    // deterministic fixes carry an op → offer to apply it in one click
+    const label = (h.fix||"").replace(/"/g,"&quot;");
+    const btn = h.apply ? ` <button class="rd__apply" data-scope="fix" data-i="${idx}" aria-label="Apply fix: ${label}">Apply</button>` : "";
+    return `<div class="rd ${h.status}"><span class="ic">${h.icon}</span><span>${h.msg}${fix}${btn}</span></div>`;
+  }).join("");
   // a persistent read-at-a-glance badge in the section header (P3 visibility)
-  const warns=out.filter(h=>h[0]==="warn").length;
+  const warns=out.filter(h=>h.status==="warn").length;
   const badge=document.getElementById("hintCount");
   if(badge){ badge.textContent = warns ? `${warns} to review` : "all clear"; badge.className = "hintcount"+(warns?" warn":""); }
+}
+// ---------- apply a system-read fix (one click: mutate the model, re-read) ----------
+// return the name of a linear easing, adding one if the set has none
+function ensureLinearEasing(){
+  const lin = easings.find(e=>e.type==="cubic" && e.bez && Math.abs(e.bez[0])<.05 && Math.abs(e.bez[1])<.05 && Math.abs(e.bez[2]-1)<.05 && Math.abs(e.bez[3]-1)<.05);
+  if(lin) return lin.name;
+  const name=uniqueName("linear",easings);
+  easings.push({name,type:"cubic",bez:[0,0,1,1]});
+  return name;
+}
+// redistribute the ladder as a clean geometric progression between its own
+// min and max (names untouched — intents reference by name), so the step
+// ratio is constant. The unevenness check reads the ladder in ARRAY order, so
+// sort the array ascending first — otherwise a ladder dragged out of order
+// (e.g. [100,900,110]) would get even values assigned in sorted order but stay
+// jagged in array order, and the warning wouldn't clear. Endpoints are pinned;
+// interior rungs snap to 10ms.
+function rebalanceLadder(){
+  if(durations.length<3) return;
+  durations.sort((a,b)=>a.ms-b.ms);
+  const lo=durations[0].ms, hi=durations[durations.length-1].ms, n=durations.length;
+  if(!(lo>0) || hi<=lo) return;
+  const r=Math.pow(hi/lo, 1/(n-1));
+  durations.forEach((d,k)=>{ d.ms = k===0 ? lo : k===n-1 ? hi : Math.max(10, Math.round(lo*Math.pow(r,k)/10)*10); });
+}
+function applyFix(a){
+  if(!a) return;
+  // resolve the target intent by index (stable — names aren't unique), falling
+  // back to name only if the index is missing/stale.
+  const it = (a.intentIndex!=null && intents[a.intentIndex]) ? intents[a.intentIndex]
+           : a.intent!=null ? intents.find(x=>x.name===a.intent) : null;
+  const b = it ? bindOf(it) : null;
+  switch(a.op){
+    case "setStagger":     if(b) b.stagger=a.ms; break;
+    case "setDur":         if(b && durations.some(d=>d.name===a.dur)) b.dur=a.dur; break;
+    case "collapseSplit":  if(b) delete b.effectsEase; break;
+    case "linearizeScrub": if(b) b.ease=ensureLinearEasing(); break;
+    case "dropEasing":     { const idx=easings.findIndex(e=>e.name===a.ease);
+      if(idx>=0 && easings.length>1 && easings.some(e=>e.name===a.into)){
+        easings.splice(idx,1);
+        // re-point BOTH tracks — ease and the effects-split easing — or a split
+        // intent keeps a reference to the now-deleted curve (render silently
+        // falls back, but CSS export + the share link would carry a dangling name).
+        intents.forEach(x=>x.binds.forEach(bd=>{
+          if(bd.ease===a.ease) bd.ease=a.into;
+          if(bd.effectsEase===a.ease) bd.effectsEase=a.into;
+        }));
+      } break; }
+    case "rebalanceLadder": rebalanceLadder(); break;
+    default: return;
+  }
+  rerenderAll();   // re-render everything, re-run the read, restamp the URL
 }
 
 // ---------- export ----------
@@ -1161,13 +1174,14 @@ document.addEventListener("click", e=>{
   const playT=e.target.closest("[data-play]");
   if(playT){ play(+playT.dataset.play); return; }
   const t=e.target, sc=t.dataset.scope, i=+t.dataset.i;
+  if(sc==="fix"){ const f=lastRead[i]; if(f) applyFix(f.apply); return; }
   if(sc==="imore"){ intents[i].open=!intents[i].open; renderIntents(); }
   if(sc==="irm"){ if(intents.length>1){ const gone=intents[i].id; intents.splice(i,1);
       probes.forEach(p=>{if(p.intent===gone)p.intent=intents[0].id;}); rerenderAll(); } }
   if(sc==="drm"){ if(durations.length>1){ const g=durations[i].name; durations.splice(i,1);
       const fb=durations[0].name; intents.forEach(it=>it.binds.forEach(b=>{if(b.dur===g)b.dur=fb;})); rerenderAll(); } }
   if(sc==="erm"){ if(easings.length>1){ const g=easings[i].name; easings.splice(i,1);
-      const fb=easings[0].name; intents.forEach(it=>it.binds.forEach(b=>{if(b.ease===g)b.ease=fb;})); rerenderAll(); } }
+      const fb=easings[0].name; intents.forEach(it=>it.binds.forEach(b=>{if(b.ease===g)b.ease=fb; if(b.effectsEase===g)b.effectsEase=fb;})); rerenderAll(); } }
   if(sc==="xrm"){ if(distances.length>1){ const g=distances[i].name; distances.splice(i,1);
       intents.forEach(it=>it.binds.forEach(b=>{if(b.distance===g)delete b.distance;})); rerenderAll(); } }
   if(sc==="mset"){ activeMode=Math.max(0,Math.min(modes.length-1,i)); rerenderAll(); }
