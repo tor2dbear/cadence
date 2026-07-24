@@ -89,6 +89,8 @@ header.top .sysbtn{padding:5px 8px;line-height:1}
 .sysmenu__del{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
 .sysmenu__del:hover{border-color:var(--warn);color:var(--warn)}
 .sysmenu__hint{margin:2px 0 0;font-family:var(--mono);font-size:10px;color:var(--ink-faint)}
+.sysmenu__err{margin:0;font-family:var(--mono);font-size:10px;color:var(--warn)}
+.sysmenu__err[hidden]{display:none}
 
 /* live-demo preview overlay */
 .preview{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;background:rgba(8,9,11,.72);backdrop-filter:blur(3px)}

@@ -29,6 +29,8 @@ await page.waitForTimeout(120);
 assert('reload button appears once a system is selected', await page.locator('#reloadSys').isVisible());
 const savedDur = await firstDur();
 await page.click('#saveSys');
+const popBox = await page.locator('#sysPop').boundingBox();
+assert('save popover stays within the viewport', popBox.x >= 0 && popBox.x + popBox.width <= 1280);
 await page.fill('#sysName', 'My tuned');
 assert('saving a preset shows only "Save as new" (no Update/Delete)', await page.locator('#sysSavedRow').isHidden());
 await page.click('#sysSaveNew');
@@ -62,4 +64,26 @@ assert('delete removes it from "My systems"', !(await hasMine()));
 
 assert('no console/page errors', errors.length === 0);
 if (errors.length) errors.forEach(e => console.log('   ! ' + e));
+
+// a full/blocked localStorage must keep the dialog open with an error (never
+// close as if it saved, then silently lose the work on reload)
+{
+  const ctx2 = await browser.newContext({ viewport: { width: 1000, height: 800 } });
+  const pg = await ctx2.newPage();
+  await pg.addInitScript(() => {
+    const orig = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (k, v) { if (k === 'cadence:systems') throw new Error('quota'); return orig.call(this, k, v); };
+  });
+  await pg.goto(BASE + '#tool', { waitUntil: 'networkidle' });
+  await pg.evaluate(() => document.fonts.ready);
+  await pg.selectOption('#loadSystem', 'Tailwind CSS');
+  await pg.click('#saveSys'); await pg.fill('#sysName', 'nope'); await pg.click('#sysSaveNew');
+  await pg.waitForTimeout(100);
+  assert('a failed save keeps the dialog open + shows an error',
+    await pg.locator('#sysPop').isVisible() && await pg.locator('#sysErr').isVisible());
+  assert('a failed save adds no phantom saved system',
+    await pg.evaluate(() => !document.querySelector('#loadSystem optgroup[label="My systems"]')));
+  await ctx2.close();
+}
+
 await browser.close();

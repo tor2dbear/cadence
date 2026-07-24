@@ -1284,8 +1284,11 @@ document.getElementById("share").addEventListener("click",()=>{
   const savedRow=document.getElementById("sysSavedRow"), updBtn=document.getElementById("sysUpdate"), delBtn=document.getElementById("sysDelete");
   const LS="cadence:systems";
   const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const err=document.getElementById("sysErr");
   const readSaved=()=>{ try{ return JSON.parse(localStorage.getItem(LS))||[]; }catch(_){ return []; } };
-  const writeSaved=a=>{ try{ localStorage.setItem(LS,JSON.stringify(a)); }catch(_){} };
+  // report success so callers don't close the dialog as if a full/blocked
+  // localStorage write had persisted (it silently hadn't)
+  const writeSaved=a=>{ try{ localStorage.setItem(LS,JSON.stringify(a)); return true; }catch(_){ return false; } };
   const uid=()=>Date.now().toString(36)+Math.floor(Math.random()*46656).toString(36);
   // preset options keep the plain template key as their value (so a shared
   // selectOption('Material 3 · Google') still works); saved ones use an s:<id>
@@ -1317,10 +1320,18 @@ document.getElementById("share").addEventListener("click",()=>{
       const cs=currentSaved();
       nameIn.value = cs ? cs.name : (sel.value ? currentLabel() : "");
       if(savedRow) savedRow.hidden=!cs;
-      pop.hidden=false; if(saveBtn) saveBtn.setAttribute("aria-expanded","true");
+      if(err) err.hidden=true;
+      pop.style.left="0px"; pop.hidden=false; if(saveBtn) saveBtn.setAttribute("aria-expanded","true");
+      // the header wraps, so Save can sit anywhere on its row; nudge the popover
+      // left if it would spill off the right edge (body is overflow-x:clip, so
+      // any spill would be unreachable) without pushing it off the left
+      const r=pop.getBoundingClientRect();
+      const shift=Math.max(0, Math.min(r.right-(window.innerWidth-8), r.left-8));
+      if(shift>0) pop.style.left=(-shift)+"px";
       setTimeout(()=>{ nameIn.focus(); nameIn.select(); },0);
     }else{ pop.hidden=true; if(saveBtn) saveBtn.setAttribute("aria-expanded","false"); }
   }
+  const showErr=()=>{ if(err) err.hidden=false; };
   if(saveBtn) saveBtn.addEventListener("click",e=>{ e.stopPropagation(); openPop(pop.hidden); });
   if(pop) pop.addEventListener("click",e=>e.stopPropagation());
   document.addEventListener("click",()=>{ if(pop&&!pop.hidden) openPop(false); });
@@ -1328,18 +1339,20 @@ document.getElementById("share").addEventListener("click",()=>{
   function saveAsNew(){
     const name=(nameIn.value||"").trim()||"My system";
     const list=readSaved(), id=uid();
-    list.push({id,name,state:stateObj()}); writeSaved(list);
+    list.push({id,name,state:stateObj()});
+    if(!writeSaved(list)){ showErr(); return; }   // keep the dialog open on failure
     populate("s:"+id); openPop(false);
   }
   function update(){
     const cs=currentSaved(); if(!cs) return;
     const list=readSaved(), it=list.find(s=>s.id===cs.id);
-    if(it){ it.name=(nameIn.value||"").trim()||cs.name; it.state=stateObj(); writeSaved(list); }
+    if(it){ it.name=(nameIn.value||"").trim()||cs.name; it.state=stateObj(); }
+    if(!writeSaved(list)){ showErr(); return; }
     populate("s:"+cs.id); openPop(false);
   }
   function remove(){
     const cs=currentSaved(); if(!cs) return;
-    writeSaved(readSaved().filter(s=>s.id!==cs.id));
+    if(!writeSaved(readSaved().filter(s=>s.id!==cs.id))){ showErr(); return; }
     populate(""); openPop(false);
   }
   if(nameIn) nameIn.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); (currentSaved()?update:saveAsNew)(); } });
