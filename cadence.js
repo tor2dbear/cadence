@@ -578,77 +578,20 @@ function startBenchIdle(){
 }
 
 // ---------- system read (the opinion layer) ----------
+// A snapshot of the live model in the shape system-read.js expects. Passing an
+// explicit object (rather than the checks reaching for globals) is what lets the
+// same critique run headless — in a unit test or, per the roadmap, as a service.
+function systemSnapshot(){
+  return { durations, distances, easings, intents, modes, activeMode };
+}
 function critique(){
-  const out=[];
-  // 1. ladder evenness
-  const ratios = durations.slice(1).map((d,i)=>d.ms/durations[i].ms);
-  const spread = Math.max(...ratios)/Math.min(...ratios);
-  if(spread>1.9) out.push(["warn","~",`Your duration ladder is uneven — step ratios run ${Math.min(...ratios).toFixed(2)}× to ${Math.max(...ratios).toFixed(2)}×. A ladder that grows at a steadier rate feels more like one scale.`]);
-  else out.push(["ok","✓","Duration ladder grows at a fairly even rate — it reads as one considered scale."]);
-  // 2. easing redundancy
-  let dup=null;
-  for(let a=0;a<easings.length;a++)for(let b=a+1;b<easings.length;b++){
-    const ea=easings[a],eb=easings[b];
-    if(!ea.bez||!eb.bez) continue;   // redundancy check compares cubic curves only
-    const d=ea.bez.reduce((s,v,k)=>s+Math.abs(v-eb.bez[k]),0);
-    if(d<0.15) dup=[ea.name,eb.name];
-  }
-  if(dup) out.push(["warn","!",`“${dup[0]}” and “${dup[1]}” are nearly identical curves. A tight easing set is easier to apply consistently — trim one.`]);
-  else out.push(["ok","✓",`${easings.length} distinct easings — a lean, legible set.`]);
-  // 3. enter/exit asymmetry
-  const en=intents.find(x=>/enter|open|in$/i.test(x.name)), ex=intents.find(x=>/exit|close|out$/i.test(x.name));
-  if(en&&ex){
-    const de=durMs(bindOf(en).dur),dx=durMs(bindOf(ex).dur);
-    if(Math.abs(de-dx)<40) out.push(["warn","≠",`“${en.name}” and “${ex.name}” resolve to near-equal durations (${de}/${dx}ms). Real motion is asymmetric — exits should be quicker so leaving feels decisive.`]);
-    else if(dx<de) out.push(["ok","✓",`“${ex.name}” (${dx}ms) is quicker than “${en.name}” (${de}ms) — leaving feels decisive.`]);
-    else out.push(["warn","!",`“${ex.name}” (${dx}ms) is slower than “${en.name}” (${de}ms). The user already chose to dismiss; a slow exit drags.`]);
-  }
-  // 4. long-duration budget
-  const longIntent = intents.find(x=>durMs(bindOf(x).dur)>550);
-  if(longIntent) out.push(["warn","!",`“${longIntent.name}” resolves to ${durMs(bindOf(longIntent).dur)}ms. Past ~550ms motion starts to feel like waiting — reserve the top of the ladder for large travel only.`]);
-  // 5. stagger budget (measured against a 5-item list)
-  const staggered = intents.filter(x=>+bindOf(x).stagger>0).sort((a,b)=>+bindOf(b).stagger-+bindOf(a).stagger)[0];
-  if(staggered){ const st=+bindOf(staggered).stagger, lead=st*4;
-    if(lead>500) out.push(["warn","!",`“${staggered.name}” staggers ${st}ms — across a 5-item list the last item waits ${lead}ms to even start. Long staggers make lists drag; keep the lead under ~500ms.`]);
-    else out.push(["ok","✓",`“${staggered.name}” staggers ${st}ms — a 5-item list cascades over ${lead}ms, brisk enough to read as one gesture.`]);
-  }
-  // 6. spatial/effects split that hasn't diverged is just noise
-  const idleSplit = intents.find(x=>{ const b=bindOf(x); return b.effectsEase && b.effectsEase===b.ease; });
-  if(idleSplit) out.push(["warn","!",`“${idleSplit.name}” is split into spatial · effects but both use the same easing. Diverge them (e.g. a spring for position, a flat curve for opacity) or collapse the split.`]);
-  // 7. distance / velocity — only when an intent opts into a travel distance
-  const withDist = intents.map(x=>{ const b=bindOf(x); if(!b.distance) return null;
-    const px=distPx(b.distance); if(px==null) return null;
-    const ms=durMs(b.dur); return {name:x.name, px, ms, v:px/Math.max(1,ms)}; }).filter(Boolean);
-  if(withDist.length){
-    const fast=withDist.slice().sort((a,b)=>b.v-a.v)[0];
-    const slow=withDist.slice().sort((a,b)=>a.v-b.v)[0];
-    if(fast.v>5) out.push(["warn","!",`“${fast.name}” covers ${fast.px}px in ${fast.ms}ms — that's ${fast.v.toFixed(1)}px/ms, fast enough to read as a jump rather than a move. Slow it down or shorten the travel.`]);
-    else if(slow.v<0.4 && slow.px>=64) out.push(["warn","~",`“${slow.name}” crawls ${slow.px}px over ${slow.ms}ms (${slow.v.toFixed(2)}px/ms). Long, slow travel reads as sluggish — tighten the duration or the distance.`]);
-    else out.push(["ok","✓",`Travel speeds read naturally — “${fast.name}” moves ${fast.px}px in ${fast.ms}ms (${fast.v.toFixed(1)}px/ms), in the range the eye tracks as motion.`]);
-  }
-  // 8. scroll reveals — only when an intent opts in (keeps the default read quiet)
-  const revIntents = intents.filter(x=>typeof bindOf(x).reveal==="number");
-  if(revIntents.length){
-    const staggered = revIntents.find(x=>+bindOf(x).stagger>0);
-    if(staggered) out.push(["warn","~",`“${staggered.name}” is a scroll reveal carrying a ${+bindOf(staggered).stagger}ms stagger. Native scroll-driven gives each item its own timeline, so the stagger only lands in the JS fallback — the two paths won't look identical. Drop the stagger, or accept the split.`]);
-    else out.push(["ok","✓",`${revIntents.length} scroll reveal${revIntents.length>1?"s":""} — exported as native CSS scroll-driven with an IntersectionObserver fallback for browsers without it (Firefox today).`]);
-  }
-  // 9. scroll scrubs — flag non-linear easing (scrub speed then fights the scroll)
-  const scrubIntents = intents.filter(x=>bindOf(x).scrub);
-  if(scrubIntents.length){
-    const isLin=e=>e.bez && Math.abs(e.bez[0])<.05 && Math.abs(e.bez[1])<.05 && Math.abs(e.bez[2]-1)<.05 && Math.abs(e.bez[3]-1)<.05;
-    const nonLin = scrubIntents.find(x=>!isLin(easeObj(bindOf(x).ease)));
-    if(nonLin) out.push(["warn","~",`“${nonLin.name}” scrubs with a non-linear easing — the motion speeds up and slows down against your scroll. That reads as intentional for a reveal-style scrub, but parallax/progress usually want a linear curve for a true 1:1 feel.`]);
-    else out.push(["ok","✓",`${scrubIntents.length} scroll scrub${scrubIntents.length>1?"s":""} — native scroll-driven (no duration; the range is the axis) with a scroll-position fallback for browsers without it.`]);
-  }
-  // 10. view transitions — opt-in; VT's only knobs are duration + easing
-  const vtIntents = intents.filter(x=>bindOf(x).vt);
-  if(vtIntents.length){
-    out.push(["ok","✓",`${vtIntents.length} view transition${vtIntents.length>1?"s":""} — same-document VT is Baseline (Chrome/Edge 111+, Safari 18+, Firefox 144+). The recipe feature-detects startViewTransition and honours reduced-motion, so unsupported browsers just swap instantly.`]);
-  }
-  document.getElementById("hints").innerHTML = out.map(h=>`<div class="rd ${h[0]}"><span class="ic">${h[1]}</span><span>${h[2]}</span></div>`).join("");
+  const out = CadenceSystemRead.systemRead(systemSnapshot());   // ranked, worst-first
+  document.getElementById("hints").innerHTML = out.map(h=>{
+    const fix = h.fix ? `<span class="rd__fix"> → ${h.fix}</span>` : "";
+    return `<div class="rd ${h.status}"><span class="ic">${h.icon}</span><span>${h.msg}${fix}</span></div>`;
+  }).join("");
   // a persistent read-at-a-glance badge in the section header (P3 visibility)
-  const warns=out.filter(h=>h[0]==="warn").length;
+  const warns=out.filter(h=>h.status==="warn").length;
   const badge=document.getElementById("hintCount");
   if(badge){ badge.textContent = warns ? `${warns} to review` : "all clear"; badge.className = "hintcount"+(warns?" warn":""); }
 }

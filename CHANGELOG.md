@@ -5,6 +5,37 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.18] — 2026-07-24
+
+### Changed — the opinion layer grows up
+- **The system read is now a pure, headless module (`system-read.js`).** The
+  whole critique used to live inside `critique()` in `cadence.js`, reaching for
+  globals and writing `innerHTML` in the same breath. It's now a DOM-free
+  `systemRead(system)` that takes an explicit snapshot and returns structured
+  findings — so the *same* critique runs three ways: in the app, in a headless
+  unit test (`tests/smoke31.mjs` requires it directly), and, per the roadmap,
+  behind a serverless/MCP endpoint where a CI step POSTs a system and gets its
+  warnings back. `cadence.js` just builds the snapshot and renders.
+- **Findings are ranked, worst-first.** Every observation now carries a
+  severity (`0` all-clear → `3` real defect); the read sorts by it, so problems
+  surface above the all-clears instead of sitting in check order. A slow exit
+  (the drag defect) leads the list.
+- **From diagnosis to prescription.** Each warning now carries a one-line
+  **fix** — *"→ Drop the exit onto a shorter duration than the enter."* — shown
+  after the observation, so the read tells you what to *do*, not only what's
+  wrong.
+
+### Fixed — coverage gaps in the read
+- **A one-rung duration ladder no longer produces `NaN`.** With fewer than two
+  steps there's no ratio to take; the check now guards that case instead of
+  quietly reading `-Infinity/Infinity`.
+- **Duplicate springs are caught.** The redundancy check compared cubic control
+  points only, so two near-identical springs slipped through. Springs are now
+  compared by physics (near-equal stiffness/damping).
+- **A no-op reduced-motion mode is called out.** A `reduced` mode whose bindings
+  resolve to the same durations, easings and staggers as the default won't calm
+  anything — the read now says so (opt-in, so the default stays quiet).
+
 ## [0.9.17] — 2026-07-23
 
 ### Fixed

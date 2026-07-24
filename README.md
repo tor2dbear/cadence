@@ -95,21 +95,26 @@ Prototype (v0.3). Rough edges expected.
   real springs.
 
 **The opinion layer** — a system read that critiques the whole system: ladder
-evenness, redundant easings, enter/exit asymmetry, duration budget, stagger
-budget, an idle spatial/effects split, and distance/velocity (travel fast enough
-to read as a jump).
+evenness, redundant easings (cubics *and* springs), enter/exit asymmetry,
+duration budget, stagger budget, an idle spatial/effects split, distance/velocity
+(travel fast enough to read as a jump), and a reduced-motion mode that doesn't
+actually calm anything. Findings are **ranked worst-first** by severity, and each
+warning carries a one-line **fix** — the read tells you what to do, not only
+what's wrong. The logic lives in `system-read.js` as a pure, DOM-free
+`systemRead(system)` (browser global + CommonJS), so the identical critique runs
+in the app, in a headless unit test, and — see below — as a service.
 
 Roadmap (stays static): bring-your-own component into the bench; import an
 existing motion palette (a framework's tokens) and run the system-read over it —
 the "reverse-engineer the art direction" angle.
 
 Candidates that would add a backend (a conscious fork from static-only):
-the **opinion layer as a service** — extract the pure resolve + system-read into
-a headless module and expose it as a serverless endpoint (a Cloudflare Worker
-fits the current stack) plus an optional MCP wrapper, so a CI step or an agent
-can POST a system and get its warnings ("block the build if exit is slower than
-enter"); and light security-header hardening (CSP, `frame-ancestors` on the
-demo) at the CDN layer.
+the **opinion layer as a service** — the pure system-read is already extracted
+(`system-read.js`, no DOM), so what's left is to wrap it in a serverless endpoint
+(a Cloudflare Worker fits the current stack) plus an optional MCP wrapper, so a
+CI step or an agent can POST a system and get its warnings ("block the build if
+exit is slower than enter"); and light security-header hardening (CSP,
+`frame-ancestors` on the demo) at the CDN layer.
 
 ## License
 

@@ -30,7 +30,7 @@ if [ -f dist/index.html ]; then
   # filenames are stable, so without this a fresh deploy isn't seen until the
   # cache expires (or a hard refresh). index.html itself is always revalidated
   # (max-age=0), so a per-deploy ?v=<commit> query is picked up immediately.
-  sed -i "s|href=\"styles.css\"|href=\"styles.css?v=${SHA:0:7}\"|; s|src=\"cadence.js\"|src=\"cadence.js?v=${SHA:0:7}\"|" dist/index.html
+  sed -i "s|href=\"styles.css\"|href=\"styles.css?v=${SHA:0:7}\"|; s|src=\"cadence.js\"|src=\"cadence.js?v=${SHA:0:7}\"|; s|src=\"system-read.js\"|src=\"system-read.js?v=${SHA:0:7}\"|" dist/index.html
 fi
 # the guide shares styles.css (no cadence.js) — cache-bust its stylesheet too
 [ -f dist/guide.html ] && sed -i "s|href=\"styles.css\"|href=\"styles.css?v=${SHA:0:7}\"|" dist/guide.html
