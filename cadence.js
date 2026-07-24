@@ -1424,7 +1424,17 @@ function exitTool(){
           g.appendChild(s); });
         field.appendChild(g); setTimeout(()=>g.remove(),sweep+150);
       };
-      (function loop(){ if(!document.hidden) spawn(); setTimeout(loop,R(3200,7000)); })();
+      // clustered timing: usually one, but ~30% of the time a quick burst of 2–3
+      // in tight succession, and ~1 in 3 waits is a long quiet stretch — so the
+      // cadence feels bursty and organic, not an even pulse.
+      (function loop(){
+        if(!document.hidden){ spawn();
+          if(Math.random()<0.3){ const extra=1+(Math.random()<0.5?1:0); let dly=0;
+            for(let i=0;i<extra;i++){ dly+=R(260,820); const dd=dly; setTimeout(()=>{ if(!document.hidden) spawn(); },dd); } } }
+        const gap=Math.random()<0.33 ? R(10000,22000)   // long quiet stretch
+                                     : R(2400,6500);     // otherwise a shortish wait
+        setTimeout(loop,gap);
+      })();
     })(); }
   }catch(_){}
   const start=document.getElementById("startTool");
