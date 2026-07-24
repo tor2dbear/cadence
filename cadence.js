@@ -1424,6 +1424,17 @@ function exitTool(){
           g.appendChild(s); });
         field.appendChild(g); setTimeout(()=>g.remove(),sweep+150);
       };
+      // pre-seed a few already-faded trails so the page opens mid-pattern — as if
+      // comets had passed before you arrived. Each is fully drawn (no comet head)
+      // with its fade fast-forwarded to a random age.
+      const seed=()=>{ const d=randPath(),op=Math.min(.5,Math.max(.16,R(.2,.5))),life=LIFE*(.7+op);
+        const tr=document.createElementNS(NS,"path");
+        tr.setAttribute("d",d); tr.setAttribute("pathLength","1000"); tr.setAttribute("class","ltr-gtrail");
+        tr.style.strokeDashoffset="0"; field.appendChild(tr); trails.push(tr);
+        const f=tr.animate([{opacity:op},{opacity:0}],{duration:life,easing:"linear",fill:"forwards"});
+        try{ f.currentTime=Math.random()*life*0.9; }catch(e){}   // aged 0–90% through its fade
+        f.onfinish=()=>{ tr.remove(); const i=trails.indexOf(tr); if(i>=0) trails.splice(i,1); }; };
+      for(let i=0,n=4+Math.floor(Math.random()*4);i<n;i++) seed();
       // clustered timing: usually one, but ~30% of the time a quick burst of 2–3
       // in tight succession, and ~1 in 3 waits is a long quiet stretch — so the
       // cadence feels bursty and organic, not an even pulse.
