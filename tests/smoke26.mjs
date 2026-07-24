@@ -19,9 +19,13 @@ const cdnRe = /fonts\.googleapis\.com|fonts\.gstatic\.com|api\.fontshare\.com|us
 assert('styles.css references no external font CDN', !cdnRe.test(css));
 assert('index.html references no external font CDN', !cdnRe.test(html));
 assert('demo.html references no external font CDN', !cdnRe.test(demo));
-// the demo shares the identity: mono self-hosted, no leftover old-blue accent
+// the demo is a DISTINCT "external product" skin (cool slate + indigo), not the
+// tool's warm sand — so the line between the system and a surface it's applied
+// to reads clearly. It still self-hosts fonts and avoids the old blue accent.
 assert('demo.html self-hosts JetBrains Mono', /@font-face[^}]*url\(["']?fonts\/jetbrains-mono/.test(demo));
 assert('demo.html dropped the old blue accent', !/#3b6ef5|#3160e0/i.test(demo));
+assert('demo.html uses its own product palette (cool slate + indigo, not the sand tool)',
+  /--accent:#4f46c4/.test(demo) && !/--bg:#e7dfce/.test(demo));
 assert('demo.html is dual-theme (prefers-color-scheme)', /@media\s*\(prefers-color-scheme:\s*dark\)/.test(demo));
 assert('@font-face sources are local fonts/', /@font-face[^}]*url\(["']?fonts\//.test(css));
 assert('Fraunces, Switzer, JetBrains Mono all self-hosted',
