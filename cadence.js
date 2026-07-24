@@ -1450,14 +1450,21 @@ function exitTool(){
         const f=tr.animate([{opacity:op},{opacity:0}],{duration:life,easing:"linear",fill:"forwards"});
         try{ f.currentTime=Math.random()*life*0.9; }catch(e){}   // aged 0–90% through its fade
         f.onfinish=()=>{ tr.remove(); const i=trails.indexOf(tr); if(i>=0) trails.splice(i,1); }; };
-      for(let i=0,n=4+Math.floor(Math.random()*4);i<n;i++) seed();
-      // clustered timing: usually one, but ~30% of the time a quick burst of 2–3
+      // only run while the landing is the visible view — when the page opens at
+      // #tool / a shared hash, or after entering the tool, #landing is
+      // display:none and the field must not keep minting SVG nodes + animations.
+      const onLanding=()=>mode==="landing"&&!document.hidden;
+      // seed the "opens mid-pattern" trails lazily, the first time the landing is
+      // actually shown (so a tool-boot doesn't seed a hidden view)
+      let seeded=false;
+      const seedOnce=()=>{ if(seeded) return; seeded=true; for(let i=0,n=4+Math.floor(Math.random()*4);i<n;i++) seed(); };
+      // clustered timing: usually one, but ~20% of the time a quick burst of 2–3
       // in tight succession, and ~1 in 3 waits is a long quiet stretch — so the
       // cadence feels bursty and organic, not an even pulse.
       (function loop(){
-        if(!document.hidden){ spawn();
+        if(onLanding()){ seedOnce(); spawn();
           if(Math.random()<0.2){ const extra=1+(Math.random()<0.25?1:0); let dly=0;   // 2-comet bursts ~3× commoner than 3-comet
-            for(let i=0;i<extra;i++){ dly+=R(260,820); const dd=dly; setTimeout(()=>{ if(!document.hidden) spawn(); },dd); } } }
+            for(let i=0;i<extra;i++){ dly+=R(260,820); const dd=dly; setTimeout(()=>{ if(onLanding()) spawn(); },dd); } } }
         const gap=Math.random()<0.35 ? R(11000,23000)   // long quiet stretch
                                      : R(3800,8500);     // otherwise a shortish wait
         setTimeout(loop,gap);
