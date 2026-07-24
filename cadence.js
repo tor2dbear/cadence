@@ -1405,7 +1405,7 @@ function exitTool(){
           f.onfinish=()=>{ tr.remove(); const i=trails.indexOf(tr); if(i>=0) trails.splice(i,1); }; };
         // the comet: five accent segments sharing one leading edge (overlap → taper)
         const g=document.createElementNS(NS,"g");
-        [26,60,104,154,210].forEach(base=>{ const s=document.createElementNS(NS,"path");
+        [13,30,52,77,105].forEach(base=>{ const s=document.createElementNS(NS,"path");
           s.setAttribute("d",d); s.setAttribute("pathLength","1000"); s.setAttribute("class","ltr-gcomet");
           const L=base*k; s.style.strokeDasharray=L+" 3000";
           s.animate([{strokeDashoffset:L+60},{strokeDashoffset:L-1080}],{duration:sweep,easing:"linear",fill:"forwards"});
