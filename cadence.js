@@ -1385,6 +1385,94 @@ function exitTool(){
 }
 (function initLanding(){
   setBootClass();
+  // hero backdrop: the generative comet field is the shipped default. The bezier
+  // editor motif is kept (not shipped by default) behind ?hero=editor; ?hero=both
+  // overlays them. So the launch experience is comet-only, editor preserved.
+  try{ const hv=new URLSearchParams(location.search).get("hero");
+    const bg=document.querySelector(".lherobg"); if(hv&&bg) bg.setAttribute("data-hero",hv);
+    // the editor morphs via SMIL, so honour reduced-motion by pausing it at its
+    // initial frame (its CSS zoom/pan + the CSS trace comet are already gated)
+    if(reduce){ const es=document.querySelector(".lce-svg"); if(es&&es.pauseAnimations) es.pauseAnimations(); }
+    // generative trace field: comets sweep RANDOM easing-curve paths (varied
+    // shape + position), each leaving a very faint grey trail that lingers ~a
+    // minute then fades — so the backdrop is an ever-changing web of lines,
+    // never the same twice. All WAAPI (no SMIL); skipped for reduced-motion, and
+    // skipped entirely for the editor-only variant (?hero=editor hides .ltr-svg,
+    // so there's nothing to draw into).
+    if(!reduce && hv!=="editor"){ (function(){
+      const svg=document.querySelector(".ltr-svg"); if(!svg) return;
+      const NS="http://www.w3.org/2000/svg";
+      let field=svg.querySelector(".ltr-field");
+      if(!field){ field=document.createElementNS(NS,"g"); field.setAttribute("class","ltr-field"); svg.appendChild(field); }
+      const W=1000,H=500,LIFE=66000,CAP=16,R=(a,b)=>a+Math.random()*(b-a),trails=[];
+      const randPath=()=>{ const y0=R(30,H-30),y3=R(20,H-70),x1=R(120,430),y1=R(0,H),x2=R(540,830),y2=R(0,H);
+        return "M-40,"+(y0|0)+" C"+(x1|0)+","+(y1|0)+" "+(x2|0)+","+(y2|0)+" "+(W+40)+","+(y3|0); };
+      const spawn=()=>{ const d=randPath(),sp=R(0.7,1.5),sweep=3400/sp,k=sp;   // faster ⇒ shorter sweep + longer comet
+        // trail strength varies for dynamism: faster comets leave a stronger
+        // mark, plus a random jitter; stronger trails also linger a touch longer
+        const op=Math.min(.55,Math.max(.16,.34+(sp-1)*.26+(Math.random()-.5)*.26));
+        const life=LIFE*(.7+op);
+        // the lingering grey trail: drawn on behind the head, then a long fade
+        const tr=document.createElementNS(NS,"path");
+        tr.setAttribute("d",d); tr.setAttribute("pathLength","1000"); tr.setAttribute("class","ltr-gtrail");
+        tr.style.strokeDashoffset="1000"; field.appendChild(tr); trails.push(tr);
+        while(trails.length>CAP){ const o=trails.shift(); if(o){ o.getAnimations&&o.getAnimations().forEach(a=>a.cancel()); o.remove(); } }
+        // the comet's ALONG-PATH speed follows the easing the curve draws: advance
+        // its x linearly, so it zips through steep sections and lingers on flat
+        // ones — like the value the easing would animate. Build the head's
+        // normalised-position schedule by sampling the path and inverting x→pos.
+        const K=24; let pos;
+        try{ const gl=tr.getTotalLength(),N=40,xs=[],ps=[];
+          for(let i=0;i<=N;i++){ const pt=tr.getPointAtLength(gl*i/N); xs.push(pt.x); ps.push(1000*i/N); }
+          const x0=xs[0],xN=xs[N]; pos=[];
+          for(let j=0;j<=K;j++){ const tx=x0+(xN-x0)*j/K; let i=1; while(i<N&&xs[i]<tx)i++;
+            const u=(tx-xs[i-1])/((xs[i]-xs[i-1])||1); pos.push(ps[i-1]+(ps[i]-ps[i-1])*u); }
+        }catch(e){ pos=[]; for(let j=0;j<=K;j++) pos.push(1000*j/K); }   // fallback: uniform speed
+        // trail reveals right behind the head, on the same schedule
+        const reveal=tr.animate(pos.map(p=>({strokeDashoffset:1000-p,opacity:op})),{duration:sweep,easing:"linear",fill:"forwards"});
+        reveal.onfinish=()=>{ const f=tr.animate([{opacity:op},{opacity:0}],{duration:life,easing:"linear",fill:"forwards"});
+          f.onfinish=()=>{ tr.remove(); const i=trails.indexOf(tr); if(i>=0) trails.splice(i,1); }; };
+        // the comet: twelve low-opacity accent segments sharing one leading edge — the
+        // overlap count fades it smoothly (short bright head → long light tail → grey)
+        const g=document.createElementNS(NS,"g");
+        [6,13,22,33,46,61,79,100,124,151,181,214].forEach(base=>{ const s=document.createElementNS(NS,"path");
+          s.setAttribute("d",d); s.setAttribute("pathLength","1000"); s.setAttribute("class","ltr-gcomet");
+          const L=base*k; s.style.strokeDasharray=L+" 3000";
+          s.animate(pos.map(p=>({strokeDashoffset:L-p})),{duration:sweep,easing:"linear",fill:"forwards"});
+          g.appendChild(s); });
+        field.appendChild(g); setTimeout(()=>g.remove(),sweep+150);
+      };
+      // pre-seed a few already-faded trails so the page opens mid-pattern — as if
+      // comets had passed before you arrived. Each is fully drawn (no comet head)
+      // with its fade fast-forwarded to a random age.
+      const seed=()=>{ const d=randPath(),op=Math.min(.5,Math.max(.16,R(.2,.5))),life=LIFE*(.7+op);
+        const tr=document.createElementNS(NS,"path");
+        tr.setAttribute("d",d); tr.setAttribute("pathLength","1000"); tr.setAttribute("class","ltr-gtrail");
+        tr.style.strokeDashoffset="0"; field.appendChild(tr); trails.push(tr);
+        const f=tr.animate([{opacity:op},{opacity:0}],{duration:life,easing:"linear",fill:"forwards"});
+        try{ f.currentTime=Math.random()*life*0.9; }catch(e){}   // aged 0–90% through its fade
+        f.onfinish=()=>{ tr.remove(); const i=trails.indexOf(tr); if(i>=0) trails.splice(i,1); }; };
+      // only run while the landing is the visible view — when the page opens at
+      // #tool / a shared hash, or after entering the tool, #landing is
+      // display:none and the field must not keep minting SVG nodes + animations.
+      const onLanding=()=>mode==="landing"&&!document.hidden;
+      // seed the "opens mid-pattern" trails lazily, the first time the landing is
+      // actually shown (so a tool-boot doesn't seed a hidden view)
+      let seeded=false;
+      const seedOnce=()=>{ if(seeded) return; seeded=true; for(let i=0,n=4+Math.floor(Math.random()*4);i<n;i++) seed(); };
+      // clustered timing: usually one, but ~20% of the time a quick burst of 2–3
+      // in tight succession, and ~1 in 3 waits is a long quiet stretch — so the
+      // cadence feels bursty and organic, not an even pulse.
+      (function loop(){
+        if(onLanding()){ seedOnce(); spawn();
+          if(Math.random()<0.2){ const extra=1+(Math.random()<0.25?1:0); let dly=0;   // 2-comet bursts ~3× commoner than 3-comet
+            for(let i=0;i<extra;i++){ dly+=R(260,820); const dd=dly; setTimeout(()=>{ if(onLanding()) spawn(); },dd); } } }
+        const gap=Math.random()<0.35 ? R(11000,23000)   // long quiet stretch
+                                     : R(3800,8500);     // otherwise a shortish wait
+        setTimeout(loop,gap);
+      })();
+    })(); }
+  }catch(_){}
   const start=document.getElementById("startTool");
   if(start) start.addEventListener("click",enterTool);
   // the tool's wordmark is a home link → back to the intro. Plain modified

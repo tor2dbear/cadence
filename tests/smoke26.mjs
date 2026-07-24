@@ -43,6 +43,47 @@ assert('easing curve draws via clip-path, not a mismatched stroke-dash',
 const springKf = (css.match(/@keyframes ltSpring\{[^\n]*/) || [''])[0];
 assert('spring tile travels the full track via left, not a fixed translateX',
   /left:calc\(100% - 22px\)/.test(springKf) && !/translateX/.test(springKf));
+// variant A — traces: a GENERATIVE field. JS sweeps comets along random
+// easing-curve paths (WAAPI, no SMIL), each leaving a faint grey trail that
+// lingers ~a minute then fades → an ever-changing web, never fixed curves
+const js = read('cadence.js');
+assert('traces: a generative field container, not fixed curves',
+  /class="lherobg"/.test(html)
+  && /class="ltr-field"/.test(html)
+  && !/ltr-echo/.test(html) && !/id="ltrp/.test(html));
+assert('the field spawns comets on random paths with long-lingering trails (WAAPI, no SMIL)',
+  /ltr-field/.test(js) && /createElementNS/.test(js) && /Math\.random/.test(js)
+  && /\.animate\(/.test(js) && /ltr-gtrail/.test(js) && /ltr-gcomet/.test(js)
+  && !/<animateTransform/.test(html));
+assert('the field is gated (reduced-motion + editor-only variant) + styled faint',
+  /if\(!reduce && hv!=="editor"\)\{\s*\(function\(\)\{[\s\S]*?ltr-field/.test(js)
+  && /\.ltr-gcomet\{[^}]*stroke:var\(--accent\)/.test(css)
+  && /\.ltr-gtrail\{[\s\S]*?color-mix\(in srgb,var\(--ink\)/.test(css));
+// variant B — a live editor that morphs + zoom/pans, BOTH SMIL on one timeline
+// (the viewBox animation shares the morph's keyTimes), so they stay in sync;
+// kept behind ?hero=editor (comet field is the shipped default)
+// shape morph (21s = 3 beats) and viewBox zoom (28s = 4 beats) are separate SMIL
+// on a shared 7s beat, so transitions coincide (synced) but the shape↔zoom
+// pairing keeps shifting (3 and 4 coprime) — no CSS lcePan drift
+assert('editor: shape (21s) + zoom (28s) are beat-synced SMIL with coprime periods',
+  /class="lce-live"/.test(html)
+  && /<animate attributeName="d" dur="21s"/.test(html)
+  && /<animate attributeName="viewBox" dur="28s"[\s\S]*?keyTimes="0;0.1964;0.25;0.4464;0.5;0.6964;0.75;0.9464;1"/.test(html)
+  && !/@keyframes lcePan/.test(css)
+  && /\.lherobg\[data-hero="editor"\] \.ltr-svg\{display:none\}/.test(css));
+// the loop runs three DISTINCT easing shapes (ease-out / ease-in / overshoot)
+assert('editor loop has 3 distinct easing shapes (ease-in dips low, overshoot goes above)',
+  /C84,100 150,86/.test(html) && /C68,-18 150,42/.test(html) && /C50,28 122,24/.test(html));
+// each morph overshoots past its target then settles (a bounce) via extra
+// value-frames — e.g. the ease-in P1 overshoots to 114 before settling to 100
+assert('editor morphs bounce (a subtle overshoot value-frame past the target)',
+  /C87,107 153,92/.test(html) && /values="[^"]*;107;100;/.test(html));
+// the editor sits in the open right-hand space, sways about its Y axis between
+// morphs, and is a desktop-only flourish
+assert('editor is confined to the right + sways on the Y axis, desktop-only',
+  /\.lce-svg\{position:absolute;top:[\d.]+%;right:[\d.]+%/.test(css)
+  && /@keyframes lceSpin\{[\s\S]*?rotateY/.test(css)
+  && /@media \(max-width:\d+px\)\{\s*\.lherobg\[data-hero\] \.lce-svg\{display:none/.test(css));
 
 // --- runtime checks: the fonts load and the identity is applied ---
 const browser = await chromium.launch();

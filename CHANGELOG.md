@@ -5,6 +5,28 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.21] — 2026-07-24
+
+### Changed — the hero backdrop is a generative comet field
+- **The landing hero backdrop is a generative field of comets.** Comets sweep
+  **random easing-curve paths** (varied shape + position), each leaving a very
+  faint navy trail that **lingers ~a minute then fades** — an ever-changing web
+  of lines, never the same twice. Each comet is a **compact bright head with a
+  long, smoothly-fading tail** (twelve overlapping low-opacity segments), and its
+  **along-path speed follows the easing the curve draws** (fast on steep
+  sections, slow on flats — like the value the easing animates). Speed, length
+  and trail strength vary per pass; spawns are **bursty** (occasional tight
+  bursts, occasional long quiets) and pre-seed a few faded trails so the page
+  opens mid-pattern. All **Web Animations API (no SMIL)**; spawning pauses when
+  the tab is hidden and **reduced-motion** skips it entirely.
+- **A live bezier-editor motif is kept behind `?hero=editor`** (not shipped by
+  default): the curve morphs with its handles — with a subtle overshoot bounce —
+  while the camera zooms/pans, both SMIL on one timeline so they stay in sync;
+  three distinct easing shapes rotate against four zoom levels (coprime periods)
+  so the shape↔size pairing never repeats.
+- Removed the "Flip to plain motion…" hint under the crafted/plain switch — the
+  labels speak for themselves.
+
 ## [0.9.20] — 2026-07-24
 
 ### Added — one-click apply

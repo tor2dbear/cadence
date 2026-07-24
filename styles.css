@@ -35,7 +35,7 @@
   }
 }
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;margin:0;overflow-x:clip}
 em{font-style:italic}
 button{font-family:var(--sans)}
 /* visible keyboard focus for every control */
@@ -352,7 +352,8 @@ html.boot-tool #landing{display:none}
   --l-spring:linear(0,.006,.025,.1,.281,.489,.676,.82,.925,.99,1.02,1.03,1.024,1.012,1.002,.997,.997,1,1.001,1);
   --l-curve:cubic-bezier(.22,1,.36,1);
   min-height:100vh;display:flex;flex-direction:column;gap:34px;
-  max-width:960px;margin-inline:auto;padding:22px 26px 60px}
+  max-width:960px;margin-inline:auto;padding:22px 26px 60px;
+  position:relative;isolation:isolate}   /* hosts the full-bleed hero backdrop (z-index:-1) */
 .landing.naive{ --l-ease:linear; --l-stag:0ms; --l-spring:linear(0,1); --l-curve:linear }
 
 .lnav{display:flex;align-items:center;justify-content:space-between}
@@ -365,6 +366,65 @@ html.boot-tool #landing{display:none}
 .lnav__link:hover{border-color:var(--accent);color:var(--ink)}
 
 .lhero{max-width:720px;margin-top:6vh}
+/* ambient easing traces behind the hero: a short arc glides along each
+   (otherwise-invisible) easing curve, so you read the shape from the motion —
+   the whole curve is never shown. Full-bleed: it breaks out of the centred
+   column to span the whole viewport, sitting below all copy (z-index:-1 in the
+   landing's isolated stacking context). */
+/* height is also capped against width (108vw) so the field covers a decent band
+   on narrow/portrait screens (down through the CTAs) without running the whole
+   page. The generative comets are short discrete strokes, so a tall/zoomed box
+   no longer risks the old solid-bar artefact. On desktop 84vh wins (unchanged). */
+.lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,108vw,820px);
+  z-index:-1;pointer-events:none;overflow:hidden}
+.ltr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+/* generative trace field (built by JS). Each comet is twelve low-opacity accent
+   segments sharing one leading edge (grouped in a <g>), lengths growing toward
+   the tail; the overlap count fades it smoothly — a compact bright head and a
+   long light tail (the faintest bands are the longest) melting into the grey trail
+   each leaves behind (lingers ~a minute then fades). Kept faint so the
+   accumulating web stays behind the copy. */
+.ltr-gcomet{fill:none;stroke-linecap:round;stroke-width:1.5;stroke:var(--accent);opacity:.1}
+.ltr-gtrail{fill:none;stroke-linecap:round;stroke-width:1.1;stroke-dasharray:1000 1000;
+  /* a navy-leaning grey (tinted toward the accent) so the comet's faint tail
+     melts into it in HUE too, not just opacity — the head stays pure accent */
+  stroke:color-mix(in srgb,color-mix(in srgb,var(--accent) 42%,var(--ink)) 18%,transparent)}
+/* mobile: the height cap already keeps it a band; thin the comets a touch */
+@media (max-width:720px){ .ltr-gcomet{stroke-width:1.2} }
+/* variant B — a live bezier editor: the curve morphs with its handles and the
+   camera zooms + pans, both SMIL on one timeline (markup) so they stay in sync.
+   It sits in the open space to the RIGHT of the copy (desktop only),
+   preserveAspectRatio=meet so it fits its box. NOT shipped by default — kept
+   behind ?hero=editor (the comet field is the default); ?hero=both overlays. */
+.lce-svg{position:absolute;top:16%;right:2%;left:auto;width:44%;height:60%;overflow:visible}
+/* lighter + thinner than before, so the editor recedes behind the copy */
+.lce-base{fill:none;stroke:color-mix(in srgb,var(--ink) 6%,transparent);stroke-width:.9;stroke-dasharray:2 3.5}
+.lce-curve{fill:none;stroke:color-mix(in srgb,var(--ink) 11%,transparent);stroke-width:1.2;stroke-linecap:round}
+.lce-handle{stroke:color-mix(in srgb,var(--accent) 16%,transparent);stroke-width:.7}
+.lce-anchor{fill:color-mix(in srgb,var(--ink) 22%,transparent)}
+/* control points are ring knobs filled with the bg, so the handle line tucks
+   cleanly under them instead of running through the dot */
+.lce-ctrl{fill:var(--bg);stroke:color-mix(in srgb,var(--accent) 40%,transparent);stroke-width:.5}
+/* the zoom/pan is now an SMIL viewBox animation in the markup (same timeline +
+   keyTimes as the morph), so it stays locked to the curve — no CSS lcePan. */
+/* between morphs the editor drifts with a subtle rotation about its Y axis, so
+   the held frame isn't dead-still; timed slower than the morph so it reads as
+   an idle sway, not a spin. (Perspective on the same element gives the 3D.) */
+@media (prefers-reduced-motion:no-preference){
+  .lce-svg{animation:lceSpin 20s ease-in-out infinite}
+}
+@keyframes lceSpin{
+  0%  {transform:perspective(840px) rotateY(-6.5deg)}
+  50% {transform:perspective(840px) rotateY(6.5deg)}
+  100%{transform:perspective(840px) rotateY(-6.5deg)}
+}
+/* the switch: A (traces) by default, B (editor) with ?hero=editor, both with ?hero=both */
+.lherobg .lce-svg{display:none}
+.lherobg[data-hero="editor"] .ltr-svg{display:none}
+.lherobg[data-hero="editor"] .lce-svg,
+.lherobg[data-hero="both"] .lce-svg{display:block}
+/* the editor is a desktop-only flourish — it needs the open right-hand space */
+@media (max-width:860px){ .lherobg[data-hero] .lce-svg{display:none!important} }
 .lkicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
 .lhead{font-family:var(--serif);font-size:clamp(30px,6.2vw,54px);line-height:1.05;letter-spacing:-.015em;margin:0 0 18px;font-weight:600;font-optical-sizing:auto}
 .lhead em{font-style:italic;color:var(--accent)}
@@ -399,8 +459,6 @@ html.boot-tool #landing{display:none}
 .ltaste__opt{font-family:var(--mono);font-size:12px;color:var(--ink-faint);transition:color .18s ease}
 .landing:not(.naive) .ltaste__opt--crafted{color:var(--ink)}
 .landing.naive .ltaste__opt--plain{color:var(--warn)}
-.ltaste__hint{font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--ink-faint);margin:12px 0 0;max-width:60ch}
-.ltaste__hint strong{font-weight:400;color:var(--ink-dim)}
 .opinion{font-family:var(--mono);font-size:12.5px;line-height:1.5;margin:12px 0 0;padding-left:20px;position:relative;
   transition:color var(--l-in) var(--l-ease)}
 .opinion::before{position:absolute;left:0;top:0;font-weight:700}
