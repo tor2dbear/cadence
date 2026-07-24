@@ -1429,10 +1429,10 @@ function exitTool(){
       // cadence feels bursty and organic, not an even pulse.
       (function loop(){
         if(!document.hidden){ spawn();
-          if(Math.random()<0.3){ const extra=1+(Math.random()<0.5?1:0); let dly=0;
+          if(Math.random()<0.2){ const extra=1+(Math.random()<0.45?1:0); let dly=0;
             for(let i=0;i<extra;i++){ dly+=R(260,820); const dd=dly; setTimeout(()=>{ if(!document.hidden) spawn(); },dd); } } }
-        const gap=Math.random()<0.33 ? R(10000,22000)   // long quiet stretch
-                                     : R(2400,6500);     // otherwise a shortish wait
+        const gap=Math.random()<0.35 ? R(11000,23000)   // long quiet stretch
+                                     : R(3800,8500);     // otherwise a shortish wait
         setTimeout(loop,gap);
       })();
     })(); }

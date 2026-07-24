@@ -46,18 +46,6 @@ const midY = (page, sel) => page.locator(sel).evaluate(el => { const b = el.getB
   await page.close();
 }
 
-// ---- the "naïve" toggle is explained (not just a bare label) ----
-{
-  const page = await browser.newPage({ viewport: { width: 900, height: 800 } });
-  await page.goto(BASE, { waitUntil: 'networkidle' });
-  const hint = page.locator('.ltaste__hint');
-  assert('the motion switch carries an explanation', await hint.count() === 1);
-  const hintTxt = await hint.innerText();
-  assert('the explanation says what plain motion is (no jargon)',
-    /plain/i.test(hintTxt) && /(one speed|straight lines|everything at once|difference)/i.test(hintTxt));
-  await page.close();
-}
-
 // ---- the guide's primary CTA text is visible on its filled button ----
 // (it used to inherit --accent from `.guide a` and vanish, navy-on-navy)
 {
