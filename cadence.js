@@ -1393,6 +1393,9 @@ function exitTool(){
     // the editor morphs via SMIL, so honour reduced-motion by pausing it at its
     // initial frame (its CSS zoom/pan + the CSS trace comet are already gated)
     if(reduce){ const es=document.querySelector(".lce-svg"); if(es&&es.pauseAnimations) es.pauseAnimations(); }
+    // the brand logomark is a live easing curve (SMIL); freeze it on its first
+    // frame under reduced-motion — the static favicon shows this same frame
+    if(reduce){ document.querySelectorAll(".logomark--anim").forEach(m=>{ if(m.pauseAnimations) m.pauseAnimations(); }); }
     // generative trace field: comets sweep RANDOM easing-curve paths (varied
     // shape + position), each leaving a very faint grey trail that lingers ~a
     // minute then fades — so the backdrop is an ever-changing web of lines,

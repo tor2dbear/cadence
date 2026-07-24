@@ -46,6 +46,13 @@ input.stag:focus-visible,.drow__name:focus-visible,.ecard__name:focus-visible,.m
 header.top{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(8px);z-index:20}
 header.top .brand{font-family:var(--serif);font-size:19px;letter-spacing:-.01em;margin:0;font-weight:600;display:inline-flex;align-items:center;gap:8px}
 header.top .brand .logomark{display:block}
+/* the mark is a live easing curve: four steps ride a bezier that morphs between
+   easing shapes (SMIL on d + the dots' cx/cy; cadence.js pauses it under
+   reduced-motion). Navy, theme-aware; brighter head. */
+.logomark--anim{display:block;overflow:visible}
+.logomark--anim .lm-guide{stroke:var(--accent);opacity:.3}
+.logomark--anim .lm-dot{fill:var(--accent)}
+.logomark--anim .lm-head{fill:var(--accent-hi)}
 /* the wordmark doubles as "home" — click it to return to the intro (mirrors
    the entrance, so the brand morphs back via the same View Transition) */
 header.top .brand a.brandhome{display:inline-flex;align-items:center;gap:8px;color:inherit;text-decoration:none;cursor:pointer;transition:opacity 150ms ease}

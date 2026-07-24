@@ -85,6 +85,22 @@ assert('editor is confined to the right + sways on the Y axis, desktop-only',
   && /@keyframes lceSpin\{[\s\S]*?rotateY/.test(css)
   && /@media \(max-width:\d+px\)\{\s*\.lherobg\[data-hero\] \.lce-svg\{display:none/.test(css));
 
+// the brand logomark is the LIVE easing-curve mark: four dots ride a bezier
+// that morphs between easing shapes (SMIL on d + the middle dots' cx/cy),
+// navy + theme-aware, frozen under reduced-motion by cadence.js. The static
+// favicon is one frozen frame of that same mark — no leftover teal/amber palette.
+assert('brand logomark is the animated SMIL easing-curve mark (no static img in index)',
+  /class="logomark logomark--anim"[\s\S]*?<animate attributeName="d"[\s\S]*?class="lm-head"/.test(html)
+  && !/<img class="logomark"/.test(html));
+assert('the animated mark is navy + theme-aware and paused under reduced-motion',
+  /\.logomark--anim \.lm-dot\{fill:var\(--accent\)\}/.test(css)
+  && /\.logomark--anim \.lm-head\{fill:var\(--accent-hi\)\}/.test(css)
+  && /if\(reduce\)\{ document\.querySelectorAll\("\.logomark--anim"\)/.test(js));
+const fav = read('favicon.svg');
+assert('favicon is a frozen frame of the mark (navy, no legacy teal/amber/violet)',
+  /C10\.5,13\.5 19,10 24,9/.test(fav) && /#8ea2e8/.test(fav)
+  && !/#8ad0c6|#e9b872|#b79cf0/.test(fav));
+
 // --- runtime checks: the fonts load and the identity is applied ---
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1100, height: 820 } });
