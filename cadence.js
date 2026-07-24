@@ -584,8 +584,21 @@ function startBenchIdle(){
 function systemSnapshot(){
   return { durations, distances, easings, intents, modes, activeMode };
 }
+// the shipped design-system templates, as system snapshots, so the read can
+// benchmark the live system against the field ("steeper than Material's").
+// Excludes the Cadence starter — we compare against real, shipped systems only.
+function benchmarkCorpus(){
+  return Object.entries(TEMPLATES)
+    .filter(([name])=>name!=="Cadence starter")
+    .map(([name,t])=>({
+      name: name.split(" · ")[0],
+      durations: t.d.map(([n,ms])=>({name:n,ms})),
+      intents: t.i.map(([n,dur,ease])=>({name:n,binds:[{dur,ease,stagger:0,prop:"all"}]})),
+      modes:[{name:"default"}], activeMode:0,
+    }));
+}
 function critique(){
-  const out = CadenceSystemRead.systemRead(systemSnapshot());   // ranked, worst-first
+  const out = CadenceSystemRead.systemRead(systemSnapshot(), {corpus:benchmarkCorpus()});   // ranked, worst-first
   document.getElementById("hints").innerHTML = out.map(h=>{
     const fix = h.fix ? `<span class="rd__fix"> → ${h.fix}</span>` : "";
     return `<div class="rd ${h.status}"><span class="ic">${h.icon}</span><span>${h.msg}${fix}</span></div>`;

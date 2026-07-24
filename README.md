@@ -98,11 +98,15 @@ Prototype (v0.3). Rough edges expected.
 evenness, redundant easings (cubics *and* springs), enter/exit asymmetry,
 duration budget, stagger budget, an idle spatial/effects split, distance/velocity
 (travel fast enough to read as a jump), and a reduced-motion mode that doesn't
-actually calm anything. Findings are **ranked worst-first** by severity, and each
-warning carries a one-line **fix** — the read tells you what to do, not only
-what's wrong. The logic lives in `system-read.js` as a pure, DOM-free
-`systemRead(system)` (browser global + CommonJS), so the identical critique runs
-in the app, in a headless unit test, and — see below — as a service.
+actually calm anything. It also runs a **comparative read** — benchmarking the
+live system against the field of real design systems it ships (ladder growth and
+overall tempo vs Material, Carbon, Fluent, …), so the numbers get a reference
+frame ("steeper than every reference system"). Findings are **ranked worst-first**
+by severity, and each warning carries a one-line **fix** — the read tells you
+what to do, not only what's wrong. The logic lives in `system-read.js` as a pure,
+DOM-free `systemRead(system, {corpus})` (browser global + CommonJS), so the
+identical critique runs in the app, in a headless unit test, and — see below — as
+a service.
 
 Roadmap (stays static): bring-your-own component into the bench; import an
 existing motion palette (a framework's tokens) and run the system-read over it —

@@ -51,7 +51,25 @@
   // is a cubic curve effectively the linear ramp? (used by the scrub check)
   const isLinearBez = b => b && Math.abs(b[0]) < .05 && Math.abs(b[1]) < .05 && Math.abs(b[2] - 1) < .05 && Math.abs(b[3] - 1) < .05;
 
-  function systemRead(system) {
+  const median = xs => { if (!xs.length) return null; const s = xs.slice().sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+
+  // A few order-invariant scalars that summarise a system's *character* — enough
+  // to benchmark it against real design systems (the comparative read). `growth`
+  // is the geometric-mean step of the duration ladder ((max/min)^(1/(rungs-1))),
+  // i.e. "grows ~1.5× per step"; `medianIntentMs` is the tempo the system
+  // actually animates at (median of the resolved intent durations).
+  function fingerprint(system) {
+    const ctx = makeCtx(system);
+    const { durations, intents, durMs, bindOf } = ctx;
+    const ms = durations.map(d => +d.ms).filter(x => x > 0);
+    const rungs = ms.length;
+    const minMs = rungs ? Math.min(...ms) : 0, maxMs = rungs ? Math.max(...ms) : 0;
+    const growth = rungs >= 2 && minMs > 0 ? Math.pow(maxMs / minMs, 1 / (rungs - 1)) : null;
+    const medianIntentMs = median(intents.map(it => durMs(bindOf(it).dur)).filter(x => x > 0));
+    return { rungs, minMs, maxMs, growth, medianIntentMs };
+  }
+
+  function systemRead(system, opts) {
     const ctx = makeCtx(system);
     const { durations, easings, intents, durMs, distPx, easeObj, bindOf } = ctx;
     const out = [];
@@ -154,9 +172,49 @@
       if (!changes) push("warn", NIT, `Your “reduced” mode resolves to the same durations, easings and staggers as the default — it won't calm anything for users who ask for less motion.`, "Shorten or flatten its bindings, or drop the mode.");
     }
 
+    // 12. the comparative read — measure this system against a corpus of real
+    //     design systems ("your ladder is steeper than Material's"). This is the
+    //     "reverse-engineer the art direction" angle: the critique stops judging
+    //     in a vacuum and positions the system in the field. Opt-in — only runs
+    //     when a corpus is supplied, so the headless default read is unchanged.
+    //     Each corpus entry is a named system snapshot: {name, durations, intents}.
+    const corpus = (opts && opts.corpus) || [];
+    if (corpus.length) {
+      const mine = fingerprint(system);
+      const refs = corpus.map(c => ({ name: c.name, fp: fingerprint(c) }));
+      const nearestBy = (pick, val) => refs.filter(r => pick(r.fp) != null)
+        .slice().sort((a, b) => Math.abs(pick(a.fp) - val) - Math.abs(pick(b.fp) - val)).slice(0, 3);
+
+      // ladder growth vs the field
+      const withG = refs.filter(r => r.fp.growth != null);
+      if (mine.growth != null && withG.length >= 3) {
+        const gs = withG.map(r => r.fp.growth), lo = Math.min(...gs), hi = Math.max(...gs), g = mine.growth;
+        const nameG = r => `${r.name} ${r.fp.growth.toFixed(1)}×`;
+        if (g > hi * 1.02) {
+          const steep = withG.slice().sort((a, b) => b.fp.growth - a.fp.growth)[0];
+          push("warn", NIT, `Your duration ladder grows ~${g.toFixed(1)}× per step — steeper than every reference system (the steepest, ${nameG(steep)}). Steep ladders jump between tempos and skip the middle.`, "Add an intermediate rung, or flatten the top of the ladder.");
+        } else if (g < lo * 0.98) {
+          const flat = withG.slice().sort((a, b) => a.fp.growth - b.fp.growth)[0];
+          push("warn", NIT, `Your duration ladder grows ~${g.toFixed(1)}× per step — flatter than every reference system (the flattest, ${nameG(flat)}). Steps this close together can read as redundant.`, "Widen the ladder, or drop a rung.");
+        } else {
+          push("ok", OK, `Your duration ladder grows ~${g.toFixed(1)}× per step — in the range real systems use (${nearestBy(fp => fp.growth, g).map(nameG).join(", ")}).`);
+        }
+      }
+
+      // overall tempo (typical resolved intent duration) vs the field
+      const meds = refs.map(r => r.fp.medianIntentMs).filter(x => x != null);
+      if (mine.medianIntentMs != null && meds.length >= 3) {
+        const lo = Math.min(...meds), hi = Math.max(...meds), m = Math.round(mine.medianIntentMs);
+        const nameM = r => `${r.name} ${Math.round(r.fp.medianIntentMs)}ms`;
+        if (mine.medianIntentMs > hi) push("ok", OK, `Your system's typical intent runs ${m}ms — more leisurely than the field (the slowest reference sits at ${Math.round(hi)}ms). A deliberate choice; keep an eye on the duration budget.`);
+        else if (mine.medianIntentMs < lo) push("ok", OK, `Your system's typical intent runs ${m}ms — snappier than the field (the quickest reference sits at ${Math.round(lo)}ms).`);
+        else push("ok", OK, `Your system's typical intent runs ${m}ms — right in the field's range (${nearestBy(fp => fp.medianIntentMs, mine.medianIntentMs).map(nameM).join(", ")}).`);
+      }
+    }
+
     // rank worst-first, stable within a severity tier (preserves check order)
     return out.map((f, i) => ({ f, i })).sort((a, b) => b.f.sev - a.f.sev || a.i - b.i).map(x => x.f);
   }
 
-  return { systemRead, iconFor };
+  return { systemRead, fingerprint, iconFor };
 });

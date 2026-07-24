@@ -6,7 +6,7 @@
  * lines like the Playwright suites, so tests/run.mjs aggregates it the same way. */
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const { systemRead } = require("../system-read.js");
+const { systemRead, fingerprint } = require("../system-read.js");
 const assert = (n, c) => console.log(`${c ? "PASS" : "FAIL"}  ${n}`);
 
 // cubic easings by control points
@@ -99,4 +99,43 @@ const msgs = out => out.map(f => f.msg).join("\n");
   s2.modes = [{ name: "default" }, { name: "reduced" }];
   s2.intents = s2.intents.map(it => ({ ...it, binds: [it.binds[0], { ...it.binds[0], dur: "fast", stagger: 0 }] }));
   assert("dampening reduced mode clears the warning", !/won't calm anything/.test(msgs(systemRead(s2))));
+}
+
+// 8. the comparative read — benchmark a system against a corpus of real ones
+{
+  // geometric-mean step: (max/min)^(1/(rungs-1)). 100..800 over 6 rungs → 8^(1/5)
+  const fp = fingerprint({ durations: [100, 200, 300, 400, 500, 800].map((ms, i) => ({ name: "d" + i, ms })), intents: [] });
+  assert("fingerprint growth ~1.5× for a Material-like ladder", Math.abs(fp.growth - Math.pow(8, 1 / 5)) < 1e-9);
+
+  // a small stand-in corpus (name + duration ladder) around ~1.5× growth
+  const corpus = [
+    { name: "Material", durations: [100, 200, 300, 400, 500, 800].map((ms, i) => ({ name: "d" + i, ms })), intents: [] },
+    { name: "Carbon", durations: [70, 110, 150, 240, 400, 700].map((ms, i) => ({ name: "d" + i, ms })), intents: [] },
+    { name: "Fluent", durations: [50, 100, 150, 200, 250, 300, 400, 500].map((ms, i) => ({ name: "d" + i, ms })), intents: [] },
+  ];
+  // no corpus → no comparative line (backward compatible)
+  assert("no corpus ⇒ no comparative read", !/reference system|the field|real systems use/.test(msgs(systemRead(base()))));
+
+  // an in-range ladder gets an informational (non-warning) comparative line
+  {
+    const out = systemRead(base(), { corpus });   // starter grows ~1.5×, mid-field
+    assert("in-range ladder gets a comparative line naming references",
+      out.some(f => /real systems use/.test(f.msg) && /Material|Carbon|Fluent/.test(f.msg)));
+    assert("in-range comparative line is not a warning",
+      out.filter(f => /grows ~/.test(f.msg)).every(f => f.status === "ok"));
+  }
+
+  // a steep outlier is flagged as a nit, above the whole field
+  {
+    const steep = { ...base(), durations: [{ name: "a", ms: 100 }, { name: "b", ms: 1200 }] };  // 12× in one step
+    const out = systemRead(steep, { corpus });
+    assert("steeper-than-the-field ladder warns", out.some(f => f.status === "warn" && /steeper than every reference/.test(f.msg)));
+  }
+
+  // a flat outlier is flagged too
+  {
+    const flat = { ...base(), durations: [{ name: "a", ms: 200 }, { name: "b", ms: 210 }, { name: "c", ms: 220 }] };
+    const out = systemRead(flat, { corpus });
+    assert("flatter-than-the-field ladder warns", out.some(f => f.status === "warn" && /flatter than every reference/.test(f.msg)));
+  }
 }

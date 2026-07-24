@@ -5,6 +5,24 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.9.19] — 2026-07-24
+
+### Added — the comparative read
+- **The system read now benchmarks against real design systems.** Until now the
+  critique judged in a vacuum. It now measures the live system against the field
+  of shipped palettes it already carries (Material 3, Carbon, Fluent, Polaris,
+  Primer, Spectrum, …) and positions it: *"Your duration ladder grows ~1.5× per
+  step — in the range real systems use (Material 3 1.5×, Carbon 1.6×)."* Two
+  characteristics are compared — **ladder growth** (the geometric-mean step of
+  the duration ladder) and **overall tempo** (the typical resolved intent
+  duration). When the system sits inside the field the line is informational;
+  when it's steeper or flatter than *every* reference, it's flagged with a fix.
+  This is the "reverse-engineer the art direction" angle: the numbers get a
+  reference frame.
+- The comparison lives in the pure module (`fingerprint(system)` +
+  `systemRead(system, {corpus})`), so it's opt-in and testable — the corpus is
+  passed in, not reached for. `cadence.js` builds it from the shipped templates.
+
 ## [0.9.18] — 2026-07-24
 
 ### Changed — the opinion layer grows up
