@@ -53,6 +53,29 @@
 
   const median = xs => { if (!xs.length) return null; const s = xs.slice().sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 
+  // sample a damped spring (mass 1) to N points over its own settle time, 0→1 —
+  // the same shape the app exports as CSS linear(). Two springs are compared by
+  // their rendered curves (not raw stiffness/damping), because an absolute
+  // damping gap means very different things at high vs low damping.
+  function sampleSpring(sp, N) {
+    N = N || 24;
+    const k = Math.max(1, +sp.stiffness || 170), c = Math.max(0, +sp.damping || 12), w0 = Math.sqrt(k);
+    const zeta = c / (2 * Math.sqrt(k));
+    const T = zeta > 0 ? Math.min(10, Math.max(0.15, Math.log(220) / (zeta * w0))) : 6;
+    const out = [];
+    for (let i = 0; i < N; i++) {
+      const t = (i / (N - 1)) * T; let x;
+      if (zeta < 1) { const wd = w0 * Math.sqrt(1 - zeta * zeta); x = 1 - Math.exp(-zeta * w0 * t) * (Math.cos(wd * t) + (zeta * w0 / wd) * Math.sin(wd * t)); }
+      else if (zeta < 1.0001) { x = 1 - Math.exp(-w0 * t) * (1 + w0 * t); }
+      else { const wd = w0 * Math.sqrt(zeta * zeta - 1); x = 1 - Math.exp(-zeta * w0 * t) * (Math.cosh(wd * t) + (zeta * w0 / wd) * Math.sinh(wd * t)); }
+      out.push(x);
+    }
+    out[0] = 0; out[N - 1] = 1;
+    return out;
+  }
+  // mean absolute difference between two springs' rendered curves (0 = identical)
+  const springCurveDist = (a, b) => { const sa = sampleSpring(a), sb = sampleSpring(b); let s = 0; for (let i = 0; i < sa.length; i++) s += Math.abs(sa[i] - sb[i]); return s / sa.length; };
+
   // A few order-invariant scalars that summarise a system's *character* — enough
   // to benchmark it against real design systems (the comparative read). `growth`
   // is the geometric-mean step of the duration ladder ((max/min)^(1/(rungs-1))),
@@ -80,7 +103,6 @@
     const push = (status, sev, msg, fix, apply) => out.push({ status, sev, icon: iconFor[sev], msg, fix: fix || null, apply: apply || null });
     // largest ladder rung strictly below / at-most a duration — used to pick a
     // concrete target when a fix means "drop onto a shorter step".
-    const rungBelow  = ms => { const c = ctx.durations.filter(d => +d.ms <  ms).sort((a, b) => b.ms - a.ms)[0]; return c ? c.name : null; };
     const rungAtMost = ms => { const c = ctx.durations.filter(d => +d.ms <= ms).sort((a, b) => b.ms - a.ms)[0]; return c ? c.name : null; };
     // apply ops target an intent by INDEX, not just name — intent names aren't
     // unique (two "custom" intents, or a rename), so a name lookup could hit the
@@ -107,9 +129,9 @@
         const d = ea.bez.reduce((s, v, k) => s + Math.abs(v - eb.bez[k]), 0);
         if (d < 0.15) dup = [ea.name, eb.name];
       } else if (ea.type === "spring" && eb.type === "spring" && ea.spring && eb.spring) {
-        const ds = Math.abs((+ea.spring.stiffness || 0) - (+eb.spring.stiffness || 0));
-        const dc = Math.abs((+ea.spring.damping || 0) - (+eb.spring.damping || 0));
-        if (ds <= 12 && dc <= 1.2) dup = [ea.name, eb.name];
+        // compare rendered curves — a small absolute damping gap can still be a
+        // large change at low damping (160/2 vs 160/3 is a 50% shift).
+        if (springCurveDist(ea.spring, eb.spring) < 0.03) dup = [ea.name, eb.name];
       }
     }
     if (dup) push("warn", WARN, `“${dup[0]}” and “${dup[1]}” are nearly identical curves. A tight easing set is easier to apply consistently — trim one.`, `Delete “${dup[1]}” and point its users at “${dup[0]}”.`, { op: "dropEasing", ease: dup[1], into: dup[0] });
@@ -119,7 +141,10 @@
     const en = intents.find(x => /enter|open|in$/i.test(x.name)), ex = intents.find(x => /exit|close|out$/i.test(x.name));
     if (en && ex) {
       const de = durMs(bindOf(en).dur), dx = durMs(bindOf(ex).dur);
-      const quicker = rungBelow(de);   // largest rung under the enter, to speed the exit up
+      // pick a rung at least 40ms under the enter, so applying it actually clears
+      // the asymmetry threshold (a rung only 10ms below would just re-trip the
+      // near-equal branch). No qualifying rung → no one-click fix.
+      const quicker = rungAtMost(de - 40);
       const exFix = quicker ? { op: "setDur", intent: ex.name, intentIndex: idxOf(ex), dur: quicker } : null;
       if (Math.abs(de - dx) < 40) push("warn", WARN, `“${en.name}” and “${ex.name}” resolve to near-equal durations (${de}/${dx}ms). Real motion is asymmetric — exits should be quicker so leaving feels decisive.`, "Drop the exit onto a shorter duration than the enter.", exFix);
       else if (dx < de) push("ok", OK, `“${ex.name}” (${dx}ms) is quicker than “${en.name}” (${de}ms) — leaving feels decisive.`);

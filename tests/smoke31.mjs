@@ -70,6 +70,17 @@ const msgs = out => out.map(f => f.msg).join("\n");
     out.some(f => /bounce.*bouncy|bouncy.*bounce/.test(f.msg)));
 }
 
+// 4b. springs are compared by rendered curve, not absolute damping — a small
+// damping gap at LOW damping is a big shape change and must NOT read as a dup
+{
+  const s = base();
+  s.easings = s.easings.concat([
+    { name: "loose2", type: "spring", spring: { stiffness: 160, damping: 2 } },
+    { name: "loose3", type: "spring", spring: { stiffness: 160, damping: 3 } },
+  ]);
+  assert("low-damping springs are NOT falsely flagged", !/nearly identical curves/.test(msgs(systemRead(s))));
+}
+
 // 5. an exit slower than enter is the worst finding — and ranks first
 {
   const s = base();
@@ -176,6 +187,19 @@ const msgs = out => out.map(f => f.msg).join("\n");
     s.intents = [intent("enter", "slow", "emphasized"), intent("exit", "slower", "accelerate")];  // 300 vs 500
     const f = find(systemRead(s), /slower than/);
     assert("slow exit carries a setDur op onto a shorter rung", f.apply.op === "setDur" && f.apply.intent === "exit");
+  }
+
+  // the exit fix must land ≥40ms under the enter, or it just re-trips near-equal.
+  // rungs 190/200/500, enter/exit 200/500 → fix must NOT choose 190ms
+  {
+    const s = {
+      ...base(),
+      durations: [{ name: "d190", ms: 190 }, { name: "d200", ms: 200 }, { name: "d500", ms: 500 }],
+      intents: [intent("enter", "d200", "standard"), intent("exit", "d500", "standard")],
+    };
+    const f = systemRead(s).find(x => /slower than|near-equal/.test(x.msg));
+    // no rung is ≤ 160ms, so there's no clean fix — Apply is omitted rather than offered a 190ms no-op
+    assert("exit fix omitted when no rung clears the 40ms threshold", f && f.apply === null);
   }
 
   // every op-bearing finding is a warning that also keeps its prose fix

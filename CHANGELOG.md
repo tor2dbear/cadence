@@ -44,6 +44,15 @@ shows the deployed semver plus the commit it was built from, stamped at deploy.
   names, so a reduced binding pointing at a differently-named token that
   resolves to the same ms/curve (two rungs dragged to the same value) read as a
   real change and hid the warning. It now compares resolved duration and easing.
+- **The exit fix now clears the asymmetry threshold.** Apply picked the largest
+  rung *below* the enter, which — with rungs like 190/200 — could land only 10ms
+  under and re-trip the near-equal warning. It now targets a rung at least 40ms
+  under the enter, and omits the button when none qualifies.
+- **Duplicate-spring detection compares rendered curves, not raw damping.** An
+  absolute damping gap of ~1 means very different things at high vs low damping
+  (160/2 vs 160/3 is a 50% shift), so the old threshold could flag — and offer
+  to delete — genuinely distinct springs. It now samples both spring curves and
+  compares their shape.
 
 ## [0.9.19] — 2026-07-24
 
