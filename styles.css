@@ -372,12 +372,13 @@ html.boot-tool #landing{display:none}
 .lherobg{position:absolute;top:0;left:calc(50% - 50vw);width:100vw;height:min(84vh,108vw,820px);
   z-index:-1;pointer-events:none;overflow:hidden}
 .ltr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-/* generative trace field (built by JS). Each comet is ten low-opacity accent
-   segments sharing one leading edge (grouped in a <g>); the overlap count fades
-   it smoothly — short bright head, long light tail melting into the grey trail
+/* generative trace field (built by JS). Each comet is twelve low-opacity accent
+   segments sharing one leading edge (grouped in a <g>), lengths growing toward
+   the tail; the overlap count fades it smoothly — a compact bright head and a
+   long light tail (the faintest bands are the longest) melting into the grey trail
    each leaves behind (lingers ~a minute then fades). Kept faint so the
    accumulating web stays behind the copy. */
-.ltr-gcomet{fill:none;stroke-linecap:round;stroke-width:1.5;stroke:var(--accent);opacity:.14}
+.ltr-gcomet{fill:none;stroke-linecap:round;stroke-width:1.5;stroke:var(--accent);opacity:.1}
 .ltr-gtrail{fill:none;stroke-linecap:round;stroke-width:1.1;stroke-dasharray:1000 1000;
   stroke:color-mix(in srgb,var(--ink) 18%,transparent)}
 /* mobile: the height cap already keeps it a band; thin the comets a touch */
