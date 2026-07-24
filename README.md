@@ -110,9 +110,11 @@ DOM-free `systemRead(system, {corpus})` (browser global + CommonJS), so the
 identical critique runs in the app, in a headless unit test, and — see below — as
 a service.
 
-Roadmap (stays static): bring-your-own component into the bench; import an
-existing motion palette (a framework's tokens) and run the system-read over it —
-the "reverse-engineer the art direction" angle.
+Roadmap (stays static): bring-your-**own** markup into the bench; import an
+**external** motion palette (paste your own tokens) and run the system-read over
+it — the "reverse-engineer the art direction" angle. (The built-in palettes are
+already covered: "Load a system" seeds from them and the comparative read
+benchmarks against them.)
 
 Candidates that would add a backend (a conscious fork from static-only):
 the **opinion layer as a service** — the pure system-read is already extracted

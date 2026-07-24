@@ -43,8 +43,8 @@ checks is the differentiator — tools generate, they don't judge.
 - **Scope:** small & sharp — a weekend v1, one clear idea done well.
 - **Stack:** plain static site, no build step — readable as portfolio code,
   deploys anywhere.
-- **Deploy:** GitHub Pages for now (workflow included); may move to
-  Netlify/Vercel later.
+- **Deploy:** Cloudflare Pages (build via `build.sh`), with per-branch preview
+  URLs on every PR.
 - **Positioning:** primarily a *design-engineering* piece (bridges design ↔
   code), but the two-layer model + opinion layer also carry the AD and
   product-thinking story. Intended as a standalone works-case on the portfolio.
@@ -58,8 +58,16 @@ checks is the differentiator — tools generate, they don't judge.
   surface of real components; "bring your **own** markup" is still open.)*
 - ✅ Shareable system via URL state (encode the whole token set in the link).
 - ✅ More export targets: Tailwind config, Style Dictionary, JS/TS objects.
-- Optional: import an existing palette of motion (a framework's tokens) and
-  visualize/critique it — the "reverse-engineer the art direction" angle.
+- ✅ Opinion layer, matured: extracted to a pure, DOM-free `systemRead(system)`
+  module; findings ranked worst-first by severity; each warning carries a
+  one-line fix, most with a one-click **Apply**; a **comparative read** that
+  benchmarks the live system against the shipped design-system corpus (ladder
+  growth + tempo vs Material, Carbon, Fluent, …).
+- Import an existing palette of motion and critique it — the "reverse-engineer
+  the art direction" angle. *(Partly there: "Load a system" seeds from real
+  framework palettes and the read runs on whatever's loaded, and the comparative
+  read benchmarks against them. Still open: paste/import your **own** external
+  tokens, not just the built-in templates.)*
 - *(Also shipped, not originally listed: springs → CSS `linear()`, motion-mode
   axis, stagger + cascade lens, property axis, distance/travel primitive +
   velocity check, tempo, reduced-motion, a live demo surface, "Load a system".)*
@@ -70,22 +78,21 @@ These break the "plain static site, no build" rule, so they're a deliberate
 branch, not default scope. Weigh them against the portfolio-code readability the
 static footprint buys.
 
-- **Opinion layer as a service.** Extract the *pure* logic (resolve + the
-  system-read checks) from `cadence.js` into a headless module (`tokens.js`, no
-  DOM), then expose it as a serverless endpoint so a CI step or an agent can POST
-  a motion system and get its warnings back — "block the build if exit is slower
-  than enter." Given the current stack (Cloudflare in front of Pages), a
-  **Cloudflare Worker** is the natural host (free tier ~100k req/day, separate
-  bucket) rather than Netlify Functions (which now draw from the same 300-credit
-  pot). An **MCP wrapper** over the same function makes the critique callable
-  from an editor/agent — the one genuinely agent-shaped part of Cadence.
+- **Opinion layer as a service.** The pure logic is already extracted — the
+  system-read checks live in `system-read.js`, no DOM, browser-global +
+  CommonJS. What's left is to expose it as a serverless endpoint so a CI step or
+  an agent can POST a motion system and get its warnings back — "block the build
+  if exit is slower than enter." Given the current stack (Cloudflare in front of
+  Pages), a **Cloudflare Worker** is the natural host (free tier ~100k req/day,
+  separate bucket). An **MCP wrapper** over the same function makes the critique
+  callable from an editor/agent — the one genuinely agent-shaped part of Cadence.
 - **Security-header hardening.** CSP + `frame-ancestors 'self'` on `demo.html`
   (so nobody else can iframe the demo), stricter `Cache-Control`. Cheap, doesn't
   touch the app — set at the Cloudflare layer, since Pages can't send custom
   headers. Really a config task, parked here so it isn't forgotten.
-- **Hosting note:** per-branch deploy previews are the one concrete reason to
-  consider Netlify; everything else Pages + Cloudflare already covers. See the
-  static-vs-backend tradeoff before moving the whole site.
+- **Hosting note:** Cloudflare Pages already covers the hosting needs, including
+  per-branch deploy previews (a preview URL lands on every PR). No reason to move
+  the site; weigh the static-vs-backend tradeoff only for the Worker above.
 
 ## Directions explored and ruled out (so we don't re-loop)
 
