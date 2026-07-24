@@ -36,6 +36,14 @@ shows the deployed semver plus the commit it was built from, stamped at deploy.
 - **The no-op reduced-mode warning shows while that mode is active.** It was
   suppressed whenever the reduced mode was the selected one, even though the
   check never depended on the active mode.
+- **Apply targets an intent by index, not name.** Intent names aren't unique
+  (two `custom` intents, or a rename), so resolving a fix by name could change
+  the wrong intent and leave the warning standing. Ops now carry the intent's
+  index (name kept for the label only).
+- **The no-op reduced-mode check compares resolved values.** It compared token
+  names, so a reduced binding pointing at a differently-named token that
+  resolves to the same ms/curve (two rungs dragged to the same value) read as a
+  real change and hid the warning. It now compares resolved duration and easing.
 
 ## [0.9.19] — 2026-07-24
 

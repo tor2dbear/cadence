@@ -70,6 +70,19 @@ const dangling = await page.evaluate(() => {
 });
 assert('no binding references a deleted easing after dropEasing', !dangling);
 
+// ---- 5b. Apply targets the right intent when two share a name ----
+await page.evaluate(() => {
+  intents.length = 0;
+  intents.push(
+    { id: 'a', name: 'custom', purpose: '', binds: [{ dur: 'base', ease: 'standard', stagger: 0, prop: 'all' }] },
+    { id: 'b', name: 'custom', purpose: '', binds: [{ dur: 'base', ease: 'standard', stagger: 200, prop: 'all' }] },
+  );
+  rerenderAll();
+});
+await page.locator('.rd', { hasText: 'waits 800ms' }).locator('.rd__apply').click();
+const staggers = await page.evaluate(() => intents.map(it => it.binds[0].stagger));
+assert('Apply fixed the offending same-named intent, not the first', staggers[0] === 0 && staggers[1] === 120);
+
 // ---- 6. Apply writes through to the URL/state (share + preview stay in sync) ----
 assert('applying a fix stamps state into the hash', /#./.test(await page.evaluate(() => location.hash)));
 

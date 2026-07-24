@@ -639,7 +639,10 @@ function rebalanceLadder(){
 }
 function applyFix(a){
   if(!a) return;
-  const it = a.intent!=null ? intents.find(x=>x.name===a.intent) : null;
+  // resolve the target intent by index (stable — names aren't unique), falling
+  // back to name only if the index is missing/stale.
+  const it = (a.intentIndex!=null && intents[a.intentIndex]) ? intents[a.intentIndex]
+           : a.intent!=null ? intents.find(x=>x.name===a.intent) : null;
   const b = it ? bindOf(it) : null;
   switch(a.op){
     case "setStagger":     if(b) b.stagger=a.ms; break;

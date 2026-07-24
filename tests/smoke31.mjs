@@ -187,4 +187,34 @@ const msgs = out => out.map(f => f.msg).join("\n");
       out.filter(f => f.apply).every(f => f.status === "warn" && f.fix));
     assert("all-clears never carry an apply op", out.filter(f => f.status === "ok").every(f => f.apply === null));
   }
+
+  // intent-targeting ops carry a stable index — names collide (two "custom"
+  // intents), so the op must point at the offending one, not the first match
+  {
+    const s = { ...base(), intents: [
+      { name: "custom", binds: [{ dur: "base", ease: "standard", stagger: 0, prop: "all" }] },
+      { name: "custom", binds: [{ dur: "base", ease: "standard", stagger: 200, prop: "all" }] },
+    ] };
+    const f = find(systemRead(s), /staggers 200ms/);
+    assert("stagger op targets the offending intent by index", f.apply.intentIndex === 1);
+  }
+}
+
+// 10. reduced-mode no-op is judged on RESOLVED values, not token names
+{
+  const msgs2 = out => out.map(f => f.msg).join("\n");
+  // two rungs at the same ms; reduced points at the other name → same animation
+  const s = {
+    durations: [{ name: "base", ms: 200 }, { name: "slow", ms: 200 }],
+    distances: [], easings: [{ name: "standard", type: "cubic", bez: [0.2, 0, 0.2, 1] }],
+    intents: [{ name: "enter", binds: [
+      { dur: "base", ease: "standard", stagger: 0, prop: "all" },
+      { dur: "slow", ease: "standard", stagger: 0, prop: "all" },   // reduced: different name, same 200ms
+    ] }],
+    modes: [{ name: "default" }, { name: "reduced" }], activeMode: 0,
+  };
+  assert("reduced mode pointing at an equal-value token still warns", /won't calm anything/.test(msgs2(systemRead(s))));
+  // and a genuinely shorter reduced binding clears it
+  const s2 = { ...s, durations: [{ name: "base", ms: 200 }, { name: "slow", ms: 80 }] };
+  assert("a shorter reduced binding clears the warning", !/won't calm anything/.test(msgs2(systemRead(s2))));
 }
