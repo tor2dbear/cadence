@@ -93,7 +93,10 @@ silently rot as features land.
   restores it.
 - Export to **CSS** custom properties (semantic tokens `var()`-reference the
   primitives, with composite `transition` shorthands), **JSON**, a **Tailwind**
-  config, a **Style Dictionary** token file, and a typed **TS** object.
+  config, a **Style Dictionary** token file, and a typed **TS** object. Each
+  format **copies or downloads** as a file under its conventional name
+  (`tokens.css`, `motion.ts`, `tailwind.config.js`, …), so the tokens land in a
+  repo without a copy-paste.
 - A **Rationale** export — the opinion layer as a shareable Markdown report: the
   composite **verdict** (a 0–100 score + letter grade), a per-dimension
   scorecard, every finding with its fix, and where the system sits against the

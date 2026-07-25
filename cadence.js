@@ -1315,6 +1315,29 @@ document.getElementById("copy").addEventListener("click",()=>{
   navigator.clipboard?.writeText(document.getElementById("out").textContent);
   const b=document.getElementById("copy"); b.textContent="Copied ✓"; setTimeout(()=>b.textContent="Copy",1200);
 });
+// download the active format as a file with the name an engineer expects to
+// commit — the conventional filename per tab, not a copy-paste into a hand-named
+// file. Client-side Blob + <a download>, no server (same as the .cadence.json
+// export). Uses #out's text, so it matches exactly what Copy would give.
+// Scroll and Transitions are integration RECIPES, not drop-in stylesheets — each
+// appends a JS fallback (an IntersectionObserver / a startViewTransition scaffold)
+// after the CSS, so a .css name would be a lie: the JS glue that makes them work
+// cross-browser would be discarded. Ship those two as .txt recipes; the rest are
+// genuinely single-language.
+const EXPORT_FILE={
+  css:["tokens.css","text/css"], json:["tokens.json","application/json"],
+  tailwind:["tailwind.config.js","text/javascript"], sd:["style-dictionary.tokens.json","application/json"],
+  ts:["motion.ts","text/typescript"], scroll:["scroll-driven-recipe.txt","text/plain"],
+  vt:["view-transitions-recipe.txt","text/plain"], rationale:["rationale.md","text/markdown"],
+};
+document.getElementById("download").addEventListener("click",()=>{
+  const [fname,mime]=EXPORT_FILE[fmt]||["tokens.txt","text/plain"];
+  const blob=new Blob([document.getElementById("out").textContent],{type:mime+";charset=utf-8"});
+  const url=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const b=document.getElementById("download"); b.textContent="Downloaded ✓"; setTimeout(()=>b.textContent="Download",1200);
+});
 document.getElementById("share").addEventListener("click",()=>{
   writeURL();
   navigator.clipboard?.writeText(location.href);
