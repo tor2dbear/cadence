@@ -204,7 +204,10 @@ svg.bz{display:block;width:100%;height:100%}
 .bz-h:hover{fill:var(--accent-hi)}
 .bz-h.drag{cursor:grabbing}
 .bz-h:focus{outline:none}
-.bz-h:focus-visible{stroke:var(--accent);stroke-width:3;paint-order:stroke}   /* keyboard focus ring on the SVG handle */
+/* keyboard focus ring: accent-2 contrasts with the handle's own accent fill AND
+   the background in both themes, so the focused slider is unambiguous (a same-as-
+   fill stroke would vanish into the dot) */
+.bz-h:focus-visible{stroke:var(--accent-2);stroke-width:3;paint-order:stroke}
 /* visually-hidden but available to assistive tech (screen-reader-only) */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
 .ecard__spring{display:flex;flex-direction:column;gap:5px;margin-top:7px}

@@ -649,11 +649,16 @@ function critique(){
     badge.className = "hintcount"+(sc.warns?" warn":"");
     badge.title = `Score ${sc.score}/100 — ${sc.summary}`;
   }
-  // announce the verdict to screen readers as a short, natural phrase (polite:
-  // rapid edits coalesce to the settled state). The visible badge is aria-hidden
-  // so the two don't double-read.
+  // announce the verdict to screen readers as a short, natural phrase — but ONLY
+  // when it actually changes. critique() runs once per frame while dragging a
+  // curve and on every keyboard nudge; rewriting the live region each time would
+  // re-announce the same grade and drown out the slider's own value. The visible
+  // badge is aria-hidden so the two don't double-read.
   const st=document.getElementById("readStatus");
-  if(st) st.textContent = `System read: grade ${sc.grade}, ${sc.warns ? sc.warns+(sc.warns===1?" finding":" findings")+" to review" : "all clear"}.`;
+  if(st){
+    const phrase = `System read: grade ${sc.grade}, ${sc.warns ? sc.warns+(sc.warns===1?" finding":" findings")+" to review" : "all clear"}.`;
+    if(st.textContent!==phrase) st.textContent=phrase;
+  }
 }
 // ---------- apply a system-read fix (one click: mutate the model, re-read) ----------
 // return the name of a linear easing, adding one if the set has none

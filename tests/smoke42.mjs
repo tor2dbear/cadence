@@ -74,6 +74,33 @@ await page.mouse.up();
 await page.waitForTimeout(150);
 assert('a drag keeps focus on the handle', await page.evaluate(() => document.activeElement?.classList.contains('bz-h')));
 
+// the focus ring must contrast with the handle's own fill (a same-colour stroke
+// would vanish into the dot)
+const ring = await page.evaluate(() => {
+  const el = document.querySelector('.ecard__plot[data-i="0"] .bz-h[data-pt="1"]');
+  el.focus();
+  const cs = getComputedStyle(el);
+  return { stroke: cs.stroke, fill: cs.fill };
+});
+assert('the focus ring is distinct from the handle fill', ring.stroke !== ring.fill);
+
+// the verdict live-region must not re-announce when the grade/count is unchanged
+// (critique() runs per drag-frame and per keyboard nudge)
+const churn = await page.evaluate(async () => {
+  const el = document.getElementById('readStatus');
+  let m = 0;
+  const obs = new MutationObserver(muts => { m += muts.length; });
+  obs.observe(el, { childList: true, characterData: true, subtree: true });
+  const h = document.querySelector('.ecard__plot[data-i="0"] .bz-h[data-pt="1"]');
+  h.focus();
+  const fire = key => document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+  for (let i = 0; i < 4; i++) { fire('ArrowRight'); fire('ArrowLeft'); }  // net-zero: grade stays put
+  await new Promise(r => setTimeout(r, 250));
+  obs.disconnect();
+  return m;
+});
+assert('the live region is silent while the verdict is unchanged', churn === 0);
+
 // --- the 404 shares the brand, not a hardcoded off-brand theme ---
 const nf = readFileSync(new URL('../404.html', import.meta.url), 'utf8');
 assert('404 links the shared stylesheet', /href="\/styles\.css"/.test(nf));
