@@ -339,8 +339,11 @@
     <div class="bench" id="bench"></div>
 
     <div class="adnote">
-      <h2 class="sec" title="The opinion layer — an automated critique of your system's motion (asymmetry, budgets, redundancy…)">System read <span class="lyr">— the opinion layer</span><span class="hintcount" id="hintCount"></span></h2>
-      <div id="hints"></div>
+      <h2 class="sec" title="The opinion layer — an automated critique of your system's motion (asymmetry, budgets, redundancy…)">System read <span class="lyr">— the opinion layer</span><span class="hintcount" id="hintCount" aria-hidden="true"></span></h2>
+      <!-- the verdict change is announced politely to screen readers as a short phrase;
+           the detailed findings below are a labelled region to read on demand -->
+      <span id="readStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
+      <div id="hints" role="region" aria-label="System read findings"></div>
 
       <!-- run the SAME read over someone else's tokens — reverse-engineer the art
            direction. Pure client-side parse of CSS vars / tokens.json / Tailwind. -->

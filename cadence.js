@@ -237,8 +237,8 @@ function easingSVG(e){
     <line class="bz-arm" x1="${p0[0]}" y1="${p0[1]}" x2="${c1[0]}" y2="${c1[1]}"/>
     <line class="bz-arm" x1="${p3[0]}" y1="${p3[1]}" x2="${c2[0]}" y2="${c2[1]}"/>
     <path class="bz-curve" d="M${p0[0]},${p0[1]} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p3[0]},${p3[1]}"/>
-    <circle class="bz-h" data-pt="1" cx="${c1[0]}" cy="${c1[1]}" r="7"/>
-    <circle class="bz-h" data-pt="2" cx="${c2[0]}" cy="${c2[1]}" r="7"/>
+    <circle class="bz-h" data-pt="1" cx="${c1[0]}" cy="${c1[1]}" r="7" tabindex="0" role="slider" aria-label="${e.name} curve · control point 1 — arrow keys adjust (Shift for larger steps)" aria-valuemin="0" aria-valuemax="1" aria-valuenow="${x1}" aria-valuetext="time ${Math.round(x1*100)}%, value ${y1.toFixed(2)}"/>
+    <circle class="bz-h" data-pt="2" cx="${c2[0]}" cy="${c2[1]}" r="7" tabindex="0" role="slider" aria-label="${e.name} curve · control point 2 — arrow keys adjust (Shift for larger steps)" aria-valuemin="0" aria-valuemax="1" aria-valuenow="${x2}" aria-valuetext="time ${Math.round(x2*100)}%, value ${y2.toFixed(2)}"/>
   </svg>`;
 }
 // update a plot's SVG in place (keeps elements alive so a drag/slide isn't interrupted)
@@ -254,10 +254,29 @@ function updateEasingPlot(i){
   const hs=svg.querySelectorAll(".bz-h");
   hs[0].setAttribute("cx",c1[0]); hs[0].setAttribute("cy",c1[1]);
   hs[1].setAttribute("cx",c2[0]); hs[1].setAttribute("cy",c2[1]);
+  // keep the slider values in sync so screen readers hear each keyboard nudge
+  hs[0].setAttribute("aria-valuenow",x1); hs[0].setAttribute("aria-valuetext",`time ${Math.round(x1*100)}%, value ${y1.toFixed(2)}`);
+  hs[1].setAttribute("aria-valuenow",x2); hs[1].setAttribute("aria-valuetext",`time ${Math.round(x2*100)}%, value ${y2.toFixed(2)}`);
 }
 function updateSpringPlot(i){
   const poly=document.querySelector(`.ecard__plot[data-i="${i}"] polyline.bz-curve`); if(!poly) return;
   poly.setAttribute("points", springPoints(easings[i].spring));
+}
+// normalize a cubic easing's preset dropdown IN PLACE (matched preset vs "custom")
+// after an edit — mirrors what renderEasings computes, but without rebuilding the
+// card, so a focused/being-tabbed-to element inside it is never detached.
+function syncEasingSelect(i){
+  const e=easings[i]; if(!e || e.type!=="cubic") return;
+  const plot=document.querySelector(`.ecard__plot[data-i="${i}"]`);
+  const sel=plot && plot.closest(".ecard") && plot.closest(".ecard").querySelector('select[data-scope="ease"]');
+  if(!sel) return;
+  const match=Object.keys(PRESETS).find(k=>JSON.stringify(PRESETS[k])===JSON.stringify(e.bez));
+  let custom=sel.querySelector('option[value="custom"]');
+  if(match){ if(custom) custom.remove(); sel.value=match; }
+  else{
+    if(!custom){ custom=document.createElement("option"); custom.value="custom"; custom.textContent="custom"; sel.insertBefore(custom, sel.firstChild); }
+    sel.value="custom";
+  }
 }
 function renderEasings(){
   const el=document.getElementById("easings");
@@ -629,6 +648,16 @@ function critique(){
     badge.textContent = `${sc.grade} · ${sc.warns ? sc.warns+" to review" : "all clear"}`;
     badge.className = "hintcount"+(sc.warns?" warn":"");
     badge.title = `Score ${sc.score}/100 — ${sc.summary}`;
+  }
+  // announce the verdict to screen readers as a short, natural phrase — but ONLY
+  // when it actually changes. critique() runs once per frame while dragging a
+  // curve and on every keyboard nudge; rewriting the live region each time would
+  // re-announce the same grade and drown out the slider's own value. The visible
+  // badge is aria-hidden so the two don't double-read.
+  const st=document.getElementById("readStatus");
+  if(st){
+    const phrase = `System read: grade ${sc.grade}, ${sc.warns ? sc.warns+(sc.warns===1?" finding":" findings")+" to review" : "all clear"}.`;
+    if(st.textContent!==phrase) st.textContent=phrase;
   }
 }
 // ---------- apply a system-read fix (one click: mutate the model, re-read) ----------
@@ -1257,11 +1286,18 @@ function bzDownstream(){                    // rAF-coalesced: heavy recompute at
   if(bzRAF) return;
   bzRAF=requestAnimationFrame(()=>{ bzRAF=null; refreshTokens(); render(); critique(); updateResolvedLines(); writeURL(); });
 }
+// commit a bézier edit (drag-release or a keyboard nudge) WITHOUT rebuilding the
+// easing card: normalize the preset dropdown in place, refresh the bench previews
+// (which bake the curve, and live in #bench — not the focused handle's #easings),
+// then run the coalesced downstream. Replaces the old pointerup rerenderAll(),
+// which tore out the focused/being-tabbed-to handle.
+function bzCommit(i){ syncEasingSelect(i); renderBench(); bzDownstream(); }
 document.addEventListener("pointerdown", e=>{
   const h=e.target.closest && e.target.closest(".bz-h"); if(!h) return;
   const plot=h.closest(".ecard__plot"); if(!plot) return;
   bzDrag={ i:+plot.dataset.i, pt:+h.dataset.pt, svg:plot.querySelector("svg.bz") };
   h.classList.add("drag"); try{ h.setPointerCapture(e.pointerId); }catch(_){}
+  try{ h.focus({preventScroll:true}); }catch(_){}   // preventDefault below suppresses default focus; do it explicitly so click→arrow-keys works
   e.preventDefault();
 });
 document.addEventListener("pointermove", e=>{
@@ -1276,9 +1312,26 @@ document.addEventListener("pointermove", e=>{
 });
 document.addEventListener("pointerup", ()=>{
   if(!bzDrag) return;
+  const i=bzDrag.i;
   bzDrag=null;
   document.querySelectorAll(".bz-h.drag").forEach(h=>h.classList.remove("drag"));
-  rerenderAll();                            // normalize the preset dropdown (custom vs matched)
+  bzCommit(i);                              // normalize in place — keep focus on the handle
+});
+// keyboard editing of the bézier handles — the same model mutation the drag does,
+// so curves are adjustable without a pointer. Both the plot and the preset dropdown
+// are updated IN PLACE (never rebuilt), so keyboard focus is never detached — a
+// rerenderAll() here would tear out the element the user is tabbing toward.
+const BZ_KEYS={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,1],ArrowDown:[0,-1]};
+document.addEventListener("keydown", e=>{
+  const h=e.target.closest && e.target.closest(".bz-h"); if(!h) return;
+  const d=BZ_KEYS[e.key]; if(!d) return;
+  e.preventDefault();
+  const plot=h.closest(".ecard__plot"); if(!plot) return;
+  const i=+plot.dataset.i, o=(+h.dataset.pt===1)?0:2, step=e.shiftKey?0.1:0.02;
+  const b=easings[i].bez;
+  b[o]=+Math.min(1,Math.max(0,b[o]+d[0]*step)).toFixed(3);
+  b[o+1]=+Math.min(1+BZPAD,Math.max(-BZPAD,b[o+1]+d[1]*step)).toFixed(3);
+  updateEasingPlot(i); bzCommit(i);
 });
 // global tempo: scale the whole ladder, preserving proportions
 function scaleTempo(f){
