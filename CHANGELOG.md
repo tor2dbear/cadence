@@ -5,6 +5,23 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.12.0] — 2026-07-25
+
+### Added
+- **The opinion layer is now a deliverable.** `systemRead()` answers "what's
+  wrong, ranked"; the new `scoreSystem()` folds those findings into an
+  "is this good?" — a **0–100 score + letter grade** plus a per-dimension
+  scorecard (ladder, easing set, enter/exit, budgets, vs-the-field). Pure and
+  DOM-free like the rest of the engine; headless-tested.
+- **A composite verdict leads the System-read header** — "A · all clear" /
+  "C · 3 to review", with the score in the tooltip — so the read opens with an
+  answer instead of a scrolling list.
+- **A Rationale export** (new export tab) — the critique as a shareable Markdown
+  report: the verdict, the scorecard, every finding with its fix, and the
+  system's fingerprint against the field. The code formats carry the tokens;
+  this one carries *why*, so the system can be defended to a team by someone who
+  was never in the editor.
+
 ## [0.11.5] — 2026-07-25
 
 ### Fixed

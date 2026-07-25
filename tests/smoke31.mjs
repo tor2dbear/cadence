@@ -258,3 +258,56 @@ const msgs = out => out.map(f => f.msg).join("\n");
 
   assert("a clean system has no duplicate-name warning", !/both named/.test(msgs(systemRead(base()))));
 }
+
+// 12. scoreSystem — the composite verdict folds findings into a grade + scorecard
+{
+  const { scoreSystem } = require("../system-read.js");
+  const h = scoreSystem(base());
+  assert("healthy system scores A / 100", h.grade === "A" && h.score === 100);
+  assert("healthy system reports zero warns", h.warns === 0);
+  assert("scorecard covers the core dimensions", ["ladder", "easing", "asymmetry"].every(k => h.categories.some(c => c.key === k)));
+  assert("every scorecard entry carries label + status + note", h.categories.every(c => c.label && c.status && c.note));
+
+  // a real defect (exit slower than enter) drops the grade and shows warns
+  const bad = base();
+  bad.intents = [intent("enter", "fast", "emphasized"), intent("exit", "slower", "accelerate")];   // exit 500 > enter 150
+  const b = scoreSystem(bad);
+  assert("a defect lowers the score below 100", b.score < 100 && b.warns >= 1);
+  assert("a defect drops the grade below A", b.grade !== "A");
+  assert("the enter/exit dimension reflects the warn", b.categories.find(c => c.key === "asymmetry")?.status === "warn");
+
+  // opts.findings lets a caller reuse an already-computed read (no second pass)
+  const findings = systemRead(bad);
+  const reused = scoreSystem(null, { findings });
+  assert("scoreSystem(null,{findings}) matches scoreSystem(system)", reused.score === b.score && reused.grade === b.grade);
+
+  // A is all-clear only: a single nitpick (an idle spatial·effects split) must
+  // NOT still read A, or the verdict would say "A · 1 to review"
+  const nit = base();
+  nit.intents = [intent("enter", "base", "emphasized", { effectsEase: "emphasized" })];   // split, both tracks same easing → NIT
+  const n = scoreSystem(nit);
+  assert("the split nitpick is the only warning", n.warns === 1 && n.total >= 1);
+  assert("one nitpick reads B, never A", n.grade === "B");
+}
+
+// 13. scoreSystem coverage + collision categorisation (Codex P2s)
+{
+  const { scoreSystem } = require("../system-read.js");
+  // a degenerate import (one rung, one easing) can't assess the ladder — so it
+  // must NOT read "A · all clear · 100"; A requires the core dims to be assessed
+  const thin = { durations: [{ name: "base", ms: 200 }], distances: [],
+    easings: [{ name: "standard", type: "cubic", bez: [0.2, 0, 0.2, 1] }],
+    intents: [intent("enter", "base", "standard")], modes: [{ name: "default" }], activeMode: 0 };
+  const t = scoreSystem(thin);
+  assert("an under-assessed system is not awarded A", t.grade !== "A");
+  assert("an under-assessed system's summary flags thin coverage", /assess/i.test(t.summary));
+
+  // a duplicate DURATION name shows under the ladder dimension, not Robustness
+  const dupDur = base();
+  dupDur.durations.push({ name: "fast", ms: 175 });   // second "fast"
+  const d = scoreSystem(dupDur);
+  const ladder = d.categories.find(c => c.key === "ladder");
+  assert("a duplicate duration name lands on the ladder dimension", ladder && ladder.status === "warn" && /both named/.test(ladder.note));
+  const robust = d.categories.find(c => c.key === "robustness");
+  assert("the collision is not misfiled under robustness", !robust || !/both named/.test(robust.note));
+}
