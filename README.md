@@ -129,13 +129,19 @@ Roadmap (stays static): bring-your-own component into the bench; import an
 existing motion palette (a framework's tokens) and run the system-read over it —
 the "reverse-engineer the art direction" angle.
 
+The site ships a strict **Content-Security-Policy** at the CDN layer (a
+generated `dist/_headers`): inline scripts run by sha256 hash rather than
+`'unsafe-inline'`, `frame-ancestors 'self'` blocks clickjacking, and only the
+analytics origins are allowlisted. The hashes are derived from the actual page
+bytes at build time (`scripts/gen-headers.mjs`), so the policy can't drift from
+the markup.
+
 Candidates that would add a backend (a conscious fork from static-only):
 the **opinion layer as a service** — the pure system-read is already extracted
 (`system-read.js`, no DOM), so what's left is to wrap it in a serverless endpoint
 (a Cloudflare Worker fits the current stack) plus an optional MCP wrapper, so a
 CI step or an agent can POST a system and get its warnings ("block the build if
-exit is slower than enter"); and light security-header hardening (CSP,
-`frame-ancestors` on the demo) at the CDN layer.
+exit is slower than enter").
 
 ## License
 

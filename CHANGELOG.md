@@ -5,6 +5,23 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.11.4] — 2026-07-25
+
+### Added
+- **A strict Content-Security-Policy at the CDN layer** — a generated
+  `dist/_headers` locks the deployed site down: `default-src 'self'`,
+  `object-src 'none'`, `frame-ancestors 'self'` (clickjacking), and only the
+  Cloudflare analytics origins allowlisted. The two executable inline scripts
+  (the boot gate, demo's resolver) run by **sha256 hash**, not `'unsafe-inline'`,
+  so an injected `<script>` can't execute — defense-in-depth behind the existing
+  input sanitisation. `style-src` keeps `'unsafe-inline'` only because the live
+  re-timing writes inline style properties, which aren't a script vector.
+  Companion headers: `nosniff`, `Referrer-Policy`, `X-Frame-Options`,
+  `Permissions-Policy`.
+- **`scripts/gen-headers.mjs`** derives the script hashes from the actual page
+  bytes at build time, so the policy can never drift from the markup; `smoke36`
+  guards the policy's shape and hash-sync in CI.
+
 ## [0.11.3] — 2026-07-25
 
 ### Fixed
