@@ -29,12 +29,17 @@ for (const line of md.split('\n')) {
   if (/^##\s/.test(line)) {
     flushPara(); flushList();
     const t = line.replace(/^##\s/, '').trim();
-    const m = t.match(/^\[([^\]]+)\]\s*—\s*(.+)$/);
-    body += m
-      ? `<h2 class="cl-ver" id="v${m[1].replace(/\./g, '-')}"><span class="cl-num">${esc(m[1])}</span><time>${esc(m[2])}</time></h2>\n`
+    const mv = t.match(/^\[([^\]]+)\]\s*—\s*(.+)$/);       // [x.y.z] — date
+    const mu = t.match(/^\[([^\]]+)\]$/);                   // [Unreleased] (no date)
+    body += mv
+      ? `<h2 class="cl-ver" id="v${mv[1].replace(/\./g, '-')}"><span class="cl-num">${esc(mv[1])}</span><time>${esc(mv[2])}</time></h2>\n`
+      : mu
+      ? `<h2 class="cl-ver" id="v${mu[1].toLowerCase()}"><span class="cl-num">${esc(mu[1])}</span></h2>\n`
       : `<h2 class="cl-ver">${inline(t)}</h2>\n`;
     continue;
   }
+  // reference-link definitions ([x]: url) define link targets — never rendered
+  if (/^\[[^\]]+\]:\s*\S/.test(line)) { flushPara(); flushList(); continue; }
   if (/^###\s/.test(line)) { flushPara(); flushList(); body += `<h3 class="cl-sec">${inline(line.replace(/^###\s/, ''))}</h3>\n`; continue; }
   if (/^-\s/.test(line)) { flushPara(); (list ||= []).push(line.replace(/^-\s/, '')); continue; }
   if (/^\s+\S/.test(line) && list) { list[list.length - 1] += ' ' + line.trim(); continue; } // wrapped bullet

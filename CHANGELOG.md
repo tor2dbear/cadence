@@ -1,1074 +1,190 @@
 # Changelog
 
-All notable changes to Cadence. It's a prototype, so versions are milestones
-rather than releases; the format loosely follows
-[Keep a Changelog](https://keepachangelog.com). The version badge in the app
-shows the deployed semver plus the commit it was built from, stamped at deploy.
+All notable changes to Cadence, a motion-system designer that ships as one
+static page. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html);
+`package.json`'s `version` field is the single source of truth. The entries below
+consolidate a rapid prototyping run into five pre-1.0 milestones (nothing was
+tagged before, so the history was regrouped into real releases). The in-app
+version badge shows the deployed version plus the commit it was built from,
+stamped at deploy time.
 
-## [0.13.5] — 2026-07-25
+## [Unreleased]
 
-### Accessibility
-- **The editor is a proper landmark and a skip link jumps to it.** The tool view
-  had no `main` landmark and no way for a keyboard user to skip the dense header
-  (system picker, Save/Export/Preview/Live-demo) to reach the editing columns. The
-  editing area is now `role="main"`, and the first tab stop in each view is a skip
-  link — "Skip to the editor" in the tool, "Skip to content" on the landing —
-  off-screen until focused, then pinned top-left. Only one `main` is ever exposed
-  (the inactive view is `display:none`).
-- **The landing's "live proof" tiles are no longer silent to screen readers.** The
-  whole section was `aria-hidden`, so AT users missed the proof entirely. The
-  purely-decorative animated stages stay hidden, but the section is now a labelled
-  region and its captions ("enter · stagger — a list cascades in", …) are read.
+## [0.5.0] — 2026-07-25
 
-### Guarded
-- `smoke42` asserts the editor's `main` role, the skip link is the first tab stop
-  and moves focus to the editor, only one `main` is exposed, and the proof section
-  is a labelled region with hidden stages but exposed captions.
-
-## [0.13.4] — 2026-07-25
-
-### Fixed
-- **Export correctness — two token-output bugs from the product-read analysis.**
-  - **The CSS spring fallback is now real, usable CSS instead of a comment.** A
-    spring easing exported the sampled `linear()` as the token value plus a
-    *commented-out*, hardcoded generic `cubic-bezier` "fallback" — unusable
-    without hand-editing, and the same curve for every spring. Now the base value
-    is a real `cubic-bezier` approximation derived from the actual spring's
-    overshoot, and an `@supports (transition-timing-function: linear(0, 1))` block
-    upgrades it to the sampled `linear()` where supported. (A two-declaration
-    cascade fallback can't work here — a custom property accepts any value at
-    parse time — so the feature query is the correct gate.)
-  - **The TypeScript export now emits the distance-primitives block**, matching
-    JSON and CSS. It carried the resolved distance inline per intent but dropped
-    the top-level `distance: { … }` primitives map, breaking parity with the
-    other formats' primitives/semantic structure.
-
-### Guarded
-- `smoke13` now asserts the spring's real cubic-bezier fallback and the `@supports`
-  upgrade (replacing the old comment check); `smoke17` asserts the TS distance
-  primitives block.
-
-## [0.13.3] — 2026-07-25
-
-### Changed
-- **The 404 page rejoins the brand.** It carried its own hardcoded dark/teal theme
-  and a system sans-serif — a visibly different product. It now links the shared
-  `styles.css`, so it inherits the Sand/Ink-navy tokens, Fraunces heading and
-  light/dark handling, with only a small 404-specific layout block left inline.
-  Asset and stylesheet links are root-absolute so they resolve at any 404 depth.
-
-### Accessibility
-- **The System-read verdict is announced to screen readers.** A polite `role="status"`
-  live region carries a short phrase ("System read: grade B, 1 finding to review")
-  that updates as you edit; the visible badge is `aria-hidden` so nothing double-reads,
-  and the findings list is a labelled region to read on demand. The opinion layer is
-  the product's soul — it's no longer silent to AT.
-- **The bézier curve handles are keyboard-operable.** Each control point is now a
-  focusable `role="slider"` — arrow keys nudge it (Shift for larger steps), the
-  value is exposed via `aria-valuetext` ("time 24%, value 0.30"), and focus is kept
-  on the handle while editing. Curves were pointer-only before.
-
-### Guarded
-- `smoke42` covers the status live-region and its updates, the labelled findings
-  region, the slider-role handles + arrow-key movement with focus retained, and
-  that the 404 links the shared stylesheet and dropped the old off-brand palette.
-
-## [0.13.2] — 2026-07-25
-
-### Changed
-- **The last icon-shaped unicode glyphs join the drawn set**, so every affordance
-  speaks one visual language. **Play** ▶ (Live demo, Play all, and the demo's Play
-  sequence) becomes a drawn `ic-play`; the **disclosure chevrons** ▸▾▴ (distance
-  toggle, each intent's more/less, the demo accordion) become one `ic-chevron`
-  rotated by the control's own open state; and the **inline remove ×** on ladder
-  steps, distances, easings, modes and intents now uses the same drawn `ic-close`
-  the panels close with — no more two kinds of cross in one view. Text-forward
-  buttons (Save/Export/Preview/+Add/tempo ±) and typographic prose arrows
-  (`→`, `↗`, `scroll ↓`) stay as-is by design.
-- Icons are now `pointer-events:none`, so a click always lands on its button —
-  the delegated handlers read `e.target`, and an SVG child would otherwise
-  swallow the click.
-
-### Guarded
-- `smoke41` gains the play/chevron symbols, asserts the play links and the
-  distance/intent chevrons point at the sprite, checks the chevron rotates on
-  open, verifies inline removes use the drawn cross, and fails if any
-  `▶▸▾▴›` glyph survives in the live tool.
-
-## [0.13.1] — 2026-07-25
-
-### Changed
-- **A hand-drawn inline-SVG icon set** replaces the platform unicode glyphs that
-  rendered inconsistently across OS/font. Drawn to the logomark's geometry (16px
-  grid, 1.75 stroke, round caps) and referenced from a symbol sprite via
-  `currentColor`, so they're crisp and consistent in light/dark: the system-read
-  **severity marks** (✓ ~ ! ≠), plus **reload / close / external / arrow**. The
-  Markdown rationale export keeps the text glyphs (it can't carry SVG); inline
-  prose arrows stay typographic.
-- **The hero's secondary CTA drops its arrow** — the primary "Start designing →"
-  now owns the single forward arrow, so the two CTAs read as a clear
-  primary/secondary pair rather than two identical arrows.
-
-### Guarded
-- `smoke41` checks the sprite defines the set, the read renders each severity as
-  a `<use>` of the matching symbol (a regression to a text glyph fails), and the
-  affordances point at the sprite.
-
-## [0.13.0] — 2026-07-25
+Accessibility and export correctness.
 
 ### Added
-- **Read another system's palette** — the roadmap "reverse-engineer the art
-  direction" feature. A collapsible reader under the System-read panel takes a
-  pasted third-party token set — CSS custom properties, a `tokens.json`, or a
-  Tailwind theme fragment — parses it with a tolerant, read-only scanner
-  (`parsePalette()` in `system-read.js`: no eval, sanitised names), and runs the
-  **same** `systemRead()` + verdict over it: a grade, the parsed primitive
-  counts, and the ranked findings with fixes. Entirely client-side, no server —
-  the opinion engine, pointed at someone else's system.
-
-## [0.12.1] — 2026-07-25
-
-### Added
-- **Download any export format as a file.** The export panel offered only Copy;
-  a **Download** button now saves the active tab under the conventional filename
-  (`tokens.css`, `motion.ts`, `tailwind.config.js`, `style-dictionary.tokens.json`,
-  `tokens.json`, `rationale.md`), so the tokens land in a repo without a
-  select-all-copy-paste. The Scroll and Transitions tabs are CSS+JS integration
-  recipes rather than drop-in stylesheets, so they download as `*-recipe.txt`
-  (a `.css` name would drop their JS fallback). Client-side Blob + `<a download>`,
-  no server — consistent with the static thesis.
-
-## [0.12.0] — 2026-07-25
-
-### Added
-- **The opinion layer is now a deliverable.** `systemRead()` answers "what's
-  wrong, ranked"; the new `scoreSystem()` folds those findings into an
-  "is this good?" — a **0–100 score + letter grade** plus a per-dimension
-  scorecard (ladder, easing set, enter/exit, budgets, vs-the-field). Pure and
-  DOM-free like the rest of the engine; headless-tested.
-- **A composite verdict leads the System-read header** — "A · all clear" /
-  "C · 3 to review", with the score in the tooltip — so the read opens with an
-  answer instead of a scrolling list.
-- **A Rationale export** (new export tab) — the critique as a shareable Markdown
-  report: the verdict, the scorecard, every finding with its fix, and the
-  system's fingerprint against the field. The code formats carry the tokens;
-  this one carries *why*, so the system can be defended to a team by someone who
-  was never in the editor.
-
-## [0.11.5] — 2026-07-25
-
-### Fixed
-- **The landing's "with taste" line now speaks the engine, not hand-typed prose.**
-  The rotating opinion line was four static strings that merely happened to match
-  the default system — a change to the default's durations/easings/stagger would
-  have silently made the shopfront assert stale numbers. It now derives from the
-  same `systemRead()` the tool runs (over the default system), rotating through
-  its positive findings — so the front page literally speaks the differentiator,
-  and can't drift. `smoke37` cross-checks every displayed line against a live read.
-- **"+ Add intent" no longer mints colliding token names.** `addIntent` pushed a
-  bare `name:"custom"` with no `uniqueName()` (unlike every other scale), so two
-  custom intents both emitted `--motion-custom-*` and the second silently
-  overwrote the first in the CSS/TS/Tailwind export — a token vanished with no
-  warning. It now dedupes to `custom-2`, and the opinion engine flags duplicate
-  names in ANY scale (covering imported / hand-edited systems too).
-
-## [0.11.4] — 2026-07-25
-
-### Added
-- **A strict Content-Security-Policy at the CDN layer** — a generated
-  `dist/_headers` locks the deployed site down: `default-src 'self'`,
-  `object-src 'none'`, `frame-ancestors 'self'` (clickjacking), and only the
-  Cloudflare analytics origins allowlisted. The two executable inline scripts
-  (the boot gate, demo's resolver) run by **sha256 hash**, not `'unsafe-inline'`,
-  so an injected `<script>` can't execute — defense-in-depth behind the existing
-  input sanitisation. `style-src` keeps `'unsafe-inline'` only because the live
-  re-timing writes inline style properties, which aren't a script vector.
-  Companion headers: `nosniff`, `Referrer-Policy`, `X-Frame-Options`,
-  `Permissions-Policy`.
-- **`scripts/gen-headers.mjs`** derives the script hashes from the actual page
-  bytes at build time, so the policy can never drift from the markup; `smoke36`
-  guards the policy's shape and hash-sync in CI.
-
-## [0.11.3] — 2026-07-25
-
-### Fixed
-- **The tool header's wordmark and tagline now share a baseline** — they were
-  laid out as a centred flex row, so the mark's height threw the tagline off the
-  wordmark's baseline. The mark + wordmark are now laid out inline (a real text
-  baseline) with the mark optically centred on the wordmark, and the header
-  baseline-aligns the tagline to it.
+- **Keyboard-operable easing curves.** Each bézier control point is a focusable
+  `role="slider"`: arrow keys nudge it (Shift for larger steps), `aria-valuetext`
+  reads out its value, and focus stays on the handle through both keyboard and
+  pointer editing.
+- **The editor is a `main` landmark, reachable by a skip link.** The first tab
+  stop in each view skips the dense header straight to the editor (tool) or the
+  hero (landing); only one `main` is exposed at a time.
+- **A screen-reader announcement for the system-read verdict** — a polite
+  `role="status"` region speaks the grade and finding count as they change, and
+  only when they change.
 
 ### Changed
-- **The header tagline is hidden on compact viewports** — on phones it wrapped
-  onto its own line and crowded an already-tight header while only repeating what
-  the landing already says; it now shows on the full desktop layout and drops in
-  the stacked layout.
-
-## [0.11.2] — 2026-07-25
+- **The 404 page rejoins the brand** — it dropped its hardcoded dark/teal theme
+  for the shared stylesheet (Sand/Ink-navy tokens, Fraunces, light/dark), with
+  root-absolute links so it resolves at any URL depth.
+- **The landing's "live proof" tiles are legible to assistive tech** — the
+  decorative animations stay hidden, but the section is a labelled region and its
+  captions are read.
 
 ### Fixed
-- **The easing proof curve no longer reads as cropped** — its endpoints sat in
-  the tile's rounded-corner clip zone; the path's y-range is inset so it keeps
-  proportional margin at any tile aspect ratio.
+- **The CSS export's spring fallback is real, usable CSS** instead of a comment:
+  a `cubic-bezier` approximation derived from the actual spring, upgraded to the
+  sampled `linear()` behind an `@supports` feature query.
+- **The TypeScript export emits the distance-primitives block**, matching the
+  JSON and CSS exports.
+- **Skip links no longer clobber the shared/edited state hash** (they move focus
+  without navigating), and a focused curve handle's ring now contrasts with its
+  own fill.
 
-### Changed
-- **Nav: the hero's secondary CTA points to the on-site guide** ("Read the
-  guide →") instead of the GitHub README, removing the third GitHub link on the
-  landing (it stays in the top nav and the colophon).
-- **Docs synced with shipped functionality** — the README "Shipped" list and the
-  guide now cover saving/naming systems and importing/exporting a
-  `.cadence.json` file; the README status line dropped its stale version.
+## [0.4.0] — 2026-07-25
+
+Saveable systems, richer exports, and hardening.
 
 ### Added
-- **A docs-freshness guard (`smoke35`)** — a CI tripwire that fails the build if
-  the README or guide stop mentioning shipped capabilities, so docs can't
-  silently rot. The README states the "definition of done" for a user-facing
-  change (update Shipped + guide + CHANGELOG).
-
-## [0.11.1] — 2026-07-24
-
-### Changed — the crafted/plain section moves with more taste
-- **The rotating opinion line swaps with the page's own motion** instead of a
-  hard text cut: the old observation lifts + fades out (exit), the new one
-  settles in from below (enter). In plain mode even the swap flattens to linear
-  — the page eats its own dog food. The cadence is calmer (~4.8s) and pauses
-  while you hover/focus the section so you can read; reduced-motion still cuts.
-- **The three proof tiles breathe instead of pulsing in lockstep** — slower,
-  pairwise-different loop periods (4.6 / 5.3 / 4.9s) so they drift out of sync.
-- Guarded in smoke28 (animated swap + desynced tile periods).
-
-## [0.11.0] — 2026-07-24
-
-### Added — import & export a system as a file
-- **Export a system as a self-describing `.cadence.json` file** (Save popover →
-  Export file): a small wrapper — `{ cadence, name, savedAt, state }` — around
-  the full state. Commit it to your repo, back it up, or move it between
-  machines and teammates without an account. This is the durable, portable
-  "save" that fits the static-site thesis (the codebase is the source of truth).
-- **Import a `.cadence.json` file** (Save popover → Import file) to load it, with
-  its name prefilled so you can drop it straight into "My systems". Import is
-  **strict about being a Cadence system** — the state shape is validated, so a
-  non-Cadence file is rejected with a clear message rather than a silent no-op —
-  but tolerant of format: it also accepts a bare state object.
-- **The system's name now rides along in the CSS export** as a comment banner
-  (`/* Cadence — Acme motion */`) — metadata only, never a token or a variable
-  name, and it stays out of the URL and the token exports.
-- Guarded in `smoke34` (export → file shape → re-import applies + names →
-  reject junk → CSS name banner).
-
-## [0.10.0] — 2026-07-24
-
-### Added — save & name your own systems
-- **You can now save systems to your browser and come back to them.** A new
-  **Save** control names the current system and stores it (`localStorage` — no
-  account, no backend, true to the static-site thesis). The picker splits into
-  **Presets** and **My systems**, so you can keep several named systems side by
-  side, reopen them, **Update** (also renames), or **Delete** them.
-- **A ↻ Reload button restores the selected system's values** — undo your edits
-  back to the saved (or preset) state. It also re-applies a preset that a plain
-  `<select>` can't re-fire once it's already selected (the Codex follow-up
-  from #38).
-- Guarded end to end in `smoke33` (save → appears under My systems → reload
-  restores → persists across a page reload → delete).
-
-## [0.9.25] — 2026-07-24
-
-### Fixed
-- **The demo's "Replay" (and "Play sequence") now actually re-play the member
-  list cascade.** The reveal is a CSS *transition*, but `revealList()` used the
-  CSS *animation* restart trick (remove/re-add `.in` around a reflow) — at the
-  reflow the rows were still at their end value, so re-adding `.in` changed
-  nothing and the cascade never re-ran. Now it snaps the rows back to the hidden
-  start with transitions momentarily off, then re-enables them and adds `.in`,
-  so the staggered cascade replays every time. Guarded in smoke29.
-- **"Load a system" now shows which system is loaded, and works on older
-  Safari.** The picker reset itself back to the "Load a system…" placeholder on
-  every pick, so you couldn't tell a system had loaded (worst on mobile, where
-  the token change lands off-screen above the sticky header) — it now keeps the
-  chosen system selected. It also deep-cloned the template with
-  `structuredClone`, which is absent on older Safari/webviews and threw into a
-  silent catch (the load did nothing there); switched to the JSON clone the rest
-  of the file uses. Guarded in smoke6.
-
-## [0.9.24] — 2026-07-24
-
-### Changed — the demo wears its own "external product" palette
-- **The live demo is re-skinned off the Cadence identity.** It now uses a cool
-  **slate + indigo** product palette (light + dark) instead of the tool's warm
-  sand/navy, so it reads as an *external* app the motion tokens are applied to —
-  not the tool's own chrome. This also makes the docked live-preview separate
-  cleanly from the warm editor. Only the colour skin changes; the motion tokens
-  are shared, which quietly shows the system is brand-agnostic.
-- `smoke26` guards that the demo carries its own product palette (cool slate +
-  indigo, not the sand tool) while still self-hosting fonts and staying
-  dual-theme.
-
-## [0.9.23] — 2026-07-24
-
-### Changed — the live-preview dock is redesigned
-- **The dock animates with the tool's own motion language.** Opening plays the
-  `enter` intent (base · emphasized), closing plays `exit` (fast · accelerate),
-  and the editor's reflow eases in step; reduced-motion skips it. The tool now
-  eats its own dog food instead of popping the panel in instantly.
-- **It's a floating card, docked below the header.** The panel starts under the
-  app header (tracked via a live `--header-h`) instead of covering it, and is
-  inset from the viewport edges with rounded corners and a soft, warm elevation
-  (`--dock-shadow`) — a built-in surface, not a black-shadowed slab jammed to
-  the edge. A gutter separates it from the intents column.
-- **De-duplicated chrome.** The dock bar is now a quiet "Preview" role-label
-  rather than a second "Live demo — …" header competing with the demo's own
-  header inside the frame.
-- `smoke24` gains guards for the floating-card geometry and the de-duplicated
-  label; `smoke18`/`smoke24` wait for the exit animation before asserting hidden.
-
-## [0.9.22] — 2026-07-24
-
-### Changed — the brand mark is a live easing curve
-- **The logomark is now a live easing curve.** Four staggered dots ride a bezier
-  that **morphs between easing shapes** (ease-out arc → gentle S → straight
-  diagonal → back): the two end dots stay anchored while the middle pair travel
-  along the curve as it changes — the same easing language as the hero comet
-  field. It's inline SVG animated with **SMIL** (on the path `d` and the middle
-  dots' `cx`/`cy`), navy and theme-aware, and **cadence.js freezes it on its
-  first frame under reduced-motion**.
-- **The favicon and social image are refreshed to match.** `favicon.svg` (and
-  the 32px/apple-touch PNGs) is now one **frozen frame** of that mark — a single
-  navy palette, dropping the old teal/amber/coral/violet step colours — and
-  `og.png` is re-rendered with the new mark. The mark is pulled inside an
-  Apple-style keyline (even margin, nothing in the corners) and its four dots
-  sit on **even arc length**, not even bezier `t`, so they read as evenly spread.
-- **Added a 96×96 PNG and a multi-size `favicon.ico`** (16/32/48) and linked
-  them across the pages, so the icon meets Google's "multiple of 48px" favicon
-  guidance for search-result icons (the 32px raster alone fell below it).
-
-## [0.9.21] — 2026-07-24
-
-### Changed — the hero backdrop is a generative comet field
-- **The landing hero backdrop is a generative field of comets.** Comets sweep
-  **random easing-curve paths** (varied shape + position), each leaving a very
-  faint navy trail that **lingers ~a minute then fades** — an ever-changing web
-  of lines, never the same twice. Each comet is a **compact bright head with a
-  long, smoothly-fading tail** (twelve overlapping low-opacity segments), and its
-  **along-path speed follows the easing the curve draws** (fast on steep
-  sections, slow on flats — like the value the easing animates). Speed, length
-  and trail strength vary per pass; spawns are **bursty** (occasional tight
-  bursts, occasional long quiets) and pre-seed a few faded trails so the page
-  opens mid-pattern. All **Web Animations API (no SMIL)**; spawning pauses when
-  the tab is hidden and **reduced-motion** skips it entirely.
-- **A live bezier-editor motif is kept behind `?hero=editor`** (not shipped by
-  default): the curve morphs with its handles — with a subtle overshoot bounce —
-  while the camera zooms/pans, both SMIL on one timeline so they stay in sync;
-  three distinct easing shapes rotate against four zoom levels (coprime periods)
-  so the shape↔size pairing never repeats.
-- Removed the "Flip to plain motion…" hint under the crafted/plain switch — the
-  labels speak for themselves.
-
-## [0.9.20] — 2026-07-24
-
-### Added — one-click apply
-- **The deterministic fixes are now one click.** Every warning already carried a
-  plain-language fix; the eight deterministic ones now carry a machine-readable
-  op too and render an **Apply** button. Click it and the model changes, the
-  read re-runs, and the URL/preview restamp — no hunting for the right control.
-  Covered: even out an uneven ladder (geometric rebalance), trim a duplicate
-  easing (and re-point everything that used it), drop a slow/near-equal exit onto
-  a shorter rung, move an over-budget duration down the ladder, tame a long
-  stagger, collapse an idle spatial/effects split, drop a scroll-reveal's stagger,
-  and linearise a non-linear scrub. The two genuinely ambiguous fixes
-  (velocity — which knob? — and a no-op reduced mode) stay text-only, on purpose.
-- The op lives in the pure module as an `apply` field on each finding
-  (`{op, …}`, params by name so a fix survives reordering); `cadence.js` runs it
-  through the existing model-mutation + `rerenderAll` path, so state, share links
-  and the live preview stay in sync for free.
-
-### Fixed (review follow-ups)
-- **Rebalance now works on a ladder that was dragged out of order.** The
-  unevenness check reads the ladder in array order, but rebalance assigned the
-  even progression in sorted order without reordering the array — so a jumbled
-  ladder (e.g. `[100, 900, 110]`) stayed uneven after Apply. It now sorts the
-  ladder ascending first, so the array the check reads is the one that's evened.
-- **Dropping a duplicate easing re-points the effects track too.** Apply (and
-  the manual remove-easing button) rewrote only `ease`, leaving a split intent's
-  `effectsEase` pointing at the deleted curve — a dangling `var(--motion-ease-…)`
-  in the CSS export and a lost split on share-link reload. Both tracks re-point now.
-- **The no-op reduced-mode warning shows while that mode is active.** It was
-  suppressed whenever the reduced mode was the selected one, even though the
-  check never depended on the active mode.
-- **Apply targets an intent by index, not name.** Intent names aren't unique
-  (two `custom` intents, or a rename), so resolving a fix by name could change
-  the wrong intent and leave the warning standing. Ops now carry the intent's
-  index (name kept for the label only).
-- **The no-op reduced-mode check compares resolved values.** It compared token
-  names, so a reduced binding pointing at a differently-named token that
-  resolves to the same ms/curve (two rungs dragged to the same value) read as a
-  real change and hid the warning. It now compares resolved duration and easing.
-- **The exit fix now clears the asymmetry threshold.** Apply picked the largest
-  rung *below* the enter, which — with rungs like 190/200 — could land only 10ms
-  under and re-trip the near-equal warning. It now targets a rung at least 40ms
-  under the enter, and omits the button when none qualifies.
-- **Duplicate-spring detection compares rendered curves, not raw damping.** An
-  absolute damping gap of ~1 means very different things at high vs low damping
-  (160/2 vs 160/3 is a 50% shift), so the old threshold could flag — and offer
-  to delete — genuinely distinct springs. It now samples both spring curves and
-  compares their shape.
-
-## [0.9.19] — 2026-07-24
-
-### Added — the comparative read
-- **The system read now benchmarks against real design systems.** Until now the
-  critique judged in a vacuum. It now measures the live system against the field
-  of shipped palettes it already carries (Material 3, Carbon, Fluent, Polaris,
-  Primer, Spectrum, …) and positions it: *"Your duration ladder grows ~1.5× per
-  step — in the range real systems use (Material 3 1.5×, Carbon 1.6×)."* Two
-  characteristics are compared — **ladder growth** (the geometric-mean step of
-  the duration ladder) and **overall tempo** (the typical resolved intent
-  duration). When the system sits inside the field the line is informational;
-  when it's steeper or flatter than *every* reference, it's flagged with a fix.
-  This is the "reverse-engineer the art direction" angle: the numbers get a
-  reference frame.
-- The comparison lives in the pure module (`fingerprint(system)` +
-  `systemRead(system, {corpus})`), so it's opt-in and testable — the corpus is
-  passed in, not reached for. `cadence.js` builds it from the shipped templates.
-
-## [0.9.18] — 2026-07-24
-
-### Changed — the opinion layer grows up
-- **The system read is now a pure, headless module (`system-read.js`).** The
-  whole critique used to live inside `critique()` in `cadence.js`, reaching for
-  globals and writing `innerHTML` in the same breath. It's now a DOM-free
-  `systemRead(system)` that takes an explicit snapshot and returns structured
-  findings — so the *same* critique runs three ways: in the app, in a headless
-  unit test (`tests/smoke31.mjs` requires it directly), and, per the roadmap,
-  behind a serverless/MCP endpoint where a CI step POSTs a system and gets its
-  warnings back. `cadence.js` just builds the snapshot and renders.
-- **Findings are ranked, worst-first.** Every observation now carries a
-  severity (`0` all-clear → `3` real defect); the read sorts by it, so problems
-  surface above the all-clears instead of sitting in check order. A slow exit
-  (the drag defect) leads the list.
-- **From diagnosis to prescription.** Each warning now carries a one-line
-  **fix** — *"→ Drop the exit onto a shorter duration than the enter."* — shown
-  after the observation, so the read tells you what to *do*, not only what's
-  wrong.
-
-### Fixed — coverage gaps in the read
-- **A one-rung duration ladder no longer produces `NaN`.** With fewer than two
-  steps there's no ratio to take; the check now guards that case instead of
-  quietly reading `-Infinity/Infinity`.
-- **Duplicate springs are caught.** The redundancy check compared cubic control
-  points only, so two near-identical springs slipped through. Springs are now
-  compared by physics (near-equal stiffness/damping).
-- **A no-op reduced-motion mode is called out.** A `reduced` mode whose bindings
-  resolve to the same durations, easings and staggers as the default won't calm
-  anything — the read now says so (opt-in, so the default stays quiet).
-
-## [0.9.17] — 2026-07-23
-
-### Fixed
-- **The motion switch snaps now.** Its thumb borrowed the page's hero-entrance
-  duration (`--l-in`, 640ms) plus a spring, so flipping crawled — both ways. A
-  control should snap: the thumb is 240ms now (180ms for the track/colour), while
-  still borrowing the page's easing *functions*, so it keeps dogfooding the
-  crafted-vs-plain character (spring back to crafted, linear to plain) at a
-  responsive speed.
-
-## [0.9.16] — 2026-07-23
-
-### Changed — clearer motion switch, and the sub-pages move + get the mark
-- **The landing's motion switch reads at rest now.** It showed only the current
-  state ("with taste") with the alternative buried in a sentence, so the choice
-  wasn't legible until you flipped it. Both states are now labelled either side
-  of the toggle — **crafted ⟷ plain** — with the active side lit (plain glows
-  warn, echoing the opinion line). The blurb is plain-language too: *"Flip to
-  plain motion — one speed, straight lines, everything at once — and feel the
-  difference the system makes"* (no more "naïve / symmetric timings" jargon).
-- **The guide and changelog carry the wordmark's easing-curve mark.** The little
-  curve under "cadence" (an easing curve — the brand signature) was landing-only;
-  the sub-pages had a bare wordmark. They match now.
-- **The guide and changelog animate in.** Both were dead-static — ironic for a
-  motion tool. They get a quiet staggered fade-up on load (reduced-motion-safe),
-  so the site keeps dogfooding its own motion.
-
-## [0.9.15] — 2026-07-23
-
-### Changed — the shareable URL is now a short diff, not the whole system
-- **The address-bar hash encodes only what differs from the default system.**
-  It used to serialise the *entire* system every time, so a one-token tweak
-  still produced ~900 characters of base64. Now the editor stores just the diff
-  from the default — a single edit is ~40 characters, and it grows only with how
-  much you've actually changed. (A fixed ~8-character link isn't possible without
-  a server to store the state behind a key; this keeps the link self-contained
-  and offline while making the common "share after a few tweaks" case tiny.)
-- The full encode is still used for the **live-demo link and preview channel**
-  (demo.html decodes the complete state), and **old/full-format links still
-  load** — so nothing that was shared before breaks.
-
-## [0.9.14] — 2026-07-23
-
-### Changed — the URL stays clean until you diverge
-- **Entering the tool no longer dumps a wall of base64 into the address bar.**
-  It used to stamp the full encoded state on entry even when nothing had changed
-  from the default system. Now the URL keeps a clean `#tool` while the system
-  still matches the default, and the long **shareable** state hash only appears
-  once you actually edit something (and drops back to `#tool` if you revert). The
-  live-demo channel and the demo link always get the full state, so they stay in
-  sync regardless.
-
-## [0.9.13] — 2026-07-23
-
-### Changed — the default lens now fits the intent (without collapsing the bench)
-- **Each probe opens in the lens that actually previews its intent.** The bench
-  used to seed `scope + 3× orb` regardless of what each intent did — so a hover
-  intent, a scroll-scrub intent and a spring all showed as identical travelling
-  orbs, and three of those *can't even show* what the intent does (an orb has no
-  press, no scroll mechanic, no state swap). A new `defaultLensFor()` picks the
-  lens by the intent's **defining trait**: structural mechanics win first
-  (`scroll·scrub` → scrub, `view transition` → vt, in-view reveal → `scroll·in-view`,
-  a height/width reflow → `accordion·reflow`), then a named press/hover gesture →
-  `button·press`, then a sequence (stagger) → `cascade`, else the everyday
-  **orb** (its comet reads travel + easing, and its trailing echoes even show a
-  spring's overshoot). **scope** is the deliberate *inspect-the-curve / ride-dot*
-  lens — it leads probe 0 but is never a catch-all, so the bench stays varied
-  rather than collapsing to one lens on a spring-heavy system.
-- **Re-pointing a probe keeps its current lens when that lens can still show the
-  new intent** (any general lens shows a plain / spring / staggered intent) —
-  only a specialist mechanic on either side re-lenses. So enabling scroll-scrub
-  on an intent and pointing a probe at it *shows it in the scrub lens*, while
-  moving between ordinary intents preserves the bench's variety. An **explicit**
-  lens choice always wins: once you pick a lens for a probe, re-pointing keeps it.
-- The default bench opens `scope · orb · orb · button` (enter / exit / move /
-  hover) — `hover → button·press` in particular is finally honest. Old share
-  links are unaffected (they carry their own saved lenses).
-
-## [0.9.12] — 2026-07-23
-
-### Changed — the scope lens rides the curve, and springs preview honestly
-- **The scope lens now has a playhead that rides the curve.** Alongside the
-  vertical time bar, a dot traces the drawn easing itself — its horizontal
-  position is linear time, its vertical position is the token's *eased* value —
-  so you watch the curve get walked, not just swept.
-- **A real spring preview, finally.** Because that dot's vertical motion is
-  driven by the token's own timing function, a **spring overshoots past the top
-  of the curve and settles** — the multi-bounce you couldn't see when a preview
-  just translated an element a fixed distance over a fixed duration. The scope
-  lens doubles as the spring preview the tool was missing.
-- **The landing "spring" tile travels the whole tile again.** It animated a
-  fixed `translateX`, so on wide and mobile-width tiles the orb only reached
-  ~40% before springing back. It now travels proportionally (across the track),
-  so the bounce reads as a full traverse everywhere.
-
-## [0.9.11] — 2026-07-22
-
-### Changed — the bench stays alive
-- **The test bench no longer freezes after the intro.** A motion tool that sits
-  motionless reads as dead, so once the opening play-through finishes the bench
-  gently **idle-loops** — one lens at a time, on a calm rotating cadence, so
-  something is always moving without being busy. Skipped for reduced-motion and
-  when the tab is hidden or the preview is docked.
-- **Replay is now signposted.** Each lens shows a subtle "↻ replay" hint on
-  hover — clicking a lens has always replayed it, but nothing said so.
-
-## [0.9.10] — 2026-07-22
-
-### Changed — the test bench is now abstract instruments only
-- **Retired the wireframe-component lenses (`drawer`, `list reveal`).** They
-  were low-fidelity copies of what the **demo page** already does with real,
-  integrated components — so they blurred the line between the two. The bench's
-  job is to *isolate one measurable quality of a token* (curve, stagger, travel,
-  scroll mechanic, state swap); the demo page owns real components at full
-  fidelity. Old share links that referenced a retired lens fall back to `orb`.
-- **The `button` lens is honest now** — labelled `button · press`, it responds
-  to **hover** (as "Hover me" always implied) as well as click-to-replay. The
-  `accordion` lens is reframed as `accordion · reflow` (the expand-in-place
-  gesture the abstract lenses can't show).
-
-## [0.9.9] — 2026-07-22
+- **Save & name your own systems** in the browser (`localStorage`, no account),
+  with a picker split into Presets and My systems, and Update / Delete / a Reload
+  that restores a system's saved values.
+- **Import & export a system as a self-describing `.cadence.json` file** — the
+  durable, portable "save" that fits the static thesis; import is strict about
+  being a Cadence system but tolerant of a bare state object.
+- **The opinion layer became a deliverable.** A `scoreSystem()` folds the ranked
+  findings into a 0–100 score, a letter grade, and a per-dimension scorecard; a
+  composite verdict leads the System-read header; and a **Rationale** export
+  writes the critique — verdict, scorecard, every finding and its fix — as
+  shareable Markdown.
+- **Read another system's palette** — paste a third-party token set (CSS custom
+  properties, a `tokens.json`, or a Tailwind fragment) and the same `systemRead()`
+  runs over it, entirely client-side.
+- **Download any export format as a file** under its conventional filename.
+- **A hand-drawn inline-SVG icon set** — severity marks, play, disclosure
+  chevrons, close and external — drawn to the logomark's geometry and themed via
+  `currentColor`, replacing the platform unicode glyphs.
 
 ### Changed
-- **The tool's orb lens is now a comet, not a fading disc.** It used to animate
-  `opacity` from `.3` to `1`, so at rest the track line showed straight through
-  the semi-transparent orb — unfinished. The head is now **fully opaque** and
-  leaves a **trail of fading echoes**: the head leads and each echo lags a
-  little, so the trail stretches through the fast part of the easing and
-  retracts at the ends — the token's easing character, now visible as motion
-  blur. (The trail's translucency reads as blur, not a see-through orb.)
+- **The landing's opinion line now derives from the live `systemRead()`** over
+  the default system instead of hand-typed prose, so it can't drift.
+- **The tool header baseline-aligns the wordmark and tagline** and hides the
+  tagline on compact viewports; the hero's single forward arrow marks the primary
+  CTA.
 
-## [0.9.8] — 2026-07-22
+### Fixed
+- **"+ Add intent" dedupes token names** (`custom`, `custom-2`, …) so two intents
+  can't silently emit colliding CSS custom properties.
+
+### Security
+- **A strict Content-Security-Policy at the CDN layer** (`scripts/gen-headers.mjs`
+  generates `dist/_headers`): `default-src 'self'`, `object-src 'none'`,
+  `frame-ancestors 'self'`, and the executable inline scripts allowed by **sha256
+  hash** rather than `'unsafe-inline'`, plus `nosniff`, `Referrer-Policy` and
+  frame protections.
+
+## [0.3.0] — 2026-07-24
+
+A visual identity, discoverability, and a maturing opinion engine.
 
 ### Added
-- **A self-hosted `/changelog` page**, generated from `CHANGELOG.md` at build
-  time (this file stays the single source of truth — a small `scripts/
-  gen-changelog.mjs` converts it, no dependency). Styled in the identity like
-  the guide, with its own canonical, Open Graph, and `BreadcrumbList`. The
-  version badge and the colophon now link there instead of the raw file on
-  GitHub — keeping visitors on-domain, adding an indexable page and a
-  freshness signal, and reading as a finished product rather than a repo file.
-
-## [0.9.7] — 2026-07-22
-
-### Fixed
-- **The spring orb finally sits on its line (iOS Safari).** Two earlier
-  attempts (margin-centring, then constraint-based `margin-block:auto`) still
-  let Safari drop the composited, animating orb a few pixels below the track.
-  The orb is now a **flex item in a `display:flex; align-items:center` track**,
-  so the layout engine places it and the compositor respects that — the
-  centering no longer lives in a `top`/`margin` the GPU layer can round. Both
-  the landing "emphasized" tile and the tool's orb lens; travel is unchanged.
-
-## [0.9.6] — 2026-07-22
-
-### Fixed
-- **The right Fraunces now loads.** The self-hosted files were single-weight
-  *static* instances baked at a low optical size (~9, the "text" cut), so the
-  big display headings rendered in the sturdy text cut instead of the delicate,
-  high-contrast display cut — visible in glyphs like the "m". Replaced them with
-  the **variable** Fraunces (opsz 9–144, wght 400–600, roman + italic); with
-  `font-optical-sizing: auto` (the browser default) display sizes now get the
-  display cut and small labels the text cut, from one file per style. (~+95 KB;
-  three static files → two variable.)
-- **The easing tile draws its curve in one clean stroke.** The "draw" used
-  `stroke-dasharray` on a path with `vector-effect: non-scaling-stroke`, which
-  computes dashes in screen space — so on the stretched path the dash repeated
-  and the curve appeared in disconnected chunks. It now reveals via a
-  left-to-right `clip-path` wipe (which reads as drawing for the monotonic
-  curve) regardless of the rendered path length.
-
-## [0.9.5] — 2026-07-22
-
-### Fixed
-- **The guide's primary CTA text is visible again.** "Build your motion system"
-  inherited `--accent` from the `.guide a` prose-link rule (higher specificity),
-  so it rendered navy-on-navy and vanished. The CTA rules are now `a.<class>`
-  so they win, and use `--on-accent`.
-- **The travelling orb sits on its line, cross-browser.** Both the landing's
-  "emphasized" tile and the tool's orb lens now centre with `top/bottom:0 +
-  margin-block:auto` (constraint-based) instead of `top:50%` + a negative
-  margin, which iOS Safari could still nudge below the line for a composited,
-  animating element.
+- **The system read became a pure, headless module** (`system-read.js`): a
+  DOM-free `systemRead(system)` returning ranked, worst-first findings, each with
+  a one-line fix — the same critique runs in the app, in a headless test, and
+  (per the roadmap) behind an endpoint.
+- **A comparative "vs the field" read** — the system is benchmarked against the
+  shipped design-system palettes (Material 3, Carbon, Fluent, …) on ladder growth
+  and overall tempo.
+- **One-click Apply** for the deterministic fixes — the model changes, the read
+  re-runs, and the share link and preview restamp.
+- **Discoverability** — SEO metadata, a social image, `robots.txt` /
+  `sitemap.xml`, JSON-LD, a long-form **/guide** page with an FAQ, and Google
+  Search Console verification; a **self-hosted /changelog** page generated from
+  this file; and cookieless analytics injected at build time only.
 
 ### Changed
-- **The "naïve" toggle is explained.** A one-line note now says what flipping
-  to naïve does — linear easing, symmetric timings, no stagger — so the label
-  isn't a bare, unexplained term.
-- **The colophon credits the author with a link** to tor-bjorn.com.
-- **Added `BreadcrumbList` structured data** to the guide (Cadence › Guide),
-  completing the schema coverage (WebApplication + FAQPage on the landing,
-  TechArticle + BreadcrumbList on the guide).
+- **A visual identity of its own** — a warm **Sand** light theme with an
+  **ink-navy** accent and a matching dark counterpart; **self-hosted** Fraunces /
+  Switzer / JetBrains Mono (zero external requests); and a **logomark that is a
+  live easing curve** (SMIL, frozen under reduced-motion), carried into the
+  favicons and social image.
+- **The bench was rationalised to abstract instruments** — the orb became a comet
+  with a fading trail; the scope lens grew a playhead that rides the curve and
+  doubles as an honest spring preview; and each probe opens in the lens that
+  actually previews its intent.
+- **The live-preview dock was redesigned** as a floating card that animates with
+  the tool's own `enter` / `exit` tokens, and the demo wears its own slate+indigo
+  "external product" palette.
+- **The shareable URL encodes only the diff from the default**, and stays a clean
+  `#tool` until the system actually diverges.
 
-## [0.9.4] — 2026-07-22
-
-### Added
-- **Google Search Console verification** meta tag on the landing, so the
-  `cadence.tor2dbear.com` property can be verified and the sitemap submitted
-  (SEO #3 — getting the site into Google's index). It's an inert meta tag (no
-  external request), so it lives in the source, not the build step.
-
-## [0.9.3] — 2026-07-22
+### Removed
+- The low-fidelity wireframe-component bench lenses (`drawer`, `list reveal`) —
+  the demo page owns real components; old share links fall back to the orb.
 
 ### Fixed
-- **Canonical / OG / sitemap URLs now match what the CDN serves.** Cloudflare
-  Pages serves clean, extensionless URLs and 308-redirects the `.html` forms
-  (`/guide.html` → `/guide`), so pointing the canonical, `og:url` and sitemap
-  entries at the `.html` URLs sent crawlers through a redirect to reach the
-  real page. They now use the clean URLs (`/guide`, `/demo`). Internal `href`s
-  keep `.html` so the pages still open directly from disk and in the tests.
+- Cross-browser centering of the travelling orb on iOS Safari; the correct
+  (variable) Fraunces optical size; the easing tile drawing in one clean stroke;
+  the motion switch snapping instead of crawling; and the canonical / OG / sitemap
+  URLs matching the clean paths the CDN serves.
 
-## [0.9.2] — 2026-07-22
+## [0.2.0] — 2026-07-20
 
-### Added — a second indexable page (SEO #2, site architecture)
-- **A `/guide.html` page: "How to build a motion system".** A genuine,
-  long-form content page — primitives (duration ladder + easing set), composing
-  intents, stagger & distance, exporting to CSS/Tailwind/Style Dictionary/JSON,
-  and scroll-driven animations + view transitions — with code examples. It's a
-  real second rankable URL targeting more of the queries designers search, in
-  the site's identity (Fraunces, sand, the terminal code style), with its own
-  canonical, Open Graph, and `TechArticle` structured data.
-- **Internal linking:** the landing links to the guide (nav + "how it works"),
-  and the guide links back to the tool and home.
+Rich primitives, scroll-driven motion, view transitions, and a
+self-demonstrating landing.
+
+### Added
+- **Richer primitives** — spring easings (sampled to CSS `linear()`), an opt-in
+  distance/travel scale, a global tempo control, a one-click reduced-motion mode,
+  a motion-mode axis, per-intent stagger, a property axis, and a spatial/effects
+  easing split.
+- **Scroll-driven motion** — any intent can be a **scroll reveal** (plays on
+  entry) or a **scrub** (bound to scroll position: parallax / progress / fade),
+  each emitting a native `animation-timeline` recipe **and** a JS fallback, with
+  live bench lenses.
+- **View Transitions** — a `root` or `shared` transition on any intent, a
+  Transitions export tab, and a simulated bench lens; the live demo exercises
+  reveals, scrubs and tab transitions on the shared tokens.
+- **A self-demonstrating landing** — a hero timed entirely by Cadence's own
+  default system, a "crafted ⟷ plain" toggle that flattens the whole page, a live
+  opinion line, a scroll montage that assembles the model, and a shared-element
+  View Transition into the editor.
+- **More export targets** — Tailwind, Style Dictionary, and a typed TS object
+  alongside CSS and JSON, plus a "Load a system" picker seeding from real
+  design-system palettes.
+- **The live demo** (`demo.html`) — a real product surface that re-times as you
+  edit (BroadcastChannel + URL hash), dockable beside the editor.
+- **Delivery tooling** — a versioned Playwright smoke suite run in CI on every
+  PR, per-PR preview deployments on **Cloudflare Pages**, a `dist/` build so the
+  test tooling never ships, and an automatic build-version stamp.
 
 ### Changed
-- **The demo is now `noindex, follow`** and dropped from the sitemap. It's a
-  thin, tool-dependent surface; keeping it out of the index stops it competing
-  with the landing and guide while its links still flow.
-- `sitemap.xml` now lists the landing + guide; `build.sh` cache-busts and
-  injects the analytics beacon into `guide.html` too.
+- **Export moved from a permanent column to a dismissible panel** so the editor
+  gets full width; progressive disclosure on intent cards; and a rebalanced,
+  capped-and-centred layout.
+- **System read, elevated** into an accent-edged panel with a persistent verdict
+  badge; glossary titles map the vocabulary to design-token terms.
 
-## [0.9.1] — 2026-07-22
-
-### Changed — on-page SEO (relevance)
-- **The title and metadata now lead with what people search**, not the brand
-  ("Cadence" collides with a large EDA company and the plain word, so it can't
-  be the discovery vector). New `<title>`: *Motion design tokens & easing scale
-  generator — Cadence*, with a keyword-led description.
-- **Fixed the double `<h1>`.** The tool's wordmark was an `<h1>` (a second,
-  keyword-free top heading); it's now a plain element, leaving the landing's
-  hero as the single `<h1>`. The wordmark's home link and brand View Transition
-  are unchanged.
-- **Added a real, crawlable content section** — "what it is / how it works /
-  what it exports / who it's for" plus an FAQ — targeting the queries designers
-  actually type (motion design tokens, easing/duration scales, export to CSS /
-  Tailwind / Style Dictionary, scroll-driven animations, view transitions).
-  Roughly doubled the page's indexable text (~525 → ~1040 words) and added
-  **FAQ structured data** (`FAQPage` JSON-LD) for rich-result eligibility.
-
-## [0.9.0] — 2026-07-22
-
-### Added — discoverability & traffic
-- **SEO metadata.** Both pages now carry a canonical URL, Open Graph and
-  Twitter (`summary_large_image`) tags, light/dark `theme-color`, and the
-  landing carries JSON-LD (`WebApplication`) structured data. Titles and
-  descriptions were already there; this makes shares unfurl and crawlers
-  understand the page.
-- **A social share image** (`og.png`, 1200×630) rendered in the identity —
-  Fraunces headline, the sand palette, the ease curve as a background sweep.
-- **`robots.txt` + `sitemap.xml`** pointing crawlers at the landing and demo.
-- **Cloudflare Web Analytics** (privacy-first, cookieless). The beacon is
-  injected at **build time into `dist/` only** — never the source — so the
-  offline smoke tests don't trip over its external request. `build.sh` also
-  now copies `.txt`/`.xml` assets into the deploy.
-
-## [0.8.5] — 2026-07-22
-
-### Fixed
-- **The spring demo's orb no longer sits below its line on iOS Safari.** The
-  travelling orb (on the landing's "emphasized" tile and the tool's orb lens)
-  was centred with `top:50%` + `transform:translateY(-50%)`. Safari drops the
-  `-50%` when it composites the *animated* transform, so the orb dropped half
-  its height below the track. It's now centred with a negative margin, leaving
-  the transform free for the travel/scale — bulletproof across browsers.
-
-### Added
-- **A way to get in touch.** The landing colophon gains a "Get in touch" link
-  (`hi@tor-bjorn.com`, subject "Cadence"), and the standalone demo gains a slim
-  footer — a colophon line plus links to the designer, source and contact — so
-  a shared `demo.html` is no longer branding-only with no way onward.
-
-## [0.8.4] — 2026-07-22
-
-### Added
-- **The live demo carries a way home.** `demo.html` can be reached as a
-  standalone shared link, so it was a dead end — its only branding was the
-  fake "Northwind" product. It now shows a `cadence` home mark that opens the
-  designer (in a new tab, so it never disturbs the demo surface). Same
-  "click the wordmark → home" gesture as the tool, now consistent across all
-  three surfaces.
-
-### Fixed
-- **The landing's "system read" line no longer makes the page jump.** The
-  tasteful observation under the motion toggle rotates through strings of
-  different lengths (1–3 lines depending on the text and viewport), and the
-  line grew/shrank with each — shoving the cards below up and down. It now
-  reserves the tallest observation's height (measured across all of them at
-  the current width, recomputed on resize), so the text swaps in place.
-
-## [0.8.3] — 2026-07-22
-
-### Added
-- **The tool's wordmark is now a "home" link back to the intro.** Entering the
-  editor was one-way — the only way back to the landing was to hand-edit the
-  URL. Clicking the `cadence` wordmark now returns to the landing (the brand
-  wordmark morphs back via the same View Transition as the entrance), clears
-  the state hash so a reload stays on the intro, and keeps your system in
-  memory so "Start designing" drops you back into the same work. Modified
-  clicks (open-in-new-tab) fall through to a plain `index.html` link, and the
-  affordance carries an accessible label.
-
-### Fixed
-- **The tool header wordmark no longer sits high.** The header was
-  baseline-aligned, but the wordmark's icon-plus-text flexbox threw off its
-  baseline, so `cadence` rode ~8px above the tagline and controls next to it.
-  The header now centre-aligns its row (the convention for a control bar), so
-  the wordmark, tagline, selector, buttons and badge share one line.
-
-## [0.8.2] — 2026-07-22
-
-### Fixed
-- **Deploys are now visible immediately.** `styles.css` and `cadence.js` are
-  cached for 4h by the CDN and their filenames are stable, so a fresh deploy
-  wasn't seen until the cache expired (or a hard refresh) — the new v0.8.0/0.8.1
-  identity looked "not live" even though it was. `build.sh` now appends a
-  per-deploy `?v=<commit>` query to both references; since `index.html` itself
-  is always revalidated (`max-age=0`), the new query — and thus the new CSS/JS
-  — is picked up on the next load.
-
-## [0.8.1] — 2026-07-22
-
-### Changed — the live demo joins the identity
-- **`demo.html` now wears the Sand/Ink-navy identity in both light and dark.**
-  It followed the old near-black stage + blue accent and clashed with the
-  rest of the app; it's now fully tokenised and dual-theme
-  (`prefers-color-scheme`) — a warm sand stage framing the product shell in
-  light, a warm-dark stage in dark, with the ink-navy / periwinkle accent.
-- **The demo's labels are self-hosted JetBrains Mono**, tying its mono to the
-  app without a CDN. The product surface itself stays in system sans (it's a
-  deliberately plain, "any product" surface — only its motion should be
-  interesting).
-- Extended the identity guard (`smoke26`) to the demo: no external font host,
-  mono self-hosted, the old blue accent gone, dual-theme present.
-
-## [0.8.0] — 2026-07-22
-
-A visual identity of its own — the app stops looking like a generic dark-mode
-dev tool and gets a real point of view: warm sand, an ink-navy, and a display
-serif with an opinion.
-
-### Changed
-- **New palette — warm "Sand" light theme + a matching dark counterpart.**
-  A warm paper (`#ece5d6`) with ink-navy (`#22356e`) accent replaces the old
-  near-black/violet scheme. Both light and dark are first-class and follow
-  `prefers-color-scheme`; every surface, border, and state colour is a token,
-  so the two themes stay in lockstep. The export code block is its own
-  theme-independent warm-dark "terminal" (`--code-*` tokens).
-- **New type system — self-hosted, zero external requests.** Display is
-  **Fraunces** (a warm, opinionated old-style serif, used with its real
-  italic for emphasis), body is **Switzer**, mono is **JetBrains Mono** — all
-  shipped as local `woff2` (`fonts/`) via `@font-face`. No Google Fonts, no
-  Fontshare, no CDN: the "one static page, no dependency" thesis now covers
-  the fonts too. Body/mono are carried over from the author's portfolio so
-  Cadence ties back to a personal brand.
-- **Motion as a graphic sign.** The wordmark carries a small easing-curve
-  swash — the "Curve = easing" primitive rendered as identity, not decoration.
-
-### Added
-- `tests/smoke26.mjs` — an identity guard: no external font hosts in source,
-  `@font-face` stays local, Fraunces (incl. italic) actually paints, the sand
-  background is live, and the curve mark is present.
-
-## [0.7.4] — 2026-07-20
-
-The redesign's finishing pass — trust and voice (the last of the UX review).
-
-### Changed
-- **The "PROTOTYPE" badge is now a clean version tag** (e.g. `v0.7.4`, still
-  linking to the changelog). "Prototype" undersold the copy-paste-ready output;
-  the version + changelog carry the same information without the caveat.
-- **The landing's author line grew into a colophon** — a short note on the
-  thesis and the fact that everything on the page is timed by Cadence's own
-  system, plus the tech facts (one static page, no framework/runtime/dependency)
-  and Source / Changelog links. Gives the visiting designer the "why & how"
-  without leaving the page.
-- Freshened the Preview button's tooltip to match the docked behaviour.
-
-## [0.7.3] — 2026-07-20
-
-### Added — landing scroll montage
-- **The landing now teaches the model by scrolling.** Below the hero, a
-  four-step montage assembles the two-layer system — primitives → intents →
-  the opinion layer → export — each step **revealing via
-  `animation-timeline: view()`** as it enters the viewport, with a
-  **reading-progress bar scrubbed by `animation-timeline: scroll()`** up top.
-  The landing dogfoods scroll-driven motion (reveal + scrub) by using it to
-  explain itself. IntersectionObserver / scroll-listener fallbacks for browsers
-  without native scroll timelines; reduced-motion shows everything statically.
-
-## [0.7.2] — 2026-07-20
-
-### Changed — the entrance
-- **The landing → tool transition is now a shared-element View Transition.** The
-  wordmark morphs from the landing nav into the editor header (a shared
-  `view-transition-name`), while the rest cross-fades — dogfooding the View
-  Transitions feature on the app's own entrance, timed by the system's own
-  duration/easing tokens. Reduced-motion still swaps instantly.
-
-## [0.7.1] — 2026-07-20
-
-In-tool UX, part of the redesign — making the editor↔demo loop and the opinion
-layer impossible to miss.
-
-### Changed — the tool
-- **The live preview docks beside the editor.** On wide screens it's a side
-  pane (not a full-screen overlay), and it **auto-opens when you enter from the
-  landing** — so the edit → see loop is felt at once, with the demo re-timing
-  as you edit. Narrow screens keep the overlay; the Preview button still
-  toggles it.
-- **System read, elevated.** It now reads as a panel (accent edge) with a
-  persistent **badge** in its header — "all clear" or "N to review" — so the
-  differentiator is legible without scrolling to it.
-- **Glossary titles** on the section headers map the vocabulary to familiar
-  terms (primitives = design tokens, intents = semantic tokens, bench = live
-  probes).
-
-## [0.7.0] — 2026-07-20
-
-A landing page — the first slice of a UX redesign. The tool used to drop you
-straight into a dense three-column cockpit; now there's a front door that leads
-with the thesis and *demonstrates it with motion*, then hands you into the
-editor.
-
-### Added — landing view
-- **Self-demonstrating hero.** Every animation on the landing is timed by
-  Cadence's own default system (staggered entrance, a spring, an easing curve
-  that draws itself), so the page *is* the proof.
-- **The signature toggle — "with taste / naïve".** One switch flips the page's
-  motion between the tasteful default and a naïve system (linear, symmetric, no
-  stagger); the whole page flattens and the live opinion line lights up red.
-  The thesis, provable in one gesture.
-- **Live opinion line** that rotates through real system-read observations —
-  the differentiator, on the front page.
-- **Two doors:** *Start designing* (dogfoods a View Transition into the editor)
-  and *How it's built*; plus an author note and a "copy-paste-ready" trust line.
-- **Boot gate:** an empty hash shows the landing; any hash (`#tool`, a share
-  link, or state) boots straight into the editor — so shared systems and
-  deep links skip the intro. Reduced-motion and mobile are first-class.
-
-## [0.6.1] — 2026-07-20
-
-The live demo catches up to the tool: it now exercises all three scroll/state
-surfaces, each driven by the same `--role-*` tokens the shell already uses, so
-they re-time live as you edit the system.
-
-### Added — demo surface
-- **View transitions on the tabs** — switching Overview / Activity / Settings
-  runs `document.startViewTransition`, cross-fading the panel on the `move`
-  token, with a feature-detected instant-swap fallback. Real Activity and
-  Settings panels were added so there's something to transition between.
-- **Native scroll reveal** — a section below the shell whose cards reveal via
-  `animation-timeline: view()` (timed by `enter`), with an IntersectionObserver
-  fallback.
-- **Scroll scrub** — a reading-progress bar that tracks the scrollbar via
-  `animation-timeline: scroll()`, with a scroll-listener fallback.
-- Reduced-motion pins every end state; unsupported browsers just show content.
-
-## [0.6.0] — 2026-07-20
-
-View Transitions. The View Transitions API's only knobs are duration + easing —
-which an intent already is — so Cadence can drive DOM state swaps (navigation,
-toggles) straight from your semantic tokens.
-
-### Added — view transitions
-- **View-transition toggle** on any intent, with a **kind**: `root` (a
-  whole-page cross-fade) or `shared` (a named element that morphs between
-  states). Independent of the scroll-driven modes — a different trigger
-  (state swap, not scroll).
-- **New “Transitions” export tab.** Emits the `::view-transition-old/new/group`
-  pseudo-elements timed by that intent's `--motion-<intent>-duration` /
-  `-ease`, a `view-transition-name` for shared elements, a reduced-motion block
-  that keeps the instant swap, and a `swap()` scaffold that feature-detects
-  `startViewTransition` so unsupported browsers just update the DOM.
-- **System read** notes that same-document VT is Baseline now (Chrome/Edge
-  111+, Safari 18+, Firefox 144+), so this is progressive enhancement, not a
-  gamble.
-- **Simulated bench lens** (`view transition`): a real `startViewTransition`
-  would snapshot the whole page, so the lens mimics the old→new cross-fade /
-  shared morph with plain transitions timed by the intent — enough to feel it.
-
-## [0.5.0] — 2026-07-20
-
-Scroll, part two: **scrub**. Where a reveal plays once on entry, a scrub binds
-an element's progress to scroll *position* — parallax, a progress bar, a fade
-that tracks the scrollbar. No duration; the range is the axis.
-
-### Added — scroll scrub
-- **Scrub mode** on any scroll-driven intent (a `reveal · on entry` /
-  `scrub · follow` switch). A scrub exposes three axes: **timeline**
-  (`view()` — the element's own passage — or `scroll()` — the page), **range**
-  (`cover` / `entry` / `exit` / `contain`), and **effect** (`progress` /
-  `parallax` / `fade`). Reveal and scrub are mutually exclusive — an element
-  either plays once or scrubs continuously.
-- **Dual export in the Scroll tab.** Native CSS emits `@keyframes` +
-  `animation: … auto …` (auto duration → the timeline drives it) +
-  `animation-timeline` + `animation-range`. The **JS fallback** maps the
-  element's viewport progress (0→1) to the same property via a passive scroll
-  listener, for browsers without native scroll timelines (Firefox today).
-  Reduced-motion pins the end state.
-- **System read** flags a scrub running on a non-linear easing — the motion
-  then speeds up and slows down against the scroll, which parallax/progress
-  usually don't want.
-- **Live scrub probe** — a bench lens (`scroll · scrub`) whose target tracks
-  the box's own scroll position, so you can feel position-as-axis directly.
-
-## [0.4.0] — 2026-07-20
-
-Scroll into the picture: the first scroll-driven surface. Any intent can now be
-tagged as a **scroll reveal** — motion that plays as the element enters the
-viewport — with a dual export that stays honest about where the platform is.
-
-### Added — scroll reveals
-- **Scroll-reveal toggle** on any intent (in the advanced panel), with a
-  **trigger threshold** (reveal by _N_% into view). It reuses the intent's own
-  duration, easing and distance, so a reveal is just a semantic token with a
-  trigger — no new knobs.
-- **Dual export — a new “Scroll” tab.** For every reveal it emits both the
-  native **CSS scroll-driven** recipe (`animation-timeline: view()` +
-  `animation-range`, Chrome/Edge 115+, Safari 26+, Opera) **and** an
-  **IntersectionObserver fallback** (behind `@supports not (...)`) for browsers
-  without it — Firefox today. Reduced-motion honoured in both paths.
-- **Honesty baked in.** The export names the real difference — native _scrubs_
-  the reveal to scroll position, the fallback _triggers_ it once at a threshold —
-  and the **system read** warns when a reveal's stagger only lands in the JS
-  path (native gives each item its own timeline).
-- **Live in-view probe** — a new bench lens (`scroll · in-view`): a genuine
-  scroll box whose cards reveal as they cross the threshold, driven by a scoped
-  IntersectionObserver, so the abstract token becomes something you can scroll.
-
-## [0.3.0] — 2026-07-18
-
-The enrichment milestone: richer motion primitives, an opinion layer that reads
-more of the system, a real demo surface, and the tooling to ship it safely.
-
-### Added — authoring the scales
-- **Spring easings** — an easing can be a stiffness/damping spring instead of a
-  cubic-bézier, sampled to CSS `linear()` so real multi-bounce physics animates
-  natively (with a cubic-bézier fallback noted in the export). Back / anticipate
-  bézier presets too.
-- **Distance (travel) scale** — an opt-in third primitive; intents can reference
-  how far they move, which the system read uses to judge velocity.
-- **Global tempo** control, and a one-click **reduced-motion** mode exported
-  under `prefers-reduced-motion`.
-
-### Added — composing intents
-- **Motion-mode axis** — modes (productive/expressive, min/mid/max, reduced),
-  each intent carrying a separate binding per mode, switched globally.
-- Per-intent **stagger** (per-item delay), a **property** axis (the CSS property
-  each intent animates → composite `transition` shorthands), and an optional
-  **spatial · effects easing split**.
-
-### Added — seeing it
-- **Scope lens** — one view of a token's whole signature (curve + time playhead
-  + property-driven demo elements that cascade by stagger).
-- **Cascade lens** — the stagger plotted as a timeline.
-- **Live demo** (`demo.html`) — a real product surface where the system is
-  applied to actual components, re-timing live as you edit (BroadcastChannel +
-  URL hash), openable in a tab or an in-editor preview overlay.
-
-### Added — sharing & exporting
-- Export targets **Tailwind**, **Style Dictionary**, and a typed **TS** object,
-  alongside CSS and JSON.
-- **"Load a system"** picker seeding the model from real design-system motion
-  palettes (Material 3 / M3 Expressive, Carbon, Fluent, Ant, Tailwind,
-  Atlassian, Polaris, Primer, Spectrum).
-
-### Added — the opinion layer
-- System-read checks for ladder evenness, easing redundancy, enter/exit
-  asymmetry, duration and stagger budgets, an idle spatial/effects split, and
-  distance/velocity ("fast enough to read as a jump").
-
-### Changed
-- **Export moved from a permanent column to a dismissible panel** — a reflowing
-  right column on wide screens, a full-screen keyboard-modal sheet below 1260px —
-  so the editor gets full width and the token lines stop clipping.
-- Progressive disclosure on intent cards (core vs "more"), role colours, tidier
-  mobile header, and a rebalanced editor (wider primitives column, capped &
-  centred layout).
-
-### Infrastructure
-- A versioned **Playwright smoke suite** run in **CI** on every PR (branch → PR →
-  CI + preview → merge).
-- Hosting moved to **Cloudflare Pages** with a per-PR **preview deployment** on
-  every pull request; custom domain, a branded **404**, and a `dist/` build so
-  the test tooling never ships.
-- **Logomark + favicons**, and an **automatic build version** stamped into the
-  badge at deploy time.
-
-## [0.2.0] — 2026-07-14
+## [0.1.0] — 2026-07-14
 
 Initial public starter — the core idea, deployable as plain static files.
 
 ### Added
-- Two-layer token model — **primitives** (a duration ladder + an easing set) →
-  **intents** (semantic tokens composed *by reference* from the primitives).
-- **Editable scales** (add / remove / rename) and a **draggable bézier editor**
-  per easing.
-- A **lens-based bench** — an abstract "orb" plus a swappable UI-component
-  library, each a lens pointed at one intent.
-- **Shareable system** encoded in the URL hash.
+- A **two-layer token model** — primitives (a duration ladder + an easing set)
+  composed *by reference* into semantic **intents**.
+- **Editable scales** (add / remove / rename) with a draggable bézier editor per
+  easing.
+- A **lens-based bench** pointing abstract and component lenses at one intent.
+- A **shareable system** encoded in the URL hash.
 - Export to **CSS** custom properties and **JSON**.
+
+[Unreleased]: https://github.com/tor2dbear/cadence/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/tor2dbear/cadence/releases/tag/v0.5.0
+[0.4.0]: https://github.com/tor2dbear/cadence/releases/tag/v0.4.0
+[0.3.0]: https://github.com/tor2dbear/cadence/releases/tag/v0.3.0
+[0.2.0]: https://github.com/tor2dbear/cadence/releases/tag/v0.2.0
+[0.1.0]: https://github.com/tor2dbear/cadence/releases/tag/v0.1.0
