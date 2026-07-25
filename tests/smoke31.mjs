@@ -311,3 +311,36 @@ const msgs = out => out.map(f => f.msg).join("\n");
   const robust = d.categories.find(c => c.key === "robustness");
   assert("the collision is not misfiled under robustness", !robust || !/both named/.test(robust.note));
 }
+
+// 14. parsePalette — read someone else's tokens into a system the engine can judge
+{
+  const { parsePalette, scoreSystem } = require("../system-read.js");
+  // CSS custom properties (durations in ms + s, cubic-bezier easings)
+  const css = parsePalette(`:root{
+    --dur-fast: 150ms; --dur-base: 200ms; --dur-slow: 0.3s;
+    --ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
+    --ease-emph: cubic-bezier(.22,1,.36,1);
+    --brand: #123; --pad: 16px; }`);
+  assert("CSS: three durations parsed", css.durations.length === 3);
+  assert("CSS: seconds convert to ms (0.3s → 300)", css.durations.some(d => d.ms === 300));
+  assert("CSS: two cubic-bezier easings parsed", css.easings.length === 2 && css.easings.every(e => e.bez.length === 4));
+  assert("CSS: non-motion props are ignored", !css.durations.some(d => /brand|pad/.test(d.name)));
+
+  // a JSON tokens tree (quoted keys) parses too
+  const json = parsePalette(`{ "duration": { "fast": "100ms", "slow": "400ms" }, "easing": { "out": "ease-out" } }`);
+  assert("JSON: quoted keys parse", json && json.durations.length === 2 && json.easings.length === 1);
+
+  // a Tailwind theme fragment (unquoted keys, single quotes) parses too
+  const tw = parsePalette(`transitionDuration: { fast: '120ms', slow: '500ms' }, transitionTimingFunction: { snappy: 'cubic-bezier(0.3,0,0,1)' }`);
+  assert("Tailwind: fragment parses", tw && tw.durations.length === 2 && tw.easings.length === 1);
+
+  // "linear-gradient" must NOT be mistaken for a linear easing
+  assert("a linear-gradient value is not read as an easing", (parsePalette(`--bg: linear-gradient(90deg,#000,#fff); --d: 200ms;`).easings).length === 0);
+
+  // nothing motion-shaped → null (so the UI can show a clean error)
+  assert("no tokens ⇒ null", parsePalette("just some prose, no tokens") === null);
+
+  // the SAME engine runs over the parsed system
+  const sc = scoreSystem(css);
+  assert("a parsed palette gets a real verdict", /^[A-E]$/.test(sc.grade) && sc.total >= 2);
+}

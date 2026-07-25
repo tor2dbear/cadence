@@ -324,6 +324,20 @@
     <div class="adnote">
       <h2 class="sec" title="The opinion layer — an automated critique of your system's motion (asymmetry, budgets, redundancy…)">System read <span class="lyr">— the opinion layer</span><span class="hintcount" id="hintCount"></span></h2>
       <div id="hints"></div>
+
+      <!-- run the SAME read over someone else's tokens — reverse-engineer the art
+           direction. Pure client-side parse of CSS vars / tokens.json / Tailwind. -->
+      <details class="paletterd" id="paletteRd">
+        <summary>Read another system's palette&nbsp;→</summary>
+        <p class="paletterd__hint">Paste a system's motion tokens — CSS custom properties, a <code>tokens.json</code>, or a Tailwind theme fragment — and run this same read over it.</p>
+        <textarea id="paletteIn" rows="5" spellcheck="false" aria-label="Paste motion tokens to read" placeholder="--motion-fast: 150ms;&#10;--motion-base: 200ms;&#10;--ease-standard: cubic-bezier(.2,0,.2,1);"></textarea>
+        <div class="paletterd__row">
+          <button class="paletterd__go" id="paletteRead">Read it</button>
+          <button class="paletterd__clr" id="paletteClear" hidden>Clear</button>
+        </div>
+        <p class="paletterd__err" id="paletteErr" hidden></p>
+        <div id="paletteOut"></div>
+      </details>
     </div>
   </section>
 

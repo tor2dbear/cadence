@@ -349,5 +349,52 @@
     return { score, grade, summary, warns, total: findings.length, categories };
   }
 
-  return { systemRead, scoreSystem, fingerprint, iconFor };
+  // Read SOMEONE ELSE's palette. A tolerant scanner that pulls named motion
+  // tokens out of raw text — CSS custom properties (`--dur-fast: 150ms`,
+  // `--ease: cubic-bezier(...)`), a tokens.json / Style-Dictionary tree
+  // (`"fast": "150ms"`), or a Tailwind theme fragment (`fast: '150ms'`) — into the
+  // snapshot shape systemRead consumes, so the exact same critique runs over a
+  // third-party system ("reverse-engineer the art direction"). Deliberately
+  // lenient and read-only: it extracts NAMED duration/easing definitions and
+  // ignores everything else; no eval, no DOM. Returns null when nothing parses.
+  const EASE_KW = { ease: [.25, .1, .25, 1], "ease-in": [.42, 0, 1, 1], "ease-out": [0, 0, .58, 1], "ease-in-out": [.42, 0, .58, 1], linear: [0, 0, 1, 1] };
+  function parsePalette(text) {
+    text = String(text == null ? "" : text);
+    const cleanName = raw => (raw || "").replace(/^[-\s"'.]+|[-\s"',;]+$/g, "").replace(/[^A-Za-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "token";
+    const durs = [], eas = [];
+    let m;
+    // <name> [quote] :|= [quote] <value> — the optional quote between the name
+    // and the separator lets JSON keys ("fast": …) parse alongside CSS vars
+    // (--fast: …) and JS literals (fast: …).
+    const NV = `([A-Za-z][\\w-]*)\\s*["']?\\s*[:=]\\s*["']?\\s*`;
+    // durations: value is <number>(ms|s)
+    const dre = new RegExp(NV + `(\\d*\\.?\\d+)\\s*(ms|s)\\b`, "g");
+    while ((m = dre.exec(text))) {
+      let ms = parseFloat(m[2]) * (m[3] === "s" ? 1000 : 1);
+      if (!(ms > 0) || ms > 60000) continue;                 // skip 0s and absurd values
+      durs.push({ name: cleanName(m[1]), ms: Math.round(ms) });
+    }
+    // easings: value is cubic-bezier(a,b,c,d) or a named CSS timing keyword. The
+    // (?![\w-]) after a keyword stops "linear" matching inside "linear-gradient".
+    const ere = new RegExp(NV + `(cubic-bezier\\s*\\([^)]*\\)|(?:ease-in-out|ease-in|ease-out|ease|linear)(?![\\w-]))`, "gi");
+    while ((m = ere.exec(text))) {
+      let bez = null;
+      const cb = m[2].match(/cubic-bezier\s*\(([^)]*)\)/i);
+      if (cb) { const n = cb[1].split(",").map(x => parseFloat(x)); if (n.length === 4 && n.every(x => !isNaN(x))) bez = n; }
+      else { const kw = EASE_KW[m[2].toLowerCase()]; if (kw) bez = kw.slice(); }
+      if (bez) eas.push({ name: cleanName(m[1]), type: "cubic", bez });
+    }
+    if (!durs.length && !eas.length) return null;
+    // de-dup identical (name+value) rows, then make names unique for token export
+    const uniqRows = (arr, sig) => { const seen = new Set(); return arr.filter(x => { const k = sig(x); if (seen.has(k)) return false; seen.add(k); return true; }); };
+    const uniqNames = arr => { const seen = {}; return arr.map(x => { let n = x.name, k = 2; while (seen[n]) n = x.name + "-" + (k++); seen[n] = 1; return Object.assign({}, x, { name: n }); }); };
+    const durations = uniqNames(uniqRows(durs, x => x.name + ":" + x.ms).sort((a, b) => a.ms - b.ms));
+    const easings = uniqNames(uniqRows(eas, x => x.name + ":" + x.bez.join(",")));
+    // no intents come out of a raw token dump — the read assesses the primitives
+    // (ladder, easing set) and the comparative fingerprint, and stays quiet on the
+    // intent-level checks it has no data for.
+    return { durations, distances: [], easings, intents: [], modes: [{ name: "default" }], activeMode: 0 };
+  }
+
+  return { systemRead, scoreSystem, fingerprint, parsePalette, iconFor };
 });

@@ -357,6 +357,30 @@ button.btn{background:var(--accent);color:var(--on-accent);border:0;border-radiu
 .rd__apply:focus-visible{outline:2px solid var(--accent-2);outline-offset:1px}
 .adnote .rd:last-child{border-bottom:0;padding-bottom:0}
 
+/* "Read another palette" — run the same critique over a pasted third-party system */
+.paletterd{margin-top:14px;border-top:1px dashed var(--line);padding-top:10px}
+.paletterd>summary{cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.02em;color:var(--ink-dim);list-style:none;user-select:none}
+.paletterd>summary::-webkit-details-marker{display:none}
+.paletterd>summary:hover{color:var(--ink)}
+.paletterd>summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:5px}
+.paletterd[open]>summary{color:var(--ink);margin-bottom:6px}
+.paletterd__hint{color:var(--ink-faint);font-size:11.5px;line-height:1.5;margin:4px 0 8px}
+.paletterd__hint code{font-family:var(--mono);font-size:10.5px;background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+#paletteIn{width:100%;box-sizing:border-box;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-family:var(--mono);font-size:11px;line-height:1.5;padding:8px 9px;resize:vertical;min-height:70px}
+#paletteIn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.paletterd__row{display:flex;gap:8px;margin-top:8px}
+.paletterd__go,.paletterd__clr{font-family:var(--mono);font-size:11px;border-radius:8px;padding:6px 12px;cursor:pointer;border:1px solid var(--line)}
+.paletterd__go{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:600}
+.paletterd__go:hover{filter:brightness(1.08)}
+.paletterd__clr{background:var(--panel-2);color:var(--ink-dim)}
+.paletterd__clr:hover{border-color:var(--accent);color:var(--ink)}
+.paletterd__err{color:var(--warn);font-size:11.5px;line-height:1.5;margin-top:8px}
+.paletterd__verdict{font-size:12.5px;margin:12px 0 4px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);border-left:3px solid var(--accent)}
+.paletterd__verdict.warn{border-left-color:var(--warn)}
+.paletterd__verdict b{font-family:var(--mono);letter-spacing:.02em}
+.paletterd__meta{display:block;margin-top:3px;color:var(--ink-faint);font-family:var(--mono);font-size:10.5px}
+#paletteOut .rd:last-child{border-bottom:0;padding-bottom:0}
+
 /* ---- export ---- */
 .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .tab{font-size:11px;font-family:var(--mono);padding:6px 10px;border:1px solid var(--line);border-radius:7px;color:var(--ink-dim);cursor:pointer;background:transparent}

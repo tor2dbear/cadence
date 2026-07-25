@@ -132,11 +132,13 @@ duplicate easing, drop a slow exit onto a shorter step, …). The read tells you
 what to do, not only what's wrong. The logic lives in `system-read.js` as a pure,
 DOM-free `systemRead(system, {corpus})` (browser global + CommonJS), so the
 identical critique runs in the app, in a headless unit test, and — see below — as
-a service.
+a service. **Read another palette** turns that on someone else's system: paste a
+framework's motion tokens (CSS custom properties, a `tokens.json`, or a Tailwind
+theme fragment) and the same read + verdict runs over them — the
+"reverse-engineer the art direction" angle, entirely client-side.
 
-Roadmap (stays static): bring-your-own component into the bench; import an
-existing motion palette (a framework's tokens) and run the system-read over it —
-the "reverse-engineer the art direction" angle.
+Roadmap (stays static): bring-your-own component into the bench; extend the
+palette reader with spring/`linear()` easings and a load-into-the-editor mode.
 
 The site ships a strict **Content-Security-Policy** at the CDN layer (a
 generated `dist/_headers`): inline scripts run by sha256 hash rather than
