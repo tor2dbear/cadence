@@ -5,6 +5,27 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.11.2] — 2026-07-25
+
+### Fixed
+- **The easing proof curve no longer reads as cropped** — its endpoints sat in
+  the tile's rounded-corner clip zone; the path's y-range is inset so it keeps
+  proportional margin at any tile aspect ratio.
+
+### Changed
+- **Nav: the hero's secondary CTA points to the on-site guide** ("Read the
+  guide →") instead of the GitHub README, removing the third GitHub link on the
+  landing (it stays in the top nav and the colophon).
+- **Docs synced with shipped functionality** — the README "Shipped" list and the
+  guide now cover saving/naming systems and importing/exporting a
+  `.cadence.json` file; the README status line dropped its stale version.
+
+### Added
+- **A docs-freshness guard (`smoke35`)** — a CI tripwire that fails the build if
+  the README or guide stop mentioning shipped capabilities, so docs can't
+  silently rot. The README states the "definition of done" for a user-facing
+  change (update Shipped + guide + CHANGELOG).
+
 ## [0.11.1] — 2026-07-24
 
 ### Changed — the crafted/plain section moves with more taste

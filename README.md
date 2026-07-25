@@ -42,7 +42,12 @@ python3 -m http.server 4173
 
 ## Status
 
-Prototype (v0.3). Rough edges expected.
+Prototype. Rough edges expected.
+
+**Definition of done for a user-facing change:** update this "Shipped" list and
+the [guide](guide.html) alongside the `CHANGELOG` — a smoke test (`smoke35`)
+fails the build if the docs don't mention shipped capabilities, so docs can't
+silently rot as features land.
 
 ### Shipped since v0.2
 
@@ -93,6 +98,16 @@ Prototype (v0.3). Rough edges expected.
   motion palette (Material 3 and Material 3 Expressive, Carbon, Fluent, Ant,
   Tailwind, Atlassian, Polaris, Primer, Spectrum) — Material 3 Expressive ships
   real springs.
+- **Save & name your own systems** — keep systems in this browser
+  (`localStorage`, no account); the picker splits into presets and **My
+  systems**, and each can be updated, renamed, deleted, or **reloaded (↻)** to
+  restore its values after edits.
+- **Import / export a system file** — download the current system as a
+  self-describing `<name>.cadence.json` (name + full state) and read one back:
+  the durable, portable "save" (the codebase stays the source of truth). Import
+  validates it's a Cadence system and rejects anything else with a clear
+  message; the system's name also rides along as a comment banner in the CSS
+  export (metadata only, never a token).
 
 **The opinion layer** — a system read that critiques the whole system: ladder
 evenness, redundant easings (cubics *and* springs), enter/exit asymmetry,
