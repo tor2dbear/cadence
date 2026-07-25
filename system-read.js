@@ -110,6 +110,23 @@
     // model change re-runs the read). Name is kept for the label/aria only.
     const idxOf = it => intents.indexOf(it);
 
+    // 0. duplicate names — token exports key custom-property and object names
+    //    straight off each scale's `name` (--motion-<name>-*, { <name>: … }), so a
+    //    repeated name silently collides: the later declaration overwrites the
+    //    earlier in the generated CSS/TS/Tailwind and a token quietly vanishes.
+    //    The editor now dedupes on add, but an imported or hand-edited system can
+    //    still carry a clash. Which one to rename is genuinely ambiguous → text
+    //    fix, no one-click apply.
+    const scales = [["duration", durations], ["easing", easings], ["distance", ctx.distances], ["intent", intents]];
+    for (const [kind, arr] of scales) {
+      const seen = new Set(); let clash = null;
+      for (const x of (arr || [])) { const n = x && x.name; if (n == null) continue; if (seen.has(n)) { clash = n; break; } seen.add(n); }
+      if (clash != null) {
+        push("warn", WARN, `Two ${kind}s are both named “${clash}”. Exported token names key off these, so the duplicate silently overwrites the first — a token quietly drops out of the CSS/TS output.`, `Rename one of the “${clash}” ${kind}s so the exported names don't collide.`);
+        break;   // one clash is enough to prompt the fix; the re-read surfaces the next
+      }
+    }
+
     // 1. ladder evenness — needs ≥2 steps to form a ratio; guard the empty/one
     //    case so a single-rung ladder can't produce NaN (was a latent bug).
     if (durations.length >= 2) {
