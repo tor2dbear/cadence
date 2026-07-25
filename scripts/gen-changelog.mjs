@@ -19,6 +19,19 @@ function inline(s) {
       (_, t, u) => `<a href="${u}"${/^https?:/.test(u) ? ' target="_blank" rel="noopener"' : ''}>${t}</a>`);
 }
 
+// resolve reference-link definitions ([label]: url) up front, so a version
+// heading like `[0.5.0]` can be rendered as a link to its release page (and
+// `[Unreleased]` to the compare view) instead of dropping the link information
+const refs = {};
+for (const line of md.split('\n')) {
+  const m = line.match(/^\[([^\]]+)\]:\s*(\S+)/);
+  if (m) refs[m[1]] = m[2];
+}
+// a version label, linked to its reference if one is defined
+const numHtml = label => refs[label]
+  ? `<a href="${refs[label]}"${/^https?:/.test(refs[label]) ? ' target="_blank" rel="noopener"' : ''}>${esc(label)}</a>`
+  : esc(label);
+
 // --- block parse ---
 let body = '', list = null, para = [];
 const flushPara = () => { if (para.length) { body += `<p>${inline(para.join(' '))}</p>\n`; para = []; } };
@@ -29,12 +42,17 @@ for (const line of md.split('\n')) {
   if (/^##\s/.test(line)) {
     flushPara(); flushList();
     const t = line.replace(/^##\s/, '').trim();
-    const m = t.match(/^\[([^\]]+)\]\s*—\s*(.+)$/);
-    body += m
-      ? `<h2 class="cl-ver" id="v${m[1].replace(/\./g, '-')}"><span class="cl-num">${esc(m[1])}</span><time>${esc(m[2])}</time></h2>\n`
+    const mv = t.match(/^\[([^\]]+)\]\s*—\s*(.+)$/);       // [x.y.z] — date
+    const mu = t.match(/^\[([^\]]+)\]$/);                   // [Unreleased] (no date)
+    body += mv
+      ? `<h2 class="cl-ver" id="v${mv[1].replace(/\./g, '-')}"><span class="cl-num">${numHtml(mv[1])}</span><time>${esc(mv[2])}</time></h2>\n`
+      : mu
+      ? `<h2 class="cl-ver" id="v${mu[1].toLowerCase()}"><span class="cl-num">${numHtml(mu[1])}</span></h2>\n`
       : `<h2 class="cl-ver">${inline(t)}</h2>\n`;
     continue;
   }
+  // reference-link definitions ([x]: url) define link targets — never rendered
+  if (/^\[[^\]]+\]:\s*\S/.test(line)) { flushPara(); flushList(); continue; }
   if (/^###\s/.test(line)) { flushPara(); flushList(); body += `<h3 class="cl-sec">${inline(line.replace(/^###\s/, ''))}</h3>\n`; continue; }
   if (/^-\s/.test(line)) { flushPara(); (list ||= []).push(line.replace(/^-\s/, '')); continue; }
   if (/^\s+\S/.test(line) && list) { list[list.length - 1] += ' ' + line.trim(); continue; } // wrapped bullet

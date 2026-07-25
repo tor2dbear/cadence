@@ -57,7 +57,16 @@ assert('build.sh generates the changelog from CHANGELOG.md', /gen-changelog\.mjs
   assert('changelog generator emits a titled, canonical page',
     /<title>Changelog — Cadence<\/title>/.test(clHtml) && new RegExp(`canonical" href="${HOST}/changelog"`).test(clHtml));
   assert('changelog generator renders the latest version entry',
-    /<h2 class="cl-ver"[^>]*><span class="cl-num">0\.9\.7<\/span>/.test(clHtml));
+    /<h2 class="cl-ver"[^>]*><span class="cl-num">(<a [^>]*>)?0\.5\.0(<\/a>)?<\/span>/.test(clHtml));
+  assert('changelog keeps an Unreleased section, cleanly rendered (no brackets)',
+    /<span class="cl-num">(<a [^>]*>)?Unreleased(<\/a>)?<\/span>/.test(clHtml));
+  assert('changelog omits raw reference-link definitions',
+    !/releases\/tag\/v0\.5\.0<\/(p|li)>/.test(clHtml) && !/\[Unreleased\]:/.test(clHtml.replace(/<[^>]+>/g, '')));
+  // the version numbers link to their release pages, and Unreleased to the compare view
+  assert('changelog links version numbers to their release pages',
+    /<span class="cl-num"><a href="[^"]*releases\/tag\/v0\.5\.0"[^>]*>0\.5\.0<\/a><\/span>/.test(clHtml));
+  assert('changelog links Unreleased to the compare view',
+    /<span class="cl-num"><a href="[^"]*compare\/v0\.5\.0\.\.\.HEAD"[^>]*>Unreleased<\/a><\/span>/.test(clHtml));
   assert('changelog generator carries BreadcrumbList', /"@type":"BreadcrumbList"/.test(clHtml));
   assert('changelog generator leaves no raw markdown bold', !/\*\*/.test(clHtml.replace(/<[^>]+>/g, '')));
   assert('changelog carries the wordmark curve + a staggered entrance',
