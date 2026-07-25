@@ -1264,7 +1264,10 @@ document.getElementById("addEasing").addEventListener("click",()=>{
 });
 document.getElementById("addIntent").addEventListener("click",()=>{
   const dur=durations[0].name, ease=easings[0].name;
-  intents.push({id:nid(),name:"custom",purpose:"your own",binds:modes.map(()=>({dur,ease,stagger:0,prop:"all"}))});
+  // dedupe like every other "add" (durations/easings/distances/modes): token
+  // exports key --motion-<name>-* and { <name>: … } straight off the name, so a
+  // second bare "custom" would collide and silently overwrite the first.
+  intents.push({id:nid(),name:uniqueName("custom",intents),purpose:"your own",binds:modes.map(()=>({dur,ease,stagger:0,prop:"all"}))});
   rerenderAll();
 });
 document.getElementById("playAll").addEventListener("click",playAll);
@@ -1658,16 +1661,24 @@ function exitTool(){
 
   // signature: the page critiques its OWN motion. Flip "with taste → naïve" and
   // the whole page flattens while the opinion line lights up — the thesis in one
-  // gesture. The tasteful read rotates through real system-read observations.
-  const TASTE=[
-    "exit (150ms) is quicker than enter (200ms) — leaving feels decisive.",
-    "4 distinct easings — a lean, legible set.",
-    "enter staggers 70ms — a 5-item list cascades over 280ms, brisk enough to read as one gesture.",
-    "the ladder grows at an even rate — it reads as one considered scale.",
-  ];
-  const NAIVE="exit as slow as enter, everything linear, no stagger — the motion reads as sluggish and undesigned.";
+  // gesture. The tasteful read is the ENGINE's own output, not hand-typed prose:
+  // run the same systemRead the tool uses over the current system (the default,
+  // on the landing) and rotate through its positive findings. So the shopfront
+  // literally speaks the differentiator — and can't drift when the default
+  // system changes (a smoke test cross-checks the two).
   const line=document.getElementById("opinionLine");
   const toggle=document.getElementById("tasteToggle");
+  let TASTE;
+  try{
+    TASTE = CadenceSystemRead.systemRead(systemSnapshot(), {corpus:benchmarkCorpus()})
+      .filter(h=>h.status==="ok").map(h=>h.msg);
+  }catch(_){ TASTE = []; }
+  if(TASTE.length<2) TASTE = [   // defensive fallback — the read should never be this thin
+    "“exit” is quicker than “enter” — leaving feels decisive.",
+    "a lean, legible set of easings.",
+  ];
+  if(line) line.__readLines = TASTE;   // exposed for the drift smoke test
+  const NAIVE="exit as slow as enter, everything linear, no stagger — the motion reads as sluggish and undesigned.";
   const ROTATE_MS=4800, OUT_MS=160;   // calmer cadence; a brief exit before each swap
   let naive=false, tick=0, timer=null;
   const stop=()=>{ if(timer){ clearInterval(timer); timer=null; } };

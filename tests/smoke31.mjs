@@ -242,3 +242,19 @@ const msgs = out => out.map(f => f.msg).join("\n");
   const s2 = { ...s, durations: [{ name: "base", ms: 200 }, { name: "slow", ms: 80 }] };
   assert("a shorter reduced binding clears the warning", !/won't calm anything/.test(msgs2(systemRead(s2))));
 }
+
+// 11. duplicate scale names are flagged — token exports key off `name`, so a
+//     repeated one silently overwrites the first in the generated CSS/TS. The
+//     editor dedupes on add, but imported / hand-edited systems can still clash.
+{
+  const clash = base();
+  clash.intents.push(intent("custom", "base", "standard"));
+  clash.intents.push(intent("custom", "fast", "accelerate"));   // second "custom" — collision
+  assert("duplicate intent names warn", /both named .custom./.test(msgs(systemRead(clash))));
+
+  const dupDur = base();
+  dupDur.durations.push({ name: "fast", ms: 175 });   // second "fast"
+  assert("duplicate duration names warn", /Two durations are both named/.test(msgs(systemRead(dupDur))));
+
+  assert("a clean system has no duplicate-name warning", !/both named/.test(msgs(systemRead(base()))));
+}

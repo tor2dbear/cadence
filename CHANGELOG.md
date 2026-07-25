@@ -5,6 +5,23 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.11.5] — 2026-07-25
+
+### Fixed
+- **The landing's "with taste" line now speaks the engine, not hand-typed prose.**
+  The rotating opinion line was four static strings that merely happened to match
+  the default system — a change to the default's durations/easings/stagger would
+  have silently made the shopfront assert stale numbers. It now derives from the
+  same `systemRead()` the tool runs (over the default system), rotating through
+  its positive findings — so the front page literally speaks the differentiator,
+  and can't drift. `smoke37` cross-checks every displayed line against a live read.
+- **"+ Add intent" no longer mints colliding token names.** `addIntent` pushed a
+  bare `name:"custom"` with no `uniqueName()` (unlike every other scale), so two
+  custom intents both emitted `--motion-custom-*` and the second silently
+  overwrote the first in the CSS/TS/Tailwind export — a token vanished with no
+  warning. It now dedupes to `custom-2`, and the opinion engine flags duplicate
+  names in ANY scale (covering imported / hand-edited systems too).
+
 ## [0.11.4] — 2026-07-25
 
 ### Added
