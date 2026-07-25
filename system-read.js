@@ -376,6 +376,19 @@
     // a `//`-commented line) don't join the live read. `//` only when it starts a
     // token (line start / after whitespace), so URLs like https:// survive.
     text = text.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|\s)\/\/[^\n]*/g, "$1 ");
+    // collapse DTCG *typed* values to their string form first: a duration object
+    // `{ value: 150, unit: "ms" }` → `150ms`, and a cubicBezier array
+    // `$value: [.2,0,.2,1]` → `cubic-bezier(.2,0,.2,1)`. Operates on the innermost
+    // brace block, so `fast: { $value: { value: 150, unit: "ms" } }` becomes
+    // `fast: { $value: 150ms }`, which the string flatten below then reads.
+    text = text.replace(/\{[^{}]*\}/g, block => {
+      const num = block.match(/\$?value\s*["']?\s*[:=]\s*["']?\s*(\d*\.?\d+)/i);
+      const unit = block.match(/unit\s*["']?\s*[:=]\s*["']?\s*(ms|s)\b/i);
+      if (num && unit) return ` ${num[1]}${unit[1].toLowerCase()} `;
+      const arr = block.match(/\$?value\s*["']?\s*[:=]\s*\[\s*([-\d.,\s]+)\]/i);
+      if (arr) { const n = arr[1].split(",").map(x => parseFloat(x)); if (n.length === 4 && n.every(x => !isNaN(x))) return ` cubic-bezier(${n.join(",")}) `; }
+      return block;
+    });
     // flatten Style-Dictionary / DTCG leaves — `fast: { value: "150ms", type… }` —
     // to `fast: 150ms`, so the read keys off the OUTER token name, not the inner
     // `value` property (nested braces mean the innermost leaf matches first).

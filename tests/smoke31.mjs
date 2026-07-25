@@ -431,3 +431,14 @@ const msgs = out => out.map(f => f.msg).join("\n");
   const ci = parsePalette(`--fast: 100MS; --base: 200Ms; --slow: .3S;`);
   assert("uppercase / dotless CSS duration units parse", ci && ci.durations.length === 3 && ci.durations.some(d => d.ms === 300));
 }
+
+// 20. DTCG typed token values (Codex P2): { value: 150, unit: "ms" } + [.2,0,.2,1]
+{
+  const { parsePalette } = require("../system-read.js");
+  const sys = parsePalette(`{
+    "fast": { "$type": "duration", "$value": { "value": 150, "unit": "ms" } },
+    "base": { "$type": "duration", "$value": { "value": 200, "unit": "ms" } },
+    "standard": { "$type": "cubicBezier", "$value": [0.2, 0, 0.2, 1] } }`);
+  assert("DTCG duration objects parse to ms", sys && sys.durations.map(d => d.name + ":" + d.ms).join(",") === "fast:150,base:200");
+  assert("DTCG cubicBezier arrays parse to an easing", sys.easings.length === 1 && sys.easings[0].name === "standard" && sys.easings[0].bez.join(",") === "0.2,0,0.2,1");
+}
