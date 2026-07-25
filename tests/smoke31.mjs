@@ -280,4 +280,12 @@ const msgs = out => out.map(f => f.msg).join("\n");
   const findings = systemRead(bad);
   const reused = scoreSystem(null, { findings });
   assert("scoreSystem(null,{findings}) matches scoreSystem(system)", reused.score === b.score && reused.grade === b.grade);
+
+  // A is all-clear only: a single nitpick (an idle spatial·effects split) must
+  // NOT still read A, or the verdict would say "A · 1 to review"
+  const nit = base();
+  nit.intents = [intent("enter", "base", "emphasized", { effectsEase: "emphasized" })];   // split, both tracks same easing → NIT
+  const n = scoreSystem(nit);
+  assert("the split nitpick is the only warning", n.warns === 1 && n.total >= 1);
+  assert("one nitpick reads B, never A", n.grade === "B");
 }

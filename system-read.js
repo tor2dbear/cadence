@@ -308,16 +308,18 @@
     ["ladder", "Duration ladder"], ["easing", "Easing set"], ["asymmetry", "Enter / exit"],
     ["budget", "Duration budgets"], ["field", "Vs the field"], ["robustness", "Robustness"],
   ];
-  // a warn costs points by severity; ok findings are free. Tuned so a healthy
-  // default lands at A, one nitpick still reads B, and a real defect bites.
+  // a warn costs points by severity; ok findings are free. Tuned so a real
+  // defect bites and warnings walk the score down through the bands.
   const PENALTY = { 1: 5, 2: 12, 3: 22 };
   function scoreSystem(system, opts) {
     const findings = (opts && opts.findings) || systemRead(system, opts);
     let score = 100;
     for (const f of findings) if (f.status === "warn") score -= (PENALTY[f.sev] || 8);
     score = Math.max(0, Math.min(100, score));
-    const grade = score >= 90 ? "A" : score >= 75 ? "B" : score >= 60 ? "C" : score >= 40 ? "D" : "E";
     const warns = findings.filter(f => f.status === "warn").length;
+    // A is reserved for an all-clear read — anything flagged, even one nitpick,
+    // reads at most B, so the header verdict never says "A · 1 to review".
+    const grade = warns === 0 ? "A" : score >= 75 ? "B" : score >= 60 ? "C" : score >= 40 ? "D" : "E";
     const summary = warns === 0
       ? "No warnings — the system reads as considered throughout."
       : `${warns} thing${warns > 1 ? "s" : ""} to review.`;
