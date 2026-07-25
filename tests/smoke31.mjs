@@ -419,3 +419,15 @@ const msgs = out => out.map(f => f.msg).join("\n");
   assert("primitives before an inline intent marker survive", sys.durations.some(d => d.name === "fast") && sys.durations.some(d => d.name === "base"));
   assert("only the marked alias is dropped", !sys.durations.some(d => d.name === "enter"));
 }
+
+// 19. delay/stagger SECTIONS and case-insensitive units (Codex P2s)
+{
+  const { parsePalette } = require("../system-read.js");
+  // a transitionDelay block with numeric leaf keys must not feed the ladder
+  const sec = parsePalette(`transitionDuration: { fast: '100ms', base: '200ms', slow: '300ms' },
+    transitionDelay: { 500: '500ms', 1000: '1000ms' }`);
+  assert("delay/stagger sections are excluded from the ladder", sec.durations.length === 3 && !sec.durations.some(d => d.ms >= 500));
+  // CSS units are case-insensitive: 100MS / .3S must parse
+  const ci = parsePalette(`--fast: 100MS; --base: 200Ms; --slow: .3S;`);
+  assert("uppercase / dotless CSS duration units parse", ci && ci.durations.length === 3 && ci.durations.some(d => d.ms === 300));
+}

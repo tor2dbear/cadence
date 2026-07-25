@@ -383,6 +383,10 @@
       const v = body.match(/\$?value\s*["']?\s*[:=]\s*["']?\s*(cubic-bezier\s*\([^)]*\)|\d*\.?\d+\s*m?s|ease-in-out|ease-in|ease-out|ease|linear)/i);
       return v ? `${key}: ${v[1]} ` : whole;
     });
+    // drop whole delay/stagger SECTIONS (e.g. Tailwind's `transitionDelay: { … }`)
+    // — their leaf keys are often numeric (`500: '500ms'`), so the per-name skip
+    // below can't catch them, and delays/staggers aren't ladder rungs.
+    text = text.replace(/[\w-]*(?:delay|stagger)[\w-]*\s*["']?\s*[:=]\s*\{[^{}]*\}/gi, " ");
     const cleanName = raw => (raw || "").replace(/^[-\s"'.]+|[-\s"',;]+$/g, "").replace(/[^A-Za-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "token";
     const durs = [], eas = [];
     let m;
@@ -392,14 +396,15 @@
     // the name may start with a digit — Tailwind's duration scale uses numeric
     // keys ('75': '75ms'). cleanName() sanitises whatever is captured.
     const NV = `([A-Za-z0-9][\\w-]*)\\s*["']?\\s*[:=]\\s*["']?\\s*`;
-    // durations: value is <number>(ms|s)
-    const dre = new RegExp(NV + `(\\d*\\.?\\d+)\\s*(ms|s)\\b`, "g");
+    // durations: value is <number>(ms|s). CSS units are ASCII case-insensitive,
+    // so `100MS` / `.3S` must parse too — hence the `i` flag + lowercased unit.
+    const dre = new RegExp(NV + `(\\d*\\.?\\d+)\\s*(ms|s)\\b`, "gi");
     while ((m = dre.exec(text))) {
       // stagger/delay are time values but NOT ladder rungs — Cadence's own JSON /
       // Style-Dictionary exports emit them, so counting them as durations would
       // invent rungs and trip false uneven-ladder / comparative warnings.
       if (/stagger|delay/i.test(m[1])) continue;
-      let ms = parseFloat(m[2]) * (m[3] === "s" ? 1000 : 1);
+      let ms = parseFloat(m[2]) * (m[3].toLowerCase() === "s" ? 1000 : 1);
       if (!(ms > 0) || ms > 60000) continue;                 // skip 0s and absurd values
       durs.push({ name: cleanName(m[1]), ms: Math.round(ms) });
     }
