@@ -46,6 +46,21 @@
 </head>
 <body>
 
+<!-- Inline icon set — hand-drawn to the logomark's geometry (16px grid, 1.75
+     stroke, round caps). currentColor, so each inherits its context's colour and
+     works in light/dark. Referenced via <use> from static markup and the
+     JS-rendered system read. -->
+<svg width="0" height="0" class="icondefs" aria-hidden="true" focusable="false" style="position:absolute"><defs>
+  <symbol id="ic-ok" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 8.6 6.7 11.6 12.6 4.6"/></symbol>
+  <symbol id="ic-nit" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3.2 9.1 Q5 6.3 6.9 8.3 T10.8 7.5"/></symbol>
+  <symbol id="ic-warn" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.1 8 8.9"/><circle cx="8" cy="12.1" r="1.05" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="ic-defect" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.4H12"/><path d="M4 9.6H12"/><path d="M11.4 4 4.6 12"/></symbol>
+  <symbol id="ic-reload" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12.7 5.6A5 5 0 1 0 13.2 9.4"/><path d="M12.9 3.2 12.9 5.9 10.2 5.9"/></symbol>
+  <symbol id="ic-external" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5H11.5V9.5"/><path d="M11.5 4.5 4.8 11.2"/></symbol>
+  <symbol id="ic-arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3.3 8H12.2"/><path d="M9 4.8 12.2 8 9 11.2"/></symbol>
+  <symbol id="ic-close" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 4.5 11.5 11.5"/><path d="M11.5 4.5 4.5 11.5"/></symbol>
+</defs></svg>
+
 <!-- LANDING — the product demonstrating its own thesis. Shown first; "Start
      designing" morphs into the tool (same document) via a view transition. -->
 <main class="landing" id="landing" aria-label="Cadence — introduction">
@@ -111,7 +126,7 @@
     <span class="lbrand"><svg class="logomark logomark--anim" viewBox="0 0 32 32" width="20" height="20" aria-hidden="true" focusable="false"><path class="lm-guide" fill="none" stroke-width="1.5" stroke-linecap="round" d="M8,23 C10.5,13.5 19,10 24,9"><animate attributeName="d" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="M8,23 C10.5,13.5 19,10 24,9;M8,23 C13.5,21.5 21.5,16 24,9;M8,23 C9.5,15.5 22.5,8 24,9;M8,23 C10.5,13.5 19,10 24,9"/></path><circle class="lm-dot" cx="8" cy="23" r="2.5"/><circle class="lm-dot" cx="11.31" cy="16.35" r="2.5"><animate attributeName="cx" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="11.31;14.6;11.67;11.31"/><animate attributeName="cy" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="16.35;19.9;16.66;16.35"/></circle><circle class="lm-dot" cx="17.01" cy="11.58" r="2.5"><animate attributeName="cx" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="17.01;20.17;17.32;17.01"/><animate attributeName="cy" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="11.58;15.18;11.88;11.58"/></circle><circle class="lm-head" cx="24" cy="9" r="3"/></svg><span class="lbrand__wm">cadence<svg class="lbrand__curve" viewBox="0 0 96 8" preserveAspectRatio="none" aria-hidden="true"><path d="M1,6.5 C34,6.5 46,2 95,1.5" /></svg></span></span>
     <span class="lnav__links">
       <a class="lnav__link" href="guide.html">Guide</a>
-      <a class="lnav__link" href="https://github.com/tor2dbear/cadence" target="_blank" rel="noopener">Source&nbsp;↗</a>
+      <a class="lnav__link" href="https://github.com/tor2dbear/cadence" target="_blank" rel="noopener">Source&nbsp;<svg class="gi" width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-external"/></svg></a>
     </span>
   </nav>
 
@@ -121,8 +136,8 @@
     <p class="lsub rise" style="--i:2">Tune duration &amp; easing scales, compose semantic <strong>intents</strong>, and get a system that <strong>critiques itself</strong> — exported as CSS, Tailwind, Style&nbsp;Dictionary, plus scroll-driven &amp; view-transition recipes.</p>
 
     <div class="lcta rise" style="--i:3">
-      <button class="lbtn lbtn--primary" id="startTool">Start designing&nbsp;→</button>
-      <a class="lbtn" href="guide.html">Read the&nbsp;guide&nbsp;→</a>
+      <button class="lbtn lbtn--primary" id="startTool">Start designing&nbsp;<svg class="gi" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-arrow"/></svg></button>
+      <a class="lbtn" href="guide.html">Read the&nbsp;guide</a>
     </div>
 
     <!-- signature: the page critiques its OWN motion — flip it to feel why taste matters -->
@@ -237,7 +252,7 @@
   <span class="tag">a motion <em>system</em> designer — scales, intents, and a swappable bench</span>
   <div class="header-actions">
     <select class="loadsys" id="loadSystem" aria-label="Load a system — a preset or one you saved"></select>
-    <button class="demobtn sysbtn" id="reloadSys" title="Reload the selected system — discard your edits and restore its values" aria-label="Reload the selected system" hidden>↻</button>
+    <button class="demobtn sysbtn" id="reloadSys" title="Reload the selected system — discard your edits and restore its values" aria-label="Reload the selected system" hidden><svg class="gi" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-reload"/></svg></button>
     <span class="sysmenu">
       <button class="demobtn" id="saveSys" title="Save the current system to this browser" aria-haspopup="dialog" aria-expanded="false">Save</button>
       <div class="sysmenu__pop" id="sysPop" role="dialog" aria-label="Save system" hidden>
@@ -267,15 +282,15 @@
 <div class="preview" id="preview" hidden>
   <div class="preview__bar">
     <span class="preview__ttl">Preview</span>
-    <a class="preview__pop" id="previewPop" href="demo.html" target="_blank" rel="noopener" title="Open in a new tab">open ↗</a>
-    <button class="preview__x" id="previewClose" aria-label="Close preview">×</button>
+    <a class="preview__pop" id="previewPop" href="demo.html" target="_blank" rel="noopener" title="Open in a new tab">open&nbsp;<svg class="gi" width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-external"/></svg></a>
+    <button class="preview__x" id="previewClose" aria-label="Close preview"><svg class="gi" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-close"/></svg></button>
   </div>
   <iframe class="preview__frame" id="previewFrame" title="Cadence live demo"></iframe>
 </div>
 
 <div class="intro" id="intro">
   <span class="intro__txt">Two token layers — tune <strong>primitives</strong> (durations &amp; easings) on the left, compose &amp; test <strong>intents</strong> in the main area, then open <strong>Export&nbsp;↗</strong> for the tokens. New here? <strong>Load a system&nbsp;↑</strong> to explore a real one.</span>
-  <button class="intro__x" id="introClose" title="Dismiss" aria-label="Dismiss intro">×</button>
+  <button class="intro__x" id="introClose" title="Dismiss" aria-label="Dismiss intro"><svg class="gi" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-close"/></svg></button>
 </div>
 
 <div class="wrap">
@@ -346,7 +361,7 @@
   <aside class="col export" id="exportPanel" hidden aria-label="Export design tokens">
     <div class="export__hd">
       <h2 class="sec">Export <span class="lyr">· tokens</span></h2>
-      <button class="export__x" id="exportClose" aria-label="Close export">×</button>
+      <button class="export__x" id="exportClose" aria-label="Close export"><svg class="gi" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-close"/></svg></button>
     </div>
     <p class="sub">Two layers: primitives, then semantic tokens that reference them.</p>
     <div class="tabs">

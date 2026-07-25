@@ -603,6 +603,11 @@ function benchmarkCorpus(){
 }
 let lastRead=[];   // the most recent findings, so an Apply click can look up its op by index
 let lastScore=null;   // the most recent composite verdict (grade + scorecard), for the rationale export
+// the severity marks as inline SVG (matched to the logomark) — colour comes from
+// the .rd status class via currentColor. The engine's iconFor glyphs stay for the
+// Markdown rationale export, which can't carry SVG.
+const ICON_BY_SEV = {0:"ok",1:"nit",2:"warn",3:"defect"};
+const sevSvg = sev => `<svg class="ic-svg" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-${ICON_BY_SEV[sev]||"nit"}"/></svg>`;
 function critique(){
   const out = CadenceSystemRead.systemRead(systemSnapshot(), {corpus:benchmarkCorpus()});   // ranked, worst-first
   lastRead = out;
@@ -611,7 +616,7 @@ function critique(){
     // deterministic fixes carry an op → offer to apply it in one click
     const label = (h.fix||"").replace(/"/g,"&quot;");
     const btn = h.apply ? ` <button class="rd__apply" data-scope="fix" data-i="${idx}" aria-label="Apply fix: ${label}">Apply</button>` : "";
-    return `<div class="rd ${h.status}"><span class="ic">${h.icon}</span><span>${h.msg}${fix}${btn}</span></div>`;
+    return `<div class="rd ${h.status}"><span class="ic">${sevSvg(h.sev)}</span><span>${h.msg}${fix}${btn}</span></div>`;
   }).join("");
   // a persistent read-at-a-glance VERDICT in the section header: the composite
   // grade leads, the count follows. Reuses the findings we just computed (no
@@ -1364,7 +1369,7 @@ document.getElementById("download").addEventListener("click",()=>{
     const meta=[plural(sys.durations.length,"duration"), plural(sys.easings.length,"easing")];
     if(fp.growth) meta.push(`ladder grows ~${fp.growth.toFixed(1)}×`);
     let html=`<div class="paletterd__verdict ${sc.warns?"warn":"ok"}"><b>${sc.grade} · ${sc.score}/100</b> — ${esc(sc.summary)}<span class="paletterd__meta">${esc(meta.join(" · "))}</span></div>`;
-    html+=findings.map(h=>`<div class="rd ${h.status}"><span class="ic">${h.icon}</span><span>${esc(h.msg)}${h.fix?` <span class="rd__fix">→ ${esc(h.fix)}</span>`:""}</span></div>`).join("");
+    html+=findings.map(h=>`<div class="rd ${h.status}"><span class="ic">${sevSvg(h.sev)}</span><span>${esc(h.msg)}${h.fix?` <span class="rd__fix">→ ${esc(h.fix)}</span>`:""}</span></div>`).join("");
     out.innerHTML=html;
     if(clrBtn) clrBtn.hidden=false;
   }
