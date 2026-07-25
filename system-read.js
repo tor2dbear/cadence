@@ -161,7 +161,10 @@
       }
     }
     if (dup) push("warn", WARN, `“${dup[0]}” and “${dup[1]}” are nearly identical curves. A tight easing set is easier to apply consistently — trim one.`, `Delete “${dup[1]}” and point its users at “${dup[0]}”.`, { op: "dropEasing", ease: dup[1], into: dup[0] });
-    else push("ok", OK, `${easings.length} distinct easings — a lean, legible set.`);
+    // only assess the easing set when there's actually one — a system with no
+    // easings (e.g. a duration-only paste) has nothing to praise here, and must
+    // NOT read as an assessed dimension (else the score awards a false A).
+    else if (easings.length) push("ok", OK, `${easings.length} distinct easings — a lean, legible set.`);
 
     // 3. enter/exit asymmetry
     cat = "asymmetry";
@@ -336,7 +339,7 @@
       ? `${warns} thing${warns > 1 ? "s" : ""} to review.`
       : coreCovered
         ? "No warnings — the system reads as considered throughout."
-        : "Too little system to fully assess — build out the duration ladder for a confident read.";
+        : "Too little system to fully assess — a confident read needs both a duration ladder (2+ rungs) and an easing set.";
     // per-dimension: the worst finding in each category present (a warn outranks
     // an ok; higher sev leads), so the scorecard shows where to look.
     const categories = CATS.map(([key, label]) => {
@@ -349,5 +352,112 @@
     return { score, grade, summary, warns, total: findings.length, categories };
   }
 
-  return { systemRead, scoreSystem, fingerprint, iconFor };
+  // Read SOMEONE ELSE's palette. A tolerant scanner that pulls named motion
+  // tokens out of raw text — CSS custom properties (`--dur-fast: 150ms`,
+  // `--ease: cubic-bezier(...)`), a tokens.json / Style-Dictionary tree
+  // (`"fast": "150ms"`), or a Tailwind theme fragment (`fast: '150ms'`) — into the
+  // snapshot shape systemRead consumes, so the exact same critique runs over a
+  // third-party system ("reverse-engineer the art direction"). Deliberately
+  // lenient and read-only: it extracts NAMED duration/easing definitions and
+  // ignores everything else; no eval, no DOM. Returns null when nothing parses.
+  const EASE_KW = { ease: [.25, .1, .25, 1], "ease-in": [.42, 0, 1, 1], "ease-out": [0, 0, .58, 1], "ease-in-out": [.42, 0, .58, 1], linear: [0, 0, 1, 1] };
+  function parsePalette(text) {
+    text = String(text == null ? "" : text);
+    // Cadence's own exports emit resolved semantic-intent rows inline-marked
+    // `… , // intent` (and `// per-item stagger`) alongside the primitives. Those
+    // are aliases of the ladder/easing set, not new tokens — counting them would
+    // double the ladder and flag phantom duplicate easings. Drop just the MARKED
+    // declaration (the `name: value` immediately before the marker) + its comment,
+    // not the whole line, so compact rows keep any primitives that precede it. Run
+    // FIRST, before the comment strip removes the marker. A quoted value is taken
+    // whole so a cubic-bezier's inner commas don't cut it short.
+    text = text.replace(/[A-Za-z0-9][\w-]*\s*["']?\s*[:=]\s*(?:"[^"]*"|'[^']*'|[^,;{}\n/]*)\s*,?\s*\/\/\s*(?:intent|per-item stagger)\b[^\n]*/gi, "");
+    // strip comments first, so disabled/legacy tokens (`/* --old: 3000ms; */`,
+    // a `//`-commented line) don't join the live read. `//` only when it starts a
+    // token (line start / after whitespace), so URLs like https:// survive.
+    text = text.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|\s)\/\/[^\n]*/g, "$1 ");
+    // collapse DTCG *typed* values to their string form first: a duration object
+    // `{ value: 150, unit: "ms" }` → `150ms`, and a cubicBezier array
+    // `$value: [.2,0,.2,1]` → `cubic-bezier(.2,0,.2,1)`. Operates on the innermost
+    // brace block, so `fast: { $value: { value: 150, unit: "ms" } }` becomes
+    // `fast: { $value: 150ms }`, which the string flatten below then reads.
+    text = text.replace(/\{[^{}]*\}/g, block => {
+      const num = block.match(/\$?value\s*["']?\s*[:=]\s*["']?\s*(\d*\.?\d+)/i);
+      const unit = block.match(/unit\s*["']?\s*[:=]\s*["']?\s*(ms|s)\b/i);
+      if (num && unit) return ` ${num[1]}${unit[1].toLowerCase()} `;
+      const arr = block.match(/\$?value\s*["']?\s*[:=]\s*\[\s*([-\d.,\s]+)\]/i);
+      if (arr) { const n = arr[1].split(",").map(x => parseFloat(x)); if (n.length === 4 && n.every(x => !isNaN(x))) return ` cubic-bezier(${n.join(",")}) `; }
+      return block;
+    });
+    // flatten Style-Dictionary / DTCG leaves — `fast: { value: "150ms", type… }` —
+    // to `fast: 150ms`, so the read keys off the OUTER token name, not the inner
+    // `value` property (nested braces mean the innermost leaf matches first).
+    text = text.replace(/([A-Za-z0-9][\w-]*)\s*["']?\s*[:=]\s*\{([^{}]*)\}/g, (whole, key, body) => {
+      const v = body.match(/\$?value\s*["']?\s*[:=]\s*["']?\s*(cubic-bezier\s*\([^)]*\)|\d*\.?\d+\s*m?s|ease-in-out|ease-in|ease-out|ease|linear)/i);
+      return v ? `${key}: ${v[1]} ` : whole;
+    });
+    // drop whole delay/stagger SECTIONS (e.g. Tailwind's `transitionDelay: { … }`,
+    // or a nested `delay: { modal: { short: "500ms" } }`) — their leaf keys are
+    // often numeric/semantic, so the per-name skip below can't catch them, and
+    // delays/staggers aren't ladder rungs. Brace-aware so nested bodies go too.
+    text = (function dropSections(s) {
+      const re = /[\w-]*(?:delay|stagger)[\w-]*\s*["']?\s*[:=]\s*\{/gi;
+      let m;
+      while ((m = re.exec(s))) {
+        let depth = 1, j = re.lastIndex;
+        while (j < s.length && depth > 0) { const c = s[j++]; if (c === "{") depth++; else if (c === "}") depth--; }
+        s = s.slice(0, m.index) + " " + s.slice(j);
+        re.lastIndex = m.index + 1;
+      }
+      return s;
+    })(text);
+    const cleanName = raw => (raw || "").replace(/^[-\s"'.]+|[-\s"',;]+$/g, "").replace(/[^A-Za-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "token";
+    const durs = [], eas = [];
+    let m;
+    // <name> [quote] :|= [quote] <value> — the optional quote between the name
+    // and the separator lets JSON keys ("fast": …) parse alongside CSS vars
+    // (--fast: …) and JS literals (fast: …).
+    // the name may start with a digit — Tailwind's duration scale uses numeric
+    // keys ('75': '75ms'). cleanName() sanitises whatever is captured.
+    const NV = `([A-Za-z0-9][\\w-]*)\\s*["']?\\s*[:=]\\s*["']?\\s*`;
+    // durations: value is <number>(ms|s). CSS units are ASCII case-insensitive,
+    // so `100MS` / `.3S` must parse too — hence the `i` flag + lowercased unit.
+    const dre = new RegExp(NV + `(\\d*\\.?\\d+)\\s*(ms|s)\\b`, "gi");
+    while ((m = dre.exec(text))) {
+      // Skip non-primitive time values: stagger/delay (any name), and a leaf
+      // named exactly `duration` — the latter is a resolved SEMANTIC token's
+      // property (`enter: { duration: "200ms" }`), not a scale rung. A primitive
+      // carries a scale in its name (`duration-fast`, `fast`), so the anchored
+      // match leaves those alone.
+      if (/stagger|delay/i.test(m[1]) || /^(?:transition-?|animation-?|motion-?|css-?)?duration$/i.test(m[1])) continue;
+      let ms = parseFloat(m[2]) * (m[3].toLowerCase() === "s" ? 1000 : 1);
+      if (!(ms > 0) || ms > 60000) continue;                 // skip 0s and absurd values
+      durs.push({ name: cleanName(m[1]), ms: Math.round(ms) });
+    }
+    // easings: value is cubic-bezier(a,b,c,d) or a named CSS timing keyword. The
+    // (?![\w-]) after a keyword stops "linear" matching inside "linear-gradient".
+    const ere = new RegExp(NV + `(cubic-bezier\\s*\\([^)]*\\)|(?:ease-in-out|ease-in|ease-out|ease|linear)(?![\\w-]))`, "gi");
+    while ((m = ere.exec(text))) {
+      // a leaf named exactly `easing`/`timing-function` is a semantic token's
+      // property (`enter: { easing: "ease-out" }`), not a named curve in the set.
+      if (/^(?:transition-?|animation-?|motion-?|css-?)?(?:easing|timing-?function)$/i.test(m[1])) continue;
+      let bez = null;
+      const cb = m[2].match(/cubic-bezier\s*\(([^)]*)\)/i);
+      if (cb) { const n = cb[1].split(",").map(x => parseFloat(x)); if (n.length === 4 && n.every(x => !isNaN(x))) bez = n; }
+      else { const kw = EASE_KW[m[2].toLowerCase()]; if (kw) bez = kw.slice(); }
+      if (bez) eas.push({ name: cleanName(m[1]), type: "cubic", bez });
+    }
+    if (!durs.length && !eas.length) return null;
+    // a repeated source name is the CSS cascade / a JS object-key override — the
+    // LAST occurrence wins, not a new `-2` rung. Collapse by name, keeping the last.
+    const lastByName = arr => { const m = new Map(); for (const x of arr) m.set(x.name, x); return [...m.values()]; };
+    const durations = lastByName(durs).sort((a, b) => a.ms - b.ms);
+    const easings = lastByName(eas);
+    // no intents come out of a raw token dump — the read assesses the primitives
+    // (ladder, easing set) and the comparative fingerprint, and stays quiet on the
+    // intent-level checks it has no data for.
+    return { durations, distances: [], easings, intents: [], modes: [{ name: "default" }], activeMode: 0 };
+  }
+
+  return { systemRead, scoreSystem, fingerprint, parsePalette, iconFor };
 });

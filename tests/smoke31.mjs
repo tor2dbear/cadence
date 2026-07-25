@@ -311,3 +311,165 @@ const msgs = out => out.map(f => f.msg).join("\n");
   const robust = d.categories.find(c => c.key === "robustness");
   assert("the collision is not misfiled under robustness", !robust || !/both named/.test(robust.note));
 }
+
+// 14. parsePalette — read someone else's tokens into a system the engine can judge
+{
+  const { parsePalette, scoreSystem } = require("../system-read.js");
+  // CSS custom properties (durations in ms + s, cubic-bezier easings)
+  const css = parsePalette(`:root{
+    --dur-fast: 150ms; --dur-base: 200ms; --dur-slow: 0.3s;
+    --ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
+    --ease-emph: cubic-bezier(.22,1,.36,1);
+    --brand: #123; --pad: 16px; }`);
+  assert("CSS: three durations parsed", css.durations.length === 3);
+  assert("CSS: seconds convert to ms (0.3s → 300)", css.durations.some(d => d.ms === 300));
+  assert("CSS: two cubic-bezier easings parsed", css.easings.length === 2 && css.easings.every(e => e.bez.length === 4));
+  assert("CSS: non-motion props are ignored", !css.durations.some(d => /brand|pad/.test(d.name)));
+
+  // a JSON tokens tree (quoted keys) parses too
+  const json = parsePalette(`{ "duration": { "fast": "100ms", "slow": "400ms" }, "easing": { "out": "ease-out" } }`);
+  assert("JSON: quoted keys parse", json && json.durations.length === 2 && json.easings.length === 1);
+
+  // a Tailwind theme fragment (unquoted keys, single quotes) parses too
+  const tw = parsePalette(`transitionDuration: { fast: '120ms', slow: '500ms' }, transitionTimingFunction: { snappy: 'cubic-bezier(0.3,0,0,1)' }`);
+  assert("Tailwind: fragment parses", tw && tw.durations.length === 2 && tw.easings.length === 1);
+
+  // "linear-gradient" must NOT be mistaken for a linear easing
+  assert("a linear-gradient value is not read as an easing", (parsePalette(`--bg: linear-gradient(90deg,#000,#fff); --d: 200ms;`).easings).length === 0);
+
+  // nothing motion-shaped → null (so the UI can show a clean error)
+  assert("no tokens ⇒ null", parsePalette("just some prose, no tokens") === null);
+
+  // the SAME engine runs over the parsed system
+  const sc = scoreSystem(css);
+  assert("a parsed palette gets a real verdict", /^[A-E]$/.test(sc.grade) && sc.total >= 2);
+}
+
+// 15. parsePalette robustness (Codex P2s): SD nesting, stagger/delay, comments
+{
+  const { parsePalette } = require("../system-read.js");
+  // Style-Dictionary / DTCG leaves key off the OUTER token, not the inner `value`
+  const sd = parsePalette(`{ "fast": { "value": "150ms", "type": "duration" },
+    "base": { "value": "200ms" }, "standard": { "value": "cubic-bezier(0.2,0,0.2,1)" } }`);
+  assert("SD nesting: outer token names, not 'value'", sd.durations.map(d => d.name).sort().join(",") === "base,fast");
+  assert("SD nesting: nested easing value parses", sd.easings.length === 1 && sd.easings[0].name === "standard");
+
+  // stagger / delay are time values but must NOT become ladder rungs
+  const st = parsePalette(`--dur-fast: 150ms; --dur-base: 200ms; --dur-slow: 300ms;
+    --stagger: 1000ms; --enter-delay: 500ms; --transition-delay: 800ms;`);
+  assert("stagger/delay excluded from the ladder", st.durations.length === 3 && !st.durations.some(d => /stagger|delay/.test(d.name)));
+
+  // commented-out tokens (block + line) don't join the read
+  const cm = parsePalette(`/* --deprecated: 3000ms; */\n--fast: 150ms;\n// --old: 5000ms;\n--base: 200ms;`);
+  assert("commented tokens are ignored", cm.durations.length === 2 && !cm.durations.some(d => /deprecated|old/.test(d.name)));
+
+  // …but a URL's // is not treated as a comment
+  const u = parsePalette(`--ref: url(https://x.com/a); --fast: 150ms; --base: 200ms;`);
+  assert("https:// URLs survive comment-stripping", u.durations.length === 2);
+}
+
+// 16. more parsePalette / scoring edge cases (Codex re-review P2s)
+{
+  const { parsePalette, scoreSystem } = require("../system-read.js");
+  // Tailwind's numeric duration keys ('75': '75ms') must parse, not return null
+  const tw = parsePalette(`transitionDuration: { '75': '75ms', '100': '100ms', '150': '150ms', '300': '300ms' }`);
+  assert("numeric Tailwind keys parse", tw && tw.durations.length === 4 && tw.durations.some(d => d.name === "75"));
+
+  // a duration-only paste is under-assessed (no easing dimension) → not a false A
+  const donly = parsePalette(`--fast: 100ms; --base: 200ms; --slow: 400ms;`);
+  const sc = scoreSystem(donly);
+  assert("duration-only paste is not awarded A", sc.grade !== "A");
+  assert("duration-only paste exposes no easing dimension", !sc.categories.some(c => c.key === "easing"));
+  // the engine must not emit a nonsensical "0 distinct easings" finding
+  const { systemRead } = require("../system-read.js");
+  assert("no '0 distinct easings' finding when there are none", !systemRead(donly).some(f => /^0 distinct easings/.test(f.msg)));
+}
+
+// 17. reading Cadence's OWN export back: inline-marked intent rows are aliases of
+// the primitives, not new tokens — they must not double the ladder or flag a
+// phantom duplicate easing (Codex P2 on dogfooding the Tailwind export)
+{
+  const { parsePalette, systemRead } = require("../system-read.js");
+  const tw = `transitionDuration: {
+    fast: '150ms',
+    base: '200ms',
+    slow: '300ms',
+    enter: '200ms', // intent
+    exit: '150ms', // intent
+    hover: '150ms', // intent
+  },
+  transitionTimingFunction: {
+    standard: 'cubic-bezier(0.2, 0, 0.2, 1)',
+    emphasized: 'cubic-bezier(0.22, 1, 0.36, 1)',
+    enter: 'cubic-bezier(0.22, 1, 0.36, 1)', // intent
+    exit: 'cubic-bezier(0.4, 0, 1, 1)', // intent
+  }`;
+  const sys = parsePalette(tw);
+  assert("intent-marked rows don't become ladder rungs", sys.durations.length === 3 && !sys.durations.some(d => /enter|exit|hover/.test(d.name)));
+  assert("intent-marked easings don't duplicate the primitives", sys.easings.length === 2 && !sys.easings.some(e => /enter|exit/.test(e.name)));
+  assert("no phantom duplicate-easing warning from resolved aliases", !systemRead(sys).some(f => /nearly identical/.test(f.msg)));
+}
+
+// 18. an intent marker only drops the declaration it marks — primitives that
+// share a compact line before it survive (Codex P2 on multi-entry lines)
+{
+  const { parsePalette } = require("../system-read.js");
+  const sys = parsePalette(`transitionDuration: { fast: '100ms', base: '200ms', enter: '200ms', // intent
+    slow: '300ms' }`);
+  assert("primitives before an inline intent marker survive", sys.durations.some(d => d.name === "fast") && sys.durations.some(d => d.name === "base"));
+  assert("only the marked alias is dropped", !sys.durations.some(d => d.name === "enter"));
+}
+
+// 19. delay/stagger SECTIONS and case-insensitive units (Codex P2s)
+{
+  const { parsePalette } = require("../system-read.js");
+  // a transitionDelay block with numeric leaf keys must not feed the ladder
+  const sec = parsePalette(`transitionDuration: { fast: '100ms', base: '200ms', slow: '300ms' },
+    transitionDelay: { 500: '500ms', 1000: '1000ms' }`);
+  assert("delay/stagger sections are excluded from the ladder", sec.durations.length === 3 && !sec.durations.some(d => d.ms >= 500));
+  // CSS units are case-insensitive: 100MS / .3S must parse
+  const ci = parsePalette(`--fast: 100MS; --base: 200Ms; --slow: .3S;`);
+  assert("uppercase / dotless CSS duration units parse", ci && ci.durations.length === 3 && ci.durations.some(d => d.ms === 300));
+}
+
+// 20. DTCG typed token values (Codex P2): { value: 150, unit: "ms" } + [.2,0,.2,1]
+{
+  const { parsePalette } = require("../system-read.js");
+  const sys = parsePalette(`{
+    "fast": { "$type": "duration", "$value": { "value": 150, "unit": "ms" } },
+    "base": { "$type": "duration", "$value": { "value": 200, "unit": "ms" } },
+    "standard": { "$type": "cubicBezier", "$value": [0.2, 0, 0.2, 1] } }`);
+  assert("DTCG duration objects parse to ms", sys && sys.durations.map(d => d.name + ":" + d.ms).join(",") === "fast:150,base:200");
+  assert("DTCG cubicBezier arrays parse to an easing", sys.easings.length === 1 && sys.easings[0].name === "standard" && sys.easings[0].bez.join(",") === "0.2,0,0.2,1");
+}
+
+// 21. duplicate declarations collapse to the cascade winner; nested delay
+// sections are excluded recursively (Codex P2s)
+{
+  const { parsePalette } = require("../system-read.js");
+  const dup = parsePalette(`--dur-fast: 100ms; --dur-fast: 120ms; --dur-base: 200ms; --dur-slow: 300ms;`);
+  assert("a repeated declaration collapses to the last value", dup.durations.length === 3 &&
+    dup.durations.find(d => d.name === "dur-fast").ms === 120 && !dup.durations.some(d => /-2$/.test(d.name)));
+
+  const nested = parsePalette(`{ "duration": { "fast": "100ms", "base": "200ms", "slow": "300ms" },
+    "delay": { "modal": { "short": "500ms", "long": "900ms" } } }`);
+  assert("nested delay sections are excluded from the ladder", nested.durations.length === 3 && !nested.durations.some(d => d.ms >= 500));
+}
+
+// 22. resolved semantic leaves (enter: { duration, easing }) are not primitives
+// (Codex P2 — the JSON counterpart of the Tailwind // intent alias case)
+{
+  const { parsePalette } = require("../system-read.js");
+  const semanticOnly = parsePalette(`{ "enter": { "duration": "200ms", "easing": "ease-out" },
+    "exit": { "duration": "150ms", "easing": "ease-in" } }`);
+  assert("a resolved-semantic-only file yields no primitives", semanticOnly === null);
+
+  const mixed = parsePalette(`{ "primitives": { "duration": { "fast": "150ms", "base": "200ms", "slow": "300ms" },
+    "easing": { "standard": "cubic-bezier(.2,0,.2,1)" } },
+    "semantic": { "enter": { "duration": "200ms", "easing": "ease-out" } } }`);
+  assert("primitives are read while semantic leaves are skipped", mixed.durations.map(d => d.name).join(",") === "fast,base,slow" && mixed.easings.length === 1);
+
+  // a primitive that carries a scale in its name is NOT skipped
+  const scaled = parsePalette(`--duration-fast: 150ms; --duration-base: 200ms;`);
+  assert("scale-suffixed duration primitives still parse", scaled.durations.length === 2);
+}

@@ -5,6 +5,18 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.13.0] — 2026-07-25
+
+### Added
+- **Read another system's palette** — the roadmap "reverse-engineer the art
+  direction" feature. A collapsible reader under the System-read panel takes a
+  pasted third-party token set — CSS custom properties, a `tokens.json`, or a
+  Tailwind theme fragment — parses it with a tolerant, read-only scanner
+  (`parsePalette()` in `system-read.js`: no eval, sanitised names), and runs the
+  **same** `systemRead()` + verdict over it: a grade, the parsed primitive
+  counts, and the ranked findings with fixes. Entirely client-side, no server —
+  the opinion engine, pointed at someone else's system.
+
 ## [0.12.1] — 2026-07-25
 
 ### Added

@@ -1338,6 +1338,39 @@ document.getElementById("download").addEventListener("click",()=>{
   setTimeout(()=>URL.revokeObjectURL(url),1000);
   const b=document.getElementById("download"); b.textContent="Downloaded ✓"; setTimeout(()=>b.textContent="Download",1200);
 });
+
+// "Read another palette" — parse a pasted third-party token set (CSS vars /
+// tokens.json / Tailwind fragment) and run the SAME systemRead + verdict over it,
+// without touching the working system. Reverse-engineer the art direction; stays
+// fully client-side. Foreign names are sanitised in parsePalette (safe chars
+// only) but the rendered msg/fix are still escaped as defense-in-depth.
+(function initPaletteReader(){
+  const inEl=document.getElementById("paletteIn"), out=document.getElementById("paletteOut"),
+        errEl=document.getElementById("paletteErr"), goBtn=document.getElementById("paletteRead"),
+        clrBtn=document.getElementById("paletteClear");
+  if(!inEl||!goBtn||!out) return;
+  const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+  const plural=(n,w)=>`${n} ${w}${n===1?"":"s"}`;
+  function readIt(){
+    errEl.hidden=true; out.innerHTML="";
+    const sys=CadenceSystemRead.parsePalette(inEl.value);
+    if(!sys){
+      errEl.textContent="Couldn't find any motion tokens — paste durations (e.g. 150ms) and easings (e.g. cubic-bezier(.2,0,.2,1)).";
+      errEl.hidden=false; if(clrBtn) clrBtn.hidden=false; return;
+    }
+    const findings=CadenceSystemRead.systemRead(sys,{corpus:benchmarkCorpus()});
+    const sc=CadenceSystemRead.scoreSystem(sys,{findings});
+    const fp=CadenceSystemRead.fingerprint(sys);
+    const meta=[plural(sys.durations.length,"duration"), plural(sys.easings.length,"easing")];
+    if(fp.growth) meta.push(`ladder grows ~${fp.growth.toFixed(1)}×`);
+    let html=`<div class="paletterd__verdict ${sc.warns?"warn":"ok"}"><b>${sc.grade} · ${sc.score}/100</b> — ${esc(sc.summary)}<span class="paletterd__meta">${esc(meta.join(" · "))}</span></div>`;
+    html+=findings.map(h=>`<div class="rd ${h.status}"><span class="ic">${h.icon}</span><span>${esc(h.msg)}${h.fix?` <span class="rd__fix">→ ${esc(h.fix)}</span>`:""}</span></div>`).join("");
+    out.innerHTML=html;
+    if(clrBtn) clrBtn.hidden=false;
+  }
+  goBtn.addEventListener("click",readIt);
+  if(clrBtn) clrBtn.addEventListener("click",()=>{ inEl.value=""; out.innerHTML=""; errEl.hidden=true; clrBtn.hidden=true; inEl.focus(); });
+})();
 document.getElementById("share").addEventListener("click",()=>{
   writeURL();
   navigator.clipboard?.writeText(location.href);
