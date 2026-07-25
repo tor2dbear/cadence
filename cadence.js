@@ -193,7 +193,7 @@ function renderDurations(){
       <span class="drow__track"><input type="range" min="60" max="1000" step="10" value="${d.ms}" data-scope="dur" data-i="${i}" aria-label="${d.name} duration"></span>
       <span class="drow__val">${d.ms}ms</span>
       <span class="drow__mult">${mult}</span>
-      ${durations.length>1?`<button class="drow__rm" data-scope="drm" data-i="${i}" title="remove step" aria-label="remove ${d.name}">×</button>`:""}
+      ${durations.length>1?`<button class="drow__rm" data-scope="drm" data-i="${i}" title="remove step" aria-label="remove ${d.name}">${rmSvg}</button>`:""}
     </div>`;
   }).join("");
 }
@@ -206,14 +206,13 @@ function renderDistances(){
       <input class="drow__name" value="${d.name}" data-scope="xname" data-i="${i}" aria-label="distance name" spellcheck="false">
       <span class="drow__track"><input type="range" min="0" max="1000" step="4" value="${d.px}" data-scope="xpx" data-i="${i}" aria-label="${d.name} distance"></span>
       <span class="drow__val">${d.px}px</span>
-      ${distances.length>1?`<button class="drow__rm" data-scope="xrm" data-i="${i}" title="remove distance" aria-label="remove ${d.name}">×</button>`:""}
+      ${distances.length>1?`<button class="drow__rm" data-scope="xrm" data-i="${i}" title="remove distance" aria-label="remove ${d.name}">${rmSvg}</button>`:""}
     </div>`).join("");
   }
   // sync the collapse chrome (the block is opt-in / collapsed by default)
   const wrap=document.getElementById("distanceWrap"), tog=document.getElementById("distToggle");
   if(wrap) wrap.hidden=!distOpen;
-  if(tog){ tog.setAttribute("aria-expanded", distOpen?"true":"false");
-    const chev=tog.querySelector(".block__chev"); if(chev) chev.textContent=distOpen?"▾":"▸"; }
+  if(tog){ tog.setAttribute("aria-expanded", distOpen?"true":"false"); }  // chevron rotates via CSS off aria-expanded
 }
 
 // ---------- render: easing set (cubic = draggable bézier; spring = sliders) ----------
@@ -278,7 +277,7 @@ function renderEasings(){
       controls = `<select data-scope="ease" data-i="${i}" aria-label="${e.name} curve">${custom}${opts}<option value="spring">spring…</option></select>`;
     }
     return `<div class="ecard">
-      <div class="ecard__top"><input class="ecard__name" value="${e.name}" data-scope="ename" data-i="${i}" aria-label="easing name" spellcheck="false">${easings.length>1?`<button class="ecard__rm" data-scope="erm" data-i="${i}" title="remove easing" aria-label="remove ${e.name}">×</button>`:""}</div>
+      <div class="ecard__top"><input class="ecard__name" value="${e.name}" data-scope="ename" data-i="${i}" aria-label="easing name" spellcheck="false">${easings.length>1?`<button class="ecard__rm" data-scope="erm" data-i="${i}" title="remove easing" aria-label="remove ${e.name}">${rmSvg}</button>`:""}</div>
       <div class="ecard__plot" data-i="${i}">${easingSVG(e)}</div>
       ${controls}
     </div>`;
@@ -292,7 +291,7 @@ function renderModes(){
   el.innerHTML = modes.map((m,i)=>{
     if(i===activeMode) return `<span class="mode active">
         <input class="mode__name" value="${m.name}" data-scope="mname" data-i="${i}" aria-label="mode name" spellcheck="false">
-        ${modes.length>1?`<button class="mode__rm" data-scope="mrm" data-i="${i}" title="remove mode" aria-label="remove mode">×</button>`:""}
+        ${modes.length>1?`<button class="mode__rm" data-scope="mrm" data-i="${i}" title="remove mode" aria-label="remove mode">${rmSvg}</button>`:""}
       </span>`;
     return `<button class="mode" data-scope="mset" data-i="${i}">${m.name}</button>`;
   }).join("") + `<button class="mode mode--add" data-scope="madd" title="add a mode (copies the current one)">+ mode</button>`
@@ -329,12 +328,12 @@ function renderIntents(){
         <span class="intent__dot" style="background:${colorOf(i)}" aria-hidden="true"></span>
         <input class="intent__name" value="${it.name}" data-scope="iname" data-i="${i}" aria-label="intent name">
         <span class="intent__purpose">${it.purpose||""}</span>
-        ${intents.length>1?`<button class="intent__rm" data-scope="irm" data-i="${i}" title="remove" aria-label="remove intent">×</button>`:""}
+        ${intents.length>1?`<button class="intent__rm" data-scope="irm" data-i="${i}" title="remove" aria-label="remove intent">${rmSvg}</button>`:""}
       </div>
       <div class="intent__ref">${durF}${easeF}</div>
       ${adv}
       <div class="intent__foot">
-        <button class="intent__more" data-scope="imore" data-i="${i}" aria-expanded="${!!it.open}">${it.open?"less ▴":"more ▾"}</button>
+        <button class="intent__more" data-scope="imore" data-i="${i}" aria-expanded="${!!it.open}">${it.open?"less":"more"}&nbsp;<svg class="gi chev-ic" width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-chevron"/></svg></button>
         <span class="intent__resolved">→ ${r.d} · ${r.eLabel}${r.s?` · stagger ${r.s}ms`:""}${r.prop!=="all"?` · ${r.prop}`:""}${r.distName?` · ${r.distPx}px`:""}${r.reveal!=null?` · reveal@${r.reveal}%`:""}${r.scrub?` · scrub·${r.scrub.tl}/${r.scrub.fx}`:""}${r.vt?` · vt·${r.vt.type}`:""}</span>
       </div>
     </div>`;
@@ -608,6 +607,8 @@ let lastScore=null;   // the most recent composite verdict (grade + scorecard), 
 // Markdown rationale export, which can't carry SVG.
 const ICON_BY_SEV = {0:"ok",1:"nit",2:"warn",3:"defect"};
 const sevSvg = sev => `<svg class="ic-svg" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-${ICON_BY_SEV[sev]||"nit"}"/></svg>`;
+// inline "remove" affordance — the same drawn cross the panels close with, so every ×/close is one glyph
+const rmSvg = `<svg class="gi" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-close"/></svg>`;
 function critique(){
   const out = CadenceSystemRead.systemRead(systemSnapshot(), {corpus:benchmarkCorpus()});   // ranked, worst-first
   lastRead = out;

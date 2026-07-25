@@ -59,6 +59,8 @@
   <symbol id="ic-external" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5H11.5V9.5"/><path d="M11.5 4.5 4.8 11.2"/></symbol>
   <symbol id="ic-arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3.3 8H12.2"/><path d="M9 4.8 12.2 8 9 11.2"/></symbol>
   <symbol id="ic-close" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 4.5 11.5 11.5"/><path d="M11.5 4.5 4.5 11.5"/></symbol>
+  <symbol id="ic-play" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5.8 4.3 12 8 5.8 11.7Z"/></symbol>
+  <symbol id="ic-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5 10.5 8 6.5 11.5"/></symbol>
 </defs></svg>
 
 <!-- LANDING — the product demonstrating its own thesis. Shown first; "Start
@@ -274,7 +276,7 @@
     </span>
     <button class="demobtn" id="exportToggle" title="Open the export panel — CSS, JSON, Tailwind, Style Dictionary, TS, and a Rationale report">Export</button>
     <button class="demobtn" id="previewToggle" title="Dock the live demo beside the editor — it re-times live as you edit">Preview</button>
-    <a class="demolink" id="demoLink" href="demo.html" target="_blank" rel="noopener" title="Open the live demo in a new tab — tile it beside the editor and it re-times live">▶ Live demo</a>
+    <a class="demolink" id="demoLink" href="demo.html" target="_blank" rel="noopener" title="Open the live demo in a new tab — tile it beside the editor and it re-times live"><svg class="gi" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-play"/></svg>&nbsp;Live demo</a>
     <a class="proto" href="changelog.html" title="Changelog — what shipped, by version" id="proto">v0.7.4</a>
   </div>
 </header>
@@ -312,7 +314,7 @@
       <button class="addbtn addbtn--sm" id="addEasing">+ Add easing</button>
     </div>
     <div class="block">
-      <button class="block__toggle" id="distToggle" aria-expanded="false"><h2 class="sec">Distance scale <span class="lyr">· optional</span></h2><span class="block__chev">▸</span></button>
+      <button class="block__toggle" id="distToggle" aria-expanded="false"><h2 class="sec">Distance scale <span class="lyr">· optional</span></h2><span class="block__chev"><svg class="gi chev-ic" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-chevron"/></svg></span></button>
       <div id="distanceWrap" hidden>
         <p class="sub">How far things travel. Optional — it lets the system read judge whether a duration suits the distance.</p>
         <div class="ladder" id="distances"></div>
@@ -331,7 +333,7 @@
 
     <h2 class="sec" style="margin-top:24px" title="Live probes — each is a lens you point at one intent to preview its motion. Swap the lens or the intent freely.">Test bench <span class="lyr">· swappable probes</span></h2>
     <div class="toolbar">
-      <button class="btn" id="playAll">▶ Play all</button>
+      <button class="btn" id="playAll"><svg class="gi" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-play"/></svg>&nbsp;Play all</button>
       <span class="hint">Each probe is just a lens. Change the token driving it — any component, any intent.</span>
     </div>
     <div class="bench" id="bench"></div>

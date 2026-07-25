@@ -18,7 +18,7 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 await page.goto(BASE, { waitUntil: 'networkidle' });
 
 // the sprite defines every icon in the set
-const SYMS = ['ic-ok', 'ic-nit', 'ic-warn', 'ic-defect', 'ic-reload', 'ic-external', 'ic-arrow', 'ic-close'];
+const SYMS = ['ic-ok', 'ic-nit', 'ic-warn', 'ic-defect', 'ic-reload', 'ic-external', 'ic-arrow', 'ic-close', 'ic-play', 'ic-chevron'];
 const haveSyms = await page.evaluate(ids => ids.every(id => !!document.getElementById(id)), SYMS);
 assert('the icon sprite defines the whole set', haveSyms);
 
@@ -26,6 +26,10 @@ assert('the icon sprite defines the whole set', haveSyms);
 assert('the hero CTA uses the arrow icon', await page.locator('#startTool .gi use[href="#ic-arrow"]').count() === 1);
 assert('the Source link uses the external icon', await page.locator('.lnav__link .gi use[href="#ic-external"]').count() === 1);
 assert('the secondary CTA has no icon (single arrow rule)', await page.locator('.lcta a.lbtn .gi').count() === 0);
+
+// play affordances and the distance chevron are drawn icons, not unicode glyphs
+assert('the Live demo link uses the play icon', await page.locator('#demoLink .gi use[href="#ic-play"]').count() === 1);
+assert('the distance toggle uses the chevron icon', await page.locator('#distToggle .chev-ic use[href="#ic-chevron"]').count() === 1);
 
 // the system read renders each finding's severity as a <use> of the sprite, and
 // the referenced symbol resolves (non-zero box)
@@ -46,6 +50,20 @@ await page.evaluate(() => document.getElementById('addEasing').click());
 await page.waitForTimeout(250);
 assert('a warning finding references the warn or defect symbol',
   (await page.locator('#hints .rd.warn .ic use[href="#ic-warn"], #hints .rd.warn .ic use[href="#ic-defect"]').count()) >= 1);
+
+// the tool view's disclosure + play + remove affordances are all drawn icons
+assert('the Play all button uses the play icon', await page.locator('#playAll .gi use[href="#ic-play"]').count() === 1);
+assert('every intent more/less toggle uses the chevron icon',
+  (await page.locator('.intent__more .chev-ic use[href="#ic-chevron"]').count()) >= 1);
+assert('inline remove buttons use the drawn close cross', await page.locator('.ecard__rm .gi use[href="#ic-close"]').count() >= 1);
+// the distance chevron rotates via its open state, not a swapped glyph
+await page.click('#distToggle');
+await page.waitForTimeout(250);
+const rotated = await page.$eval('#distToggle .chev-ic', el => getComputedStyle(el).transform);
+assert('the distance chevron rotates when the section opens', rotated && rotated !== 'none');
+// no icon-shaped unicode glyph survives anywhere in the live tool view
+const glyphFree = await page.evaluate(() => !/[▶▸▾▴›]/.test(document.body.innerText));
+assert('no leftover play/chevron unicode glyphs in the tool', glyphFree);
 
 assert('no console/page errors', errors.length === 0);
 if (errors.length) errors.forEach(e => console.log('   ! ' + e));
