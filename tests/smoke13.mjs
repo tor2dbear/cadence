@@ -23,7 +23,10 @@ assert('spring plot is a polyline', (await ecard0.locator('svg.bz polyline.bz-cu
 // exports emit linear() with a fallback note
 const css = await out('css');
 assert('CSS emits linear() for the spring', /--motion-ease-standard: linear\(0, [-0-9., ]+1\);/.test(css));
-assert('CSS notes a cubic fallback', css.includes('fallback: --motion-ease-standard: cubic-bezier'));
+// the fallback is now REAL CSS: a cubic-bezier base value, upgraded to linear()
+// behind an @supports gate (a comment fallback couldn't be used without editing)
+assert('CSS gives the spring a real cubic-bezier fallback', /--motion-ease-standard: cubic-bezier\([0-9.\- ,]+\);/.test(css));
+assert('CSS upgrades springs to linear() via @supports', css.includes('@supports (transition-timing-function: linear(0, 1))'));
 const json = JSON.parse(await out('json'));
 assert('JSON easing is linear()', json.primitives.easing.standard.startsWith('linear('));
 

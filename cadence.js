@@ -143,6 +143,16 @@ function springSamples(sp, N=SPRING_N){
 const easeCSS = e => e.type==="spring"
   ? "linear("+springSamples(e.spring).map(v=>+v.toFixed(4)).join(", ")+")"
   : bezStr(e.bez);
+// a real cubic-bezier approximation of a spring, for browsers without linear():
+// underdamped springs overshoot, so map the sampled peak into the second control
+// point's y (a "back out" curve); a settled spring gets a smooth ease-out. Not a
+// bounce — a single overshoot — but honest, usable CSS rather than a comment.
+const springCubicFallback = sp => {
+  const peak = Math.max(1, ...springSamples(sp));
+  return peak > 1.02
+    ? `cubic-bezier(0.34, ${(+Math.min(1.8, 1 + (peak-1)*1.6).toFixed(2))}, 0.64, 1)`
+    : `cubic-bezier(0.22, 1, 0.36, 1)`;
+};
 // short human label (the linear() string is too long to show inline)
 const easeLabel = e => e.type==="spring"
   ? `spring ${e.spring.stiffness}/${e.spring.damping}`
@@ -726,11 +736,12 @@ function buildCSS(){
   let s=`<span class="cm">/* Cadence${nm} */</span>\n:root{\n`;
   s+=`  <span class="cm">/* primitives · durations */</span>\n`;
   durations.forEach(d=>s+=`  <span class="tk">--motion-duration-${d.name}</span>: ${d.ms}ms;\n`);
-  const hasSpring=easings.some(e=>e.type==="spring");
-  s+=`\n  <span class="cm">/* primitives · easing${hasSpring?" (linear() = sampled spring; needs a 2023+ browser)":""} */</span>\n`;
+  const springs=easings.filter(e=>e.type==="spring");
+  s+=`\n  <span class="cm">/* primitives · easing${springs.length?" (springs export a real cubic-bezier fallback, upgraded to the sampled linear() where supported)":""} */</span>\n`;
   easings.forEach(e=>{
-    s+=`  <span class="tk">--motion-ease-${e.name}</span>: ${easeCSS(e)};\n`;
-    if(e.type==="spring") s+=`  <span class="cm">/* fallback: --motion-ease-${e.name}: cubic-bezier(0.34, 1.4, 0.5, 1); */</span>\n`;
+    // springs land the cubic-bezier fallback as the base value so pre-2023
+    // browsers get real motion; the @supports block below upgrades them to linear()
+    s+=`  <span class="tk">--motion-ease-${e.name}</span>: ${e.type==="spring"?springCubicFallback(e.spring):easeCSS(e)};\n`;
   });
   // distance primitives only when an intent references them (opt-in scale)
   const usedDist=[...new Set(intents.map(it=>bindOf(it).distance).filter(Boolean))];
@@ -764,7 +775,16 @@ function buildCSS(){
     });
     rb+=`  }\n}`;
   }
-  return s+`}`+rb;
+  // progressive enhancement for springs: a custom property accepts any value at
+  // parse time, so a two-declaration cascade fallback wouldn't work — feature-gate
+  // the sampled linear() behind @supports so unsupporting browsers keep the cubic.
+  let sup="";
+  if(springs.length){
+    sup=`\n\n<span class="cm">/* springs: the sampled linear() where the browser supports it (2023+) */</span>\n@supports (transition-timing-function: linear(0, 1)){\n  :root{\n`;
+    springs.forEach(e=>{ sup+=`    <span class="tk">--motion-ease-${e.name}</span>: ${easeCSS(e)};\n`; });
+    sup+=`  }\n}`;
+  }
+  return s+`}`+rb+sup;
 }
 function buildJSON(){
   const obj={primitives:{duration:{},easing:{}},semantic:{}};
@@ -815,6 +835,10 @@ function buildTS(){
   const key=k=>isIdent(k)?k:JSON.stringify(k), q=JSON.stringify;
   const dur=durations.map(d=>`    ${key(d.name)}: ${q(d.ms+"ms")},`).join("\n");
   const ease=easings.map(e=>`    ${key(e.name)}: ${q(easeCSS(e))},`).join("\n");
+  // distance primitives (opt-in) — parity with JSON/CSS, which both emit the block
+  const usedD=[...new Set(intents.map(it=>bindOf(it).distance).filter(Boolean))];
+  const distRows=distances.filter(d=>usedD.includes(d.name)).map(d=>`    ${key(d.name)}: ${q(d.px+"px")},`).join("\n");
+  const distBlock=distRows?`  distance: {\n${distRows}\n  },\n`:"";
   const sem=intents.map(it=>{ const b=bindOf(it);
     const prp=(b.prop&&b.prop!=="all")?`, property: ${q(b.prop)}`:"";
     const dpx=b.distance?distPx(b.distance):null;
@@ -825,6 +849,7 @@ function buildTS(){
     `export const motion = {\n`+
     `  duration: {\n${dur}\n  },\n`+
     `  easing: {\n${ease}\n  },\n`+
+    distBlock+
     `  // semantic intents (resolved from primitives)\n`+
     `  intent: {\n${sem}\n  },\n} as const;`;
 }

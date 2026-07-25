@@ -5,6 +5,29 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.13.4] — 2026-07-25
+
+### Fixed
+- **Export correctness — two token-output bugs from the product-read analysis.**
+  - **The CSS spring fallback is now real, usable CSS instead of a comment.** A
+    spring easing exported the sampled `linear()` as the token value plus a
+    *commented-out*, hardcoded generic `cubic-bezier` "fallback" — unusable
+    without hand-editing, and the same curve for every spring. Now the base value
+    is a real `cubic-bezier` approximation derived from the actual spring's
+    overshoot, and an `@supports (transition-timing-function: linear(0, 1))` block
+    upgrades it to the sampled `linear()` where supported. (A two-declaration
+    cascade fallback can't work here — a custom property accepts any value at
+    parse time — so the feature query is the correct gate.)
+  - **The TypeScript export now emits the distance-primitives block**, matching
+    JSON and CSS. It carried the resolved distance inline per intent but dropped
+    the top-level `distance: { … }` primitives map, breaking parity with the
+    other formats' primitives/semantic structure.
+
+### Guarded
+- `smoke13` now asserts the spring's real cubic-bezier fallback and the `@supports`
+  upgrade (replacing the old comment check); `smoke17` asserts the TS distance
+  primitives block.
+
 ## [0.13.3] — 2026-07-25
 
 ### Changed

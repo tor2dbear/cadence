@@ -41,6 +41,9 @@ const sd = JSON.parse(await out('sd'));
 assert('Style Dictionary distance token', sd.motion.enter.distance.value === '720px');
 const ts = await out('ts');
 assert('TS intent includes distance', /enter: \{ duration:.*distance: "720px".* \}/.test(ts));
+// TS keeps the distance PRIMITIVES block too (parity with JSON/CSS), not just the
+// inline per-intent value
+assert('TS emits a distance primitives block', /distance: \{\s*screen: "720px",/.test(ts));
 
 // system-read: 720px in 200ms = 3.6px/ms → reads naturally (ok). Speed it up → jump warning.
 let hints = await page.locator('#hints').innerText();
