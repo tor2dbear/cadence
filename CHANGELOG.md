@@ -5,6 +5,16 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.12.1] — 2026-07-25
+
+### Added
+- **Download any export format as a file.** The export panel offered only Copy;
+  a **Download** button now saves the active tab under the conventional filename
+  (`tokens.css`, `motion.ts`, `tailwind.config.js`, `style-dictionary.tokens.json`,
+  `tokens.json`, `scroll.css`, `view-transitions.css`, `rationale.md`), so the
+  tokens land in a repo without a select-all-copy-paste. Client-side Blob +
+  `<a download>`, no server — consistent with the static thesis.
+
 ## [0.12.0] — 2026-07-25
 
 ### Added
