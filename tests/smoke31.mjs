@@ -344,3 +344,26 @@ const msgs = out => out.map(f => f.msg).join("\n");
   const sc = scoreSystem(css);
   assert("a parsed palette gets a real verdict", /^[A-E]$/.test(sc.grade) && sc.total >= 2);
 }
+
+// 15. parsePalette robustness (Codex P2s): SD nesting, stagger/delay, comments
+{
+  const { parsePalette } = require("../system-read.js");
+  // Style-Dictionary / DTCG leaves key off the OUTER token, not the inner `value`
+  const sd = parsePalette(`{ "fast": { "value": "150ms", "type": "duration" },
+    "base": { "value": "200ms" }, "standard": { "value": "cubic-bezier(0.2,0,0.2,1)" } }`);
+  assert("SD nesting: outer token names, not 'value'", sd.durations.map(d => d.name).sort().join(",") === "base,fast");
+  assert("SD nesting: nested easing value parses", sd.easings.length === 1 && sd.easings[0].name === "standard");
+
+  // stagger / delay are time values but must NOT become ladder rungs
+  const st = parsePalette(`--dur-fast: 150ms; --dur-base: 200ms; --dur-slow: 300ms;
+    --stagger: 1000ms; --enter-delay: 500ms; --transition-delay: 800ms;`);
+  assert("stagger/delay excluded from the ladder", st.durations.length === 3 && !st.durations.some(d => /stagger|delay/.test(d.name)));
+
+  // commented-out tokens (block + line) don't join the read
+  const cm = parsePalette(`/* --deprecated: 3000ms; */\n--fast: 150ms;\n// --old: 5000ms;\n--base: 200ms;`);
+  assert("commented tokens are ignored", cm.durations.length === 2 && !cm.durations.some(d => /deprecated|old/.test(d.name)));
+
+  // …but a URL's // is not treated as a comment
+  const u = parsePalette(`--ref: url(https://x.com/a); --fast: 150ms; --base: 200ms;`);
+  assert("https:// URLs survive comment-stripping", u.durations.length === 2);
+}

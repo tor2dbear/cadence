@@ -360,6 +360,17 @@
   const EASE_KW = { ease: [.25, .1, .25, 1], "ease-in": [.42, 0, 1, 1], "ease-out": [0, 0, .58, 1], "ease-in-out": [.42, 0, .58, 1], linear: [0, 0, 1, 1] };
   function parsePalette(text) {
     text = String(text == null ? "" : text);
+    // strip comments first, so disabled/legacy tokens (`/* --old: 3000ms; */`,
+    // a `//`-commented line) don't join the live read. `//` only when it starts a
+    // token (line start / after whitespace), so URLs like https:// survive.
+    text = text.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|\s)\/\/[^\n]*/g, "$1 ");
+    // flatten Style-Dictionary / DTCG leaves — `fast: { value: "150ms", type… }` —
+    // to `fast: 150ms`, so the read keys off the OUTER token name, not the inner
+    // `value` property (nested braces mean the innermost leaf matches first).
+    text = text.replace(/([A-Za-z][\w-]*)\s*["']?\s*[:=]\s*\{([^{}]*)\}/g, (whole, key, body) => {
+      const v = body.match(/\$?value\s*["']?\s*[:=]\s*["']?\s*(cubic-bezier\s*\([^)]*\)|\d*\.?\d+\s*m?s|ease-in-out|ease-in|ease-out|ease|linear)/i);
+      return v ? `${key}: ${v[1]} ` : whole;
+    });
     const cleanName = raw => (raw || "").replace(/^[-\s"'.]+|[-\s"',;]+$/g, "").replace(/[^A-Za-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "token";
     const durs = [], eas = [];
     let m;
@@ -370,6 +381,10 @@
     // durations: value is <number>(ms|s)
     const dre = new RegExp(NV + `(\\d*\\.?\\d+)\\s*(ms|s)\\b`, "g");
     while ((m = dre.exec(text))) {
+      // stagger/delay are time values but NOT ladder rungs — Cadence's own JSON /
+      // Style-Dictionary exports emit them, so counting them as durations would
+      // invent rungs and trip false uneven-ladder / comparative warnings.
+      if (/stagger|delay/i.test(m[1])) continue;
       let ms = parseFloat(m[2]) * (m[3] === "s" ? 1000 : 1);
       if (!(ms > 0) || ms > 60000) continue;                 // skip 0s and absurd values
       durs.push({ name: cleanName(m[1]), ms: Math.round(ms) });
