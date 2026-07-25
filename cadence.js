@@ -1305,6 +1305,20 @@ document.addEventListener("click", e=>{
   if(sc==="mrm"){ if(modes.length>1){ modes.splice(i,1); intents.forEach(it=>it.binds.splice(i,1));
       activeMode=Math.max(0,Math.min(modes.length-1,activeMode>=i?activeMode-1:activeMode)); rerenderAll(); } }
 });
+// skip links: the hash is the app's state/routing channel (an edited or shared
+// system lives in it, and any nonempty hash boots tool mode), so a raw #editor /
+// #lhero fragment jump would clobber that on reload. Intercept and move focus +
+// scroll to the target WITHOUT touching location.hash. Covers mouse and keyboard
+// (Enter on a focused link fires a click).
+document.addEventListener("click", e=>{
+  const a=e.target.closest && e.target.closest("a.skip-link"); if(!a) return;
+  e.preventDefault();
+  const t=document.getElementById(a.getAttribute("href").slice(1));
+  if(!t) return;
+  t.focus({preventScroll:true});
+  const smooth=!matchMedia("(prefers-reduced-motion: reduce)").matches;
+  t.scrollIntoView({block:"start", behavior: smooth?"smooth":"auto"});
+});
 // ---------- bézier drag editing ----------
 let bzDrag=null, bzRAF=null;
 function bzDownstream(){                    // rAF-coalesced: heavy recompute at most once per frame
