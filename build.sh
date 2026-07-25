@@ -45,5 +45,12 @@ for f in dist/index.html dist/demo.html dist/guide.html dist/changelog.html; do
   [ -f "$f" ] && sed -i "s|</body>|${BEACON}</body>|" "$f"
 done
 
+# Strict security headers (CSP with a sha256 per executable inline script,
+# frame-ancestors, nosniff, …). Runs LAST so it hashes the final deployed bytes,
+# after the beacon + cache-bust rewrites above.
+if [ -f scripts/gen-headers.mjs ]; then
+  node scripts/gen-headers.mjs dist
+fi
+
 echo "version: ${STAMP}"
 echo "dist/ contains:" && ls -1 dist/
