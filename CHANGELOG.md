@@ -5,6 +5,18 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.11.1] — 2026-07-24
+
+### Changed — the crafted/plain section moves with more taste
+- **The rotating opinion line swaps with the page's own motion** instead of a
+  hard text cut: the old observation lifts + fades out (exit), the new one
+  settles in from below (enter). In plain mode even the swap flattens to linear
+  — the page eats its own dog food. The cadence is calmer (~4.8s) and pauses
+  while you hover/focus the section so you can read; reduced-motion still cuts.
+- **The three proof tiles breathe instead of pulsing in lockstep** — slower,
+  pairwise-different loop periods (4.6 / 5.3 / 4.9s) so they drift out of sync.
+- Guarded in smoke28 (animated swap + desynced tile periods).
+
 ## [0.11.0] — 2026-07-24
 
 ### Added — import & export a system as a file

@@ -49,4 +49,26 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
   await page.close();
 }
 
+// ---- 3. the section moves with taste: the observation swaps with an animated
+// exit (not a hard text cut), and the three proof tiles run at pairwise-
+// different, slower periods so they breathe instead of pulsing in lockstep ----
+{
+  const page = await browser.newPage({ viewport: { width: 1000, height: 1200 } });
+  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(120);
+  await page.locator('#tasteToggle').click();          // trigger a swap
+  await page.waitForTimeout(30);
+  assert('the opinion line swaps with an animated exit (mid-flight, not an instant cut)',
+    await page.locator('#opinionLine').evaluate(el => el.classList.contains('is-out') || getComputedStyle(el).opacity !== '1'));
+  await page.waitForTimeout(300);
+  const dur = await page.evaluate(() => {
+    const g = s => getComputedStyle(document.querySelector(s)).animationDuration;
+    return [g('.lt-reveal span'), g('.lt-orb'), g('.lt-curve svg')];
+  });
+  assert('the three proof tiles run at pairwise-different (desynced) periods', new Set(dur).size === 3);
+  assert('the tiles loop slower than ~4s (calmer, longer holds)', dur.every(d => parseFloat(d) >= 4));
+  await page.close();
+}
+
 await browser.close();

@@ -18,6 +18,7 @@ assert('three proof tiles', await page.locator('.ltile').count() === 3);
 // --- signature toggle: flip to naïve, the page + opinion degrade ---
 await page.locator('#tasteToggle').click();
 assert('toggle adds the naïve class', await page.locator('#landing').evaluate(el => el.classList.contains('naive')));
+await page.waitForTimeout(260);   // the opinion line swaps with an animated exit, so its class flips mid-swap
 assert('opinion line flips to warn', await page.locator('#opinionLine').evaluate(el => el.classList.contains('warn')));
 // both states are labelled either side of the switch; the active one lights up
 assert('switch shows both labels (crafted / plain)',
@@ -28,6 +29,7 @@ assert('the active (plain) label is highlighted vs the other',
     !== getComputedStyle(document.querySelector('.ltaste__opt--crafted')).color));
 await page.locator('#tasteToggle').click();
 assert('toggle back removes naïve', !(await page.locator('#landing').evaluate(el => el.classList.contains('naive'))));
+await page.waitForTimeout(260);   // opinion class flips mid-swap (animated exit)
 assert('opinion line back to ok', await page.locator('#opinionLine').evaluate(el => el.classList.contains('ok')));
 
 // --- the entrance is a shared-element View Transition: the wordmark morphs ---
