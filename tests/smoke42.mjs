@@ -115,6 +115,10 @@ await page.waitForTimeout(300);
 assert('the editor is a main landmark', (await page.$eval('#editor', el => el.getAttribute('role'))) === 'main');
 assert('exactly one main landmark is exposed (the hidden view is display:none)',
   (await page.evaluate(() => [...document.querySelectorAll('main, [role=main]')].filter(m => getComputedStyle(m).display !== 'none').length)) === 1);
+// an edit first, so the hash carries serialized state the skip link must not clobber
+await page.evaluate(() => document.getElementById('tempoUp').click());
+await page.waitForTimeout(150);
+const stateHash = await page.evaluate(() => location.hash);
 await page.keyboard.press('Tab');  // first tab stop
 const skip = await page.evaluate(() => ({ cls: document.activeElement?.className, href: document.activeElement?.getAttribute('href') }));
 assert('the first tab stop is the skip link → #editor', skip.cls === 'skip-link' && skip.href === '#editor');
@@ -123,6 +127,9 @@ assert('the skip link reveals on focus (on-screen)', (await page.$eval('#toolvie
 await page.keyboard.press('Enter');
 await page.waitForTimeout(120);
 assert('activating the skip link moves focus to the editor', (await page.evaluate(() => document.activeElement?.id)) === 'editor');
+// the state hash is the app's routing/state channel — the skip link must not touch it
+assert('the skip link preserves the state hash (never navigates to #editor)',
+  (await page.evaluate(() => location.hash)) === stateHash && stateHash.length > 1);
 
 // --- the landing exposes the proof captions and has its own skip link ---
 await page.goto(BASE, { waitUntil: 'networkidle' });
@@ -130,6 +137,10 @@ await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(300);
 await page.keyboard.press('Tab');
 assert('the landing first tab stop is a skip link', (await page.evaluate(() => document.activeElement?.className)) === 'skip-link');
+// activating it must not set a hash (any nonempty hash boots the tool on reload)
+await page.keyboard.press('Enter');
+await page.waitForTimeout(120);
+assert('the landing skip link leaves the hash empty', (await page.evaluate(() => location.hash)) === '');
 const proof = await page.evaluate(() => {
   const s = document.querySelector('.lproof');
   return {
