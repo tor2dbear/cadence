@@ -363,6 +363,12 @@
   const EASE_KW = { ease: [.25, .1, .25, 1], "ease-in": [.42, 0, 1, 1], "ease-out": [0, 0, .58, 1], "ease-in-out": [.42, 0, .58, 1], linear: [0, 0, 1, 1] };
   function parsePalette(text) {
     text = String(text == null ? "" : text);
+    // Cadence's own exports emit resolved semantic-intent rows inline-marked
+    // `… , // intent` (and `// per-item stagger`) alongside the primitives. Those
+    // are aliases of the ladder/easing set, not new tokens — counting them would
+    // double the ladder and flag phantom duplicate easings. Drop those rows FIRST,
+    // before the comment strip below removes the marker that identifies them.
+    text = text.replace(/^.*\/\/\s*(?:intent|per-item stagger)\b.*$/gim, "");
     // strip comments first, so disabled/legacy tokens (`/* --old: 3000ms; */`,
     // a `//`-commented line) don't join the live read. `//` only when it starts a
     // token (line start / after whitespace), so URLs like https:// survive.

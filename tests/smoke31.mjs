@@ -384,3 +384,28 @@ const msgs = out => out.map(f => f.msg).join("\n");
   const { systemRead } = require("../system-read.js");
   assert("no '0 distinct easings' finding when there are none", !systemRead(donly).some(f => /^0 distinct easings/.test(f.msg)));
 }
+
+// 17. reading Cadence's OWN export back: inline-marked intent rows are aliases of
+// the primitives, not new tokens — they must not double the ladder or flag a
+// phantom duplicate easing (Codex P2 on dogfooding the Tailwind export)
+{
+  const { parsePalette, systemRead } = require("../system-read.js");
+  const tw = `transitionDuration: {
+    fast: '150ms',
+    base: '200ms',
+    slow: '300ms',
+    enter: '200ms', // intent
+    exit: '150ms', // intent
+    hover: '150ms', // intent
+  },
+  transitionTimingFunction: {
+    standard: 'cubic-bezier(0.2, 0, 0.2, 1)',
+    emphasized: 'cubic-bezier(0.22, 1, 0.36, 1)',
+    enter: 'cubic-bezier(0.22, 1, 0.36, 1)', // intent
+    exit: 'cubic-bezier(0.4, 0, 1, 1)', // intent
+  }`;
+  const sys = parsePalette(tw);
+  assert("intent-marked rows don't become ladder rungs", sys.durations.length === 3 && !sys.durations.some(d => /enter|exit|hover/.test(d.name)));
+  assert("intent-marked easings don't duplicate the primitives", sys.easings.length === 2 && !sys.easings.some(e => /enter|exit/.test(e.name)));
+  assert("no phantom duplicate-easing warning from resolved aliases", !systemRead(sys).some(f => /nearly identical/.test(f.msg)));
+}
