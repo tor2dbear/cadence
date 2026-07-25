@@ -5,6 +5,26 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.13.5] — 2026-07-25
+
+### Accessibility
+- **The editor is a proper landmark and a skip link jumps to it.** The tool view
+  had no `main` landmark and no way for a keyboard user to skip the dense header
+  (system picker, Save/Export/Preview/Live-demo) to reach the editing columns. The
+  editing area is now `role="main"`, and the first tab stop in each view is a skip
+  link — "Skip to the editor" in the tool, "Skip to content" on the landing —
+  off-screen until focused, then pinned top-left. Only one `main` is ever exposed
+  (the inactive view is `display:none`).
+- **The landing's "live proof" tiles are no longer silent to screen readers.** The
+  whole section was `aria-hidden`, so AT users missed the proof entirely. The
+  purely-decorative animated stages stay hidden, but the section is now a labelled
+  region and its captions ("enter · stagger — a list cascades in", …) are read.
+
+### Guarded
+- `smoke42` asserts the editor's `main` role, the skip link is the first tab stop
+  and moves focus to the editor, only one `main` is exposed, and the proof section
+  is a labelled region with hidden stages but exposed captions.
+
 ## [0.13.4] — 2026-07-25
 
 ### Fixed

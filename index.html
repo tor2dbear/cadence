@@ -66,6 +66,7 @@
 <!-- LANDING — the product demonstrating its own thesis. Shown first; "Start
      designing" morphs into the tool (same document) via a view transition. -->
 <main class="landing" id="landing" aria-label="Cadence — introduction">
+  <a class="skip-link" href="#lhero">Skip to content</a>
   <div class="lprogress" aria-hidden="true"></div>
   <!-- full-bleed hero backdrop: one arc at a time glides along an (invisible)
        easing curve. Spans the viewport (breaks out of the centred column). -->
@@ -132,7 +133,7 @@
     </span>
   </nav>
 
-  <section class="lhero">
+  <section class="lhero" id="lhero" tabindex="-1">
     <p class="lkicker rise" style="--i:0">A motion&nbsp;system designer</p>
     <h1 class="lhead rise" style="--i:1">Not more knobs —<br><em>structure, and an&nbsp;opinion.</em></h1>
     <p class="lsub rise" style="--i:2">Tune duration &amp; easing scales, compose semantic <strong>intents</strong>, and get a system that <strong>critiques itself</strong> — exported as CSS, Tailwind, Style&nbsp;Dictionary, plus scroll-driven &amp; view-transition recipes.</p>
@@ -155,17 +156,19 @@
   </section>
 
   <!-- live proof: three tiles, each timed by Cadence's own default system -->
-  <section class="lproof rise" style="--i:5" aria-hidden="true">
+  <!-- the animated stages are decorative (hidden from AT); the captions carry the
+       actual proof, so the section is a labelled region and its captions are read -->
+  <section class="lproof rise" style="--i:5" aria-label="Live proof — Cadence's own default timing, in motion">
     <div class="ltile">
-      <div class="ltile__stage lt-reveal"><span></span><span></span><span></span><span></span></div>
+      <div class="ltile__stage lt-reveal" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
       <p class="ltile__cap"><b>enter</b> · stagger — a list cascades in</p>
     </div>
     <div class="ltile">
-      <div class="ltile__stage lt-spring"><span class="lt-base"></span><span class="lt-track"><i class="lt-orb"></i></span></div>
+      <div class="ltile__stage lt-spring" aria-hidden="true"><span class="lt-base"></span><span class="lt-track"><i class="lt-orb"></i></span></div>
       <p class="ltile__cap"><b>emphasized</b> · spring — one lively overshoot</p>
     </div>
     <div class="ltile">
-      <div class="ltile__stage lt-curve"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,90 C22,90 34,12 100,12"/></svg></div>
+      <div class="ltile__stage lt-curve" aria-hidden="true"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,90 C22,90 34,12 100,12"/></svg></div>
       <p class="ltile__cap"><b>easing</b> — the curve behind the motion</p>
     </div>
   </section>
@@ -249,6 +252,7 @@
 </main>
 
 <div id="toolview">
+<a class="skip-link" href="#editor">Skip to the editor</a>
 <header class="top">
   <div class="brand"><a class="brandhome" id="brandHome" href="index.html" title="Back to the intro" aria-label="Cadence — back to the intro"><svg class="logomark logomark--anim" viewBox="0 0 32 32" width="22" height="22" aria-hidden="true" focusable="false"><path class="lm-guide" fill="none" stroke-width="1.5" stroke-linecap="round" d="M8,23 C10.5,13.5 19,10 24,9"><animate attributeName="d" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="M8,23 C10.5,13.5 19,10 24,9;M8,23 C13.5,21.5 21.5,16 24,9;M8,23 C9.5,15.5 22.5,8 24,9;M8,23 C10.5,13.5 19,10 24,9"/></path><circle class="lm-dot" cx="8" cy="23" r="2.5"/><circle class="lm-dot" cx="11.31" cy="16.35" r="2.5"><animate attributeName="cx" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="11.31;14.6;11.67;11.31"/><animate attributeName="cy" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="16.35;19.9;16.66;16.35"/></circle><circle class="lm-dot" cx="17.01" cy="11.58" r="2.5"><animate attributeName="cx" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="17.01;20.17;17.32;17.01"/><animate attributeName="cy" dur="9s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.3333;0.6667;1" keySplines="0.65 0 0.35 1;0.65 0 0.35 1;0.65 0 0.35 1" values="11.58;15.18;11.88;11.58"/></circle><circle class="lm-head" cx="24" cy="9" r="3"/></svg>cadence</a></div>
   <span class="tag">a motion <em>system</em> designer — scales, intents, and a swappable bench</span>
@@ -295,7 +299,7 @@
   <button class="intro__x" id="introClose" title="Dismiss" aria-label="Dismiss intro"><svg class="gi" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-close"/></svg></button>
 </div>
 
-<div class="wrap">
+<div class="wrap" id="editor" role="main" aria-label="Motion system editor" tabindex="-1">
   <!-- LAYER 1 -->
   <section class="col scales">
     <h2 class="sec" title="Primitives — your general duration &amp; easing vocabulary. The design tokens everything else references.">Scales <span class="lyr">· primitives</span></h2>

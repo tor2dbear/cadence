@@ -108,6 +108,40 @@ assert('404 heading uses the display serif token', /font-family:var\(--serif\)/.
 assert('404 drops the old hardcoded dark/teal palette', !/#0b0c0e/i.test(nf) && !/#8ad0c6/i.test(nf));
 assert('404 assets are root-absolute (resolve at any 404 depth)', /src="\/favicon\.svg"/.test(nf));
 
+// --- the editor has a main landmark and a skip link jumps past the header ---
+await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
+await page.reload({ waitUntil: 'networkidle' });
+await page.waitForTimeout(300);
+assert('the editor is a main landmark', (await page.$eval('#editor', el => el.getAttribute('role'))) === 'main');
+assert('exactly one main landmark is exposed (the hidden view is display:none)',
+  (await page.evaluate(() => [...document.querySelectorAll('main, [role=main]')].filter(m => getComputedStyle(m).display !== 'none').length)) === 1);
+await page.keyboard.press('Tab');  // first tab stop
+const skip = await page.evaluate(() => ({ cls: document.activeElement?.className, href: document.activeElement?.getAttribute('href') }));
+assert('the first tab stop is the skip link → #editor', skip.cls === 'skip-link' && skip.href === '#editor');
+await page.waitForTimeout(250);
+assert('the skip link reveals on focus (on-screen)', (await page.$eval('#toolview .skip-link', el => el.getBoundingClientRect().top)) >= 0);
+await page.keyboard.press('Enter');
+await page.waitForTimeout(120);
+assert('activating the skip link moves focus to the editor', (await page.evaluate(() => document.activeElement?.id)) === 'editor');
+
+// --- the landing exposes the proof captions and has its own skip link ---
+await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.reload({ waitUntil: 'networkidle' });
+await page.waitForTimeout(300);
+await page.keyboard.press('Tab');
+assert('the landing first tab stop is a skip link', (await page.evaluate(() => document.activeElement?.className)) === 'skip-link');
+const proof = await page.evaluate(() => {
+  const s = document.querySelector('.lproof');
+  return {
+    labelled: !!s.getAttribute('aria-label') && s.getAttribute('aria-hidden') === null,
+    stagesHidden: [...s.querySelectorAll('.ltile__stage')].every(x => x.getAttribute('aria-hidden') === 'true'),
+    capsExposed: [...s.querySelectorAll('.ltile__cap')].every(c => c.closest('[aria-hidden="true"]') === null),
+  };
+});
+assert('the proof section is a labelled region, not aria-hidden', proof.labelled);
+assert('the decorative proof stages are hidden from AT', proof.stagesHidden);
+assert('the proof captions are exposed to AT', proof.capsExposed);
+
 assert('no console/page errors', errors.length === 0);
 if (errors.length) errors.forEach(e => console.log('   ! ' + e));
 
