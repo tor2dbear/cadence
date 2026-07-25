@@ -94,6 +94,12 @@ silently rot as features land.
 - Export to **CSS** custom properties (semantic tokens `var()`-reference the
   primitives, with composite `transition` shorthands), **JSON**, a **Tailwind**
   config, a **Style Dictionary** token file, and a typed **TS** object.
+- A **Rationale** export — the opinion layer as a shareable Markdown report: the
+  composite **verdict** (a 0–100 score + letter grade), a per-dimension
+  scorecard, every finding with its fix, and where the system sits against the
+  field. The critique is the one thing the other formats can't carry; this makes
+  it the deliverable, so a reviewer who wasn't in the editor can read *why* the
+  system is the way it is. The same grade leads the in-tool **System read** header.
 - A **"Load a system"** picker that seeds the model from a real design system's
   motion palette (Material 3 and Material 3 Expressive, Carbon, Fluent, Ant,
   Tailwind, Atlassian, Polaris, Primer, Spectrum) — Material 3 Expressive ships

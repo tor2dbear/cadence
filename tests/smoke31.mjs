@@ -258,3 +258,26 @@ const msgs = out => out.map(f => f.msg).join("\n");
 
   assert("a clean system has no duplicate-name warning", !/both named/.test(msgs(systemRead(base()))));
 }
+
+// 12. scoreSystem — the composite verdict folds findings into a grade + scorecard
+{
+  const { scoreSystem } = require("../system-read.js");
+  const h = scoreSystem(base());
+  assert("healthy system scores A / 100", h.grade === "A" && h.score === 100);
+  assert("healthy system reports zero warns", h.warns === 0);
+  assert("scorecard covers the core dimensions", ["ladder", "easing", "asymmetry"].every(k => h.categories.some(c => c.key === k)));
+  assert("every scorecard entry carries label + status + note", h.categories.every(c => c.label && c.status && c.note));
+
+  // a real defect (exit slower than enter) drops the grade and shows warns
+  const bad = base();
+  bad.intents = [intent("enter", "fast", "emphasized"), intent("exit", "slower", "accelerate")];   // exit 500 > enter 150
+  const b = scoreSystem(bad);
+  assert("a defect lowers the score below 100", b.score < 100 && b.warns >= 1);
+  assert("a defect drops the grade below A", b.grade !== "A");
+  assert("the enter/exit dimension reflects the warn", b.categories.find(c => c.key === "asymmetry")?.status === "warn");
+
+  // opts.findings lets a caller reuse an already-computed read (no second pass)
+  const findings = systemRead(bad);
+  const reused = scoreSystem(null, { findings });
+  assert("scoreSystem(null,{findings}) matches scoreSystem(system)", reused.score === b.score && reused.grade === b.grade);
+}

@@ -100,7 +100,10 @@
     // operation the app can run to actually make the change. Params reference
     // scale slots by NAME (not index) so a fix survives reordering. Deterministic
     // fixes carry one; genuinely ambiguous ones (which knob?) stay text-only.
-    const push = (status, sev, msg, fix, apply) => out.push({ status, sev, icon: iconFor[sev], msg, fix: fix || null, apply: apply || null });
+    // each finding carries a scorecard category (set per check below), so a
+    // score/scorecard can group findings by dimension without re-deriving them.
+    let cat = "robustness";
+    const push = (status, sev, msg, fix, apply) => out.push({ status, sev, icon: iconFor[sev], msg, fix: fix || null, apply: apply || null, cat });
     // largest ladder rung strictly below / at-most a duration — used to pick a
     // concrete target when a fix means "drop onto a shorter step".
     const rungAtMost = ms => { const c = ctx.durations.filter(d => +d.ms <= ms).sort((a, b) => b.ms - a.ms)[0]; return c ? c.name : null; };
@@ -129,6 +132,7 @@
 
     // 1. ladder evenness — needs ≥2 steps to form a ratio; guard the empty/one
     //    case so a single-rung ladder can't produce NaN (was a latent bug).
+    cat = "ladder";
     if (durations.length >= 2) {
       const ratios = durations.slice(1).map((d, i) => +d.ms / +durations[i].ms);
       const spread = Math.max(...ratios) / Math.min(...ratios);
@@ -139,6 +143,7 @@
     // 2. easing redundancy — cubic curves compared by control points; springs
     //    compared by physics (near-equal stiffness/damping), so a duplicate
     //    spring no longer slips through the cubic-only test.
+    cat = "easing";
     let dup = null;
     for (let a = 0; a < easings.length && !dup; a++) for (let b = a + 1; b < easings.length && !dup; b++) {
       const ea = easings[a], eb = easings[b];
@@ -155,6 +160,7 @@
     else push("ok", OK, `${easings.length} distinct easings — a lean, legible set.`);
 
     // 3. enter/exit asymmetry
+    cat = "asymmetry";
     const en = intents.find(x => /enter|open|in$/i.test(x.name)), ex = intents.find(x => /exit|close|out$/i.test(x.name));
     if (en && ex) {
       const de = durMs(bindOf(en).dur), dx = durMs(bindOf(ex).dur);
@@ -169,6 +175,7 @@
     }
 
     // 4. long-duration budget
+    cat = "budget";
     const longIntent = intents.find(x => durMs(bindOf(x).dur) > 550);
     if (longIntent) {
       const under = rungAtMost(550);
@@ -177,6 +184,7 @@
     }
 
     // 5. stagger budget (measured against a 5-item list)
+    cat = "budget";
     const staggered = intents.filter(x => +bindOf(x).stagger > 0).sort((a, b) => +bindOf(b).stagger - +bindOf(a).stagger)[0];
     if (staggered) {
       const st = +bindOf(staggered).stagger, lead = st * 4;
@@ -185,10 +193,12 @@
     }
 
     // 6. spatial/effects split that hasn't diverged is just noise
+    cat = "easing";
     const idleSplit = intents.find(x => { const b = bindOf(x); return b.effectsEase && b.effectsEase === b.ease; });
     if (idleSplit) push("warn", NIT, `“${idleSplit.name}” is split into spatial · effects but both use the same easing. Diverge them (e.g. a spring for position, a flat curve for opacity) or collapse the split.`, "Give the effects track its own easing, or collapse the split.", { op: "collapseSplit", intent: idleSplit.name, intentIndex: idxOf(idleSplit) });
 
     // 7. distance / velocity — only when an intent opts into a travel distance
+    cat = "budget";
     const withDist = intents.map(x => { const b = bindOf(x); if (!b.distance) return null;
       const px = distPx(b.distance); if (px == null) return null;
       const ms = durMs(b.dur); return { name: x.name, px, ms, v: px / Math.max(1, ms) }; }).filter(Boolean);
@@ -201,6 +211,7 @@
     }
 
     // 8. scroll reveals — only when an intent opts in (keeps the default read quiet)
+    cat = "robustness";
     const revIntents = intents.filter(x => typeof bindOf(x).reveal === "number");
     if (revIntents.length) {
       const revStag = revIntents.find(x => +bindOf(x).stagger > 0);
@@ -209,6 +220,7 @@
     }
 
     // 9. scroll scrubs — flag non-linear easing (scrub speed then fights the scroll)
+    cat = "robustness";
     const scrubIntents = intents.filter(x => bindOf(x).scrub);
     if (scrubIntents.length) {
       const nonLin = scrubIntents.find(x => { const e = easeObj(bindOf(x).ease); return !(e && e.bez && isLinearBez(e.bez)); });
@@ -217,6 +229,7 @@
     }
 
     // 10. view transitions — opt-in; VT's only knobs are duration + easing
+    cat = "robustness";
     const vtIntents = intents.filter(x => bindOf(x).vt);
     if (vtIntents.length) push("ok", OK, `${vtIntents.length} view transition${vtIntents.length > 1 ? "s" : ""} — same-document VT is Baseline (Chrome/Edge 111+, Safari 18+, Firefox 144+). The recipe feature-detects startViewTransition and honours reduced-motion, so unsupported browsers just swap instantly.`);
 
@@ -226,6 +239,7 @@
     //     comparison always reads bind 0 vs bind rmi, so it holds regardless of
     //     which mode is active (including while the reduced mode itself is being
     //     edited).
+    cat = "robustness";
     const rmi = ctx.modes.findIndex(m => m.name === "reduced");
     if (rmi >= 0) {
       // compare RESOLVED values, not token names — a reduced binding that points
@@ -246,6 +260,7 @@
     //     in a vacuum and positions the system in the field. Opt-in — only runs
     //     when a corpus is supplied, so the headless default read is unchanged.
     //     Each corpus entry is a named system snapshot: {name, durations, intents}.
+    cat = "field";
     const corpus = (opts && opts.corpus) || [];
     if (corpus.length) {
       const mine = fingerprint(system);
@@ -284,5 +299,39 @@
     return out.map((f, i) => ({ f, i })).sort((a, b) => b.f.sev - a.f.sev || a.i - b.i).map(x => x.f);
   }
 
-  return { systemRead, fingerprint, iconFor };
+  // The composite verdict. systemRead answers "what's wrong, ranked"; this folds
+  // those findings into a single "is this good?" — a 0-100 score + letter grade —
+  // plus a per-dimension scorecard, so the read can lead with an answer instead of
+  // a scrolling list. Deterministic and DOM-free like systemRead; pass its
+  // already-computed findings via opts.findings to avoid a second pass.
+  const CATS = [
+    ["ladder", "Duration ladder"], ["easing", "Easing set"], ["asymmetry", "Enter / exit"],
+    ["budget", "Duration budgets"], ["field", "Vs the field"], ["robustness", "Robustness"],
+  ];
+  // a warn costs points by severity; ok findings are free. Tuned so a healthy
+  // default lands at A, one nitpick still reads B, and a real defect bites.
+  const PENALTY = { 1: 5, 2: 12, 3: 22 };
+  function scoreSystem(system, opts) {
+    const findings = (opts && opts.findings) || systemRead(system, opts);
+    let score = 100;
+    for (const f of findings) if (f.status === "warn") score -= (PENALTY[f.sev] || 8);
+    score = Math.max(0, Math.min(100, score));
+    const grade = score >= 90 ? "A" : score >= 75 ? "B" : score >= 60 ? "C" : score >= 40 ? "D" : "E";
+    const warns = findings.filter(f => f.status === "warn").length;
+    const summary = warns === 0
+      ? "No warnings — the system reads as considered throughout."
+      : `${warns} thing${warns > 1 ? "s" : ""} to review.`;
+    // per-dimension: the worst finding in each category present (a warn outranks
+    // an ok; higher sev leads), so the scorecard shows where to look.
+    const categories = CATS.map(([key, label]) => {
+      const fs = findings.filter(f => f.cat === key);
+      if (!fs.length) return null;
+      const worst = fs.slice().sort((a, b) =>
+        (b.status === "warn") - (a.status === "warn") || b.sev - a.sev)[0];
+      return { key, label, status: worst.status, sev: worst.status === "warn" ? worst.sev : 0, icon: worst.icon, note: worst.msg };
+    }).filter(Boolean);
+    return { score, grade, summary, warns, total: findings.length, categories };
+  }
+
+  return { systemRead, scoreSystem, fingerprint, iconFor };
 });

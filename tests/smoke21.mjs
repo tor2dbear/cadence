@@ -14,8 +14,8 @@ await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
 { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }
 await intent().locator('.intent__more').click();
 
-// 7 tabs now (added Transitions)
-assert('7 export tabs present', await page.locator('.tabs .tab').count() === 7);
+// 8 tabs now (added Transitions, then Rationale)
+assert('8 export tabs present', await page.locator('.tabs .tab').count() === 8);
 // nothing tagged → placeholder
 assert('vt export placeholder when none', (await out('vt')).includes('No view transitions yet'));
 
