@@ -120,11 +120,15 @@
     //    The editor now dedupes on add, but an imported or hand-edited system can
     //    still carry a clash. Which one to rename is genuinely ambiguous → text
     //    fix, no one-click apply.
+    // the collision belongs to the DIMENSION it corrupts, so the scorecard flags
+    // "Duration ladder" / "Easing set" rather than hiding it under Robustness.
+    const scaleCat = { duration: "ladder", easing: "easing", distance: "budget", intent: "robustness" };
     const scales = [["duration", durations], ["easing", easings], ["distance", ctx.distances], ["intent", intents]];
     for (const [kind, arr] of scales) {
       const seen = new Set(); let clash = null;
       for (const x of (arr || [])) { const n = x && x.name; if (n == null) continue; if (seen.has(n)) { clash = n; break; } seen.add(n); }
       if (clash != null) {
+        cat = scaleCat[kind] || "robustness";
         push("warn", WARN, `Two ${kind}s are both named “${clash}”. Exported token names key off these, so the duplicate silently overwrites the first — a token quietly drops out of the CSS/TS output.`, `Rename one of the “${clash}” ${kind}s so the exported names don't collide.`);
         break;   // one clash is enough to prompt the fix; the re-read surfaces the next
       }
@@ -317,12 +321,22 @@
     for (const f of findings) if (f.status === "warn") score -= (PENALTY[f.sev] || 8);
     score = Math.max(0, Math.min(100, score));
     const warns = findings.filter(f => f.status === "warn").length;
-    // A is reserved for an all-clear read — anything flagged, even one nitpick,
-    // reads at most B, so the header verdict never says "A · 1 to review".
-    const grade = warns === 0 ? "A" : score >= 75 ? "B" : score >= 60 ? "C" : score >= 40 ? "D" : "E";
-    const summary = warns === 0
-      ? "No warnings — the system reads as considered throughout."
-      : `${warns} thing${warns > 1 ? "s" : ""} to review.`;
+    // A demands an all-clear read of an ACTUALLY-ASSESSED system. Coverage is read
+    // off the findings (scoreSystem may be handed findings with no system): the
+    // ladder check only runs with ≥2 rungs and easing with ≥1, so a degenerate
+    // import (one duration, one easing) produces no ladder finding — that's
+    // "too thin to judge", not "flawless". Don't hand it an A · 100.
+    const assessed = new Set(findings.map(f => f.cat));
+    const coreCovered = assessed.has("ladder") && assessed.has("easing");
+    // A is all-clear AND assessed; anything flagged (even one nitpick) reads at
+    // most B, so the header verdict never says "A · 1 to review".
+    const grade = (warns === 0 && coreCovered) ? "A"
+      : score >= 75 ? "B" : score >= 60 ? "C" : score >= 40 ? "D" : "E";
+    const summary = warns > 0
+      ? `${warns} thing${warns > 1 ? "s" : ""} to review.`
+      : coreCovered
+        ? "No warnings — the system reads as considered throughout."
+        : "Too little system to fully assess — build out the duration ladder for a confident read.";
     // per-dimension: the worst finding in each category present (a warn outranks
     // an ok; higher sev leads), so the scorecard shows where to look.
     const categories = CATS.map(([key, label]) => {

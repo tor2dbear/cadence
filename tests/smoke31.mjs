@@ -289,3 +289,25 @@ const msgs = out => out.map(f => f.msg).join("\n");
   assert("the split nitpick is the only warning", n.warns === 1 && n.total >= 1);
   assert("one nitpick reads B, never A", n.grade === "B");
 }
+
+// 13. scoreSystem coverage + collision categorisation (Codex P2s)
+{
+  const { scoreSystem } = require("../system-read.js");
+  // a degenerate import (one rung, one easing) can't assess the ladder — so it
+  // must NOT read "A · all clear · 100"; A requires the core dims to be assessed
+  const thin = { durations: [{ name: "base", ms: 200 }], distances: [],
+    easings: [{ name: "standard", type: "cubic", bez: [0.2, 0, 0.2, 1] }],
+    intents: [intent("enter", "base", "standard")], modes: [{ name: "default" }], activeMode: 0 };
+  const t = scoreSystem(thin);
+  assert("an under-assessed system is not awarded A", t.grade !== "A");
+  assert("an under-assessed system's summary flags thin coverage", /assess/i.test(t.summary));
+
+  // a duplicate DURATION name shows under the ladder dimension, not Robustness
+  const dupDur = base();
+  dupDur.durations.push({ name: "fast", ms: 175 });   // second "fast"
+  const d = scoreSystem(dupDur);
+  const ladder = d.categories.find(c => c.key === "ladder");
+  assert("a duplicate duration name lands on the ladder dimension", ladder && ladder.status === "warn" && /both named/.test(ladder.note));
+  const robust = d.categories.find(c => c.key === "robustness");
+  assert("the collision is not misfiled under robustness", !robust || !/both named/.test(robust.note));
+}
