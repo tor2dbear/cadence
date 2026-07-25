@@ -5,6 +5,25 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.13.1] — 2026-07-25
+
+### Changed
+- **A hand-drawn inline-SVG icon set** replaces the platform unicode glyphs that
+  rendered inconsistently across OS/font. Drawn to the logomark's geometry (16px
+  grid, 1.75 stroke, round caps) and referenced from a symbol sprite via
+  `currentColor`, so they're crisp and consistent in light/dark: the system-read
+  **severity marks** (✓ ~ ! ≠), plus **reload / close / external / arrow**. The
+  Markdown rationale export keeps the text glyphs (it can't carry SVG); inline
+  prose arrows stay typographic.
+- **The hero's secondary CTA drops its arrow** — the primary "Start designing →"
+  now owns the single forward arrow, so the two CTAs read as a clear
+  primary/secondary pair rather than two identical arrows.
+
+### Guarded
+- `smoke41` checks the sprite defines the set, the read renders each severity as
+  a `<use>` of the matching symbol (a regression to a text glyph fails), and the
+  affordances point at the sprite.
+
 ## [0.13.0] — 2026-07-25
 
 ### Added
