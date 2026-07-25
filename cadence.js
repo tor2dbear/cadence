@@ -1281,11 +1281,18 @@ function bzDownstream(){                    // rAF-coalesced: heavy recompute at
   if(bzRAF) return;
   bzRAF=requestAnimationFrame(()=>{ bzRAF=null; refreshTokens(); render(); critique(); updateResolvedLines(); writeURL(); });
 }
+// commit a bézier edit (drag-release or a keyboard nudge) WITHOUT rebuilding the
+// easing card: normalize the preset dropdown in place, refresh the bench previews
+// (which bake the curve, and live in #bench — not the focused handle's #easings),
+// then run the coalesced downstream. Replaces the old pointerup rerenderAll(),
+// which tore out the focused/being-tabbed-to handle.
+function bzCommit(i){ syncEasingSelect(i); renderBench(); bzDownstream(); }
 document.addEventListener("pointerdown", e=>{
   const h=e.target.closest && e.target.closest(".bz-h"); if(!h) return;
   const plot=h.closest(".ecard__plot"); if(!plot) return;
   bzDrag={ i:+plot.dataset.i, pt:+h.dataset.pt, svg:plot.querySelector("svg.bz") };
   h.classList.add("drag"); try{ h.setPointerCapture(e.pointerId); }catch(_){}
+  try{ h.focus({preventScroll:true}); }catch(_){}   // preventDefault below suppresses default focus; do it explicitly so click→arrow-keys works
   e.preventDefault();
 });
 document.addEventListener("pointermove", e=>{
@@ -1300,9 +1307,10 @@ document.addEventListener("pointermove", e=>{
 });
 document.addEventListener("pointerup", ()=>{
   if(!bzDrag) return;
+  const i=bzDrag.i;
   bzDrag=null;
   document.querySelectorAll(".bz-h.drag").forEach(h=>h.classList.remove("drag"));
-  rerenderAll();                            // normalize the preset dropdown (custom vs matched)
+  bzCommit(i);                              // normalize in place — keep focus on the handle
 });
 // keyboard editing of the bézier handles — the same model mutation the drag does,
 // so curves are adjustable without a pointer. Both the plot and the preset dropdown
@@ -1318,7 +1326,7 @@ document.addEventListener("keydown", e=>{
   const b=easings[i].bez;
   b[o]=+Math.min(1,Math.max(0,b[o]+d[0]*step)).toFixed(3);
   b[o+1]=+Math.min(1+BZPAD,Math.max(-BZPAD,b[o+1]+d[1]*step)).toFixed(3);
-  updateEasingPlot(i); syncEasingSelect(i); bzDownstream();
+  updateEasingPlot(i); bzCommit(i);
 });
 // global tempo: scale the whole ladder, preserving proportions
 function scaleTempo(f){

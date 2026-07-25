@@ -56,6 +56,24 @@ await page.waitForTimeout(150);
 assert('focus is preserved when leaving an edited curve (not lost to body)',
   (await page.evaluate(() => document.activeElement?.tagName)) !== 'BODY');
 
+// pointer editing also focuses the handle (so click → arrow keys works) and a
+// drag doesn't tear focus out of the handle
+const h2 = await page.$('.ecard__plot[data-i="0"] .bz-h[data-pt="2"]');
+const vtc = await h2.getAttribute('aria-valuetext');
+const box = await h2.boundingBox();
+await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+await page.waitForTimeout(80);
+assert('clicking a handle focuses it', await page.evaluate(() => document.activeElement?.classList.contains('bz-h')));
+await page.keyboard.press('ArrowLeft');
+await page.waitForTimeout(120);
+assert('arrow keys work after a click (pointer→keyboard hand-off)', (await h2.getAttribute('aria-valuetext')) !== vtc);
+await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+await page.mouse.down();
+await page.mouse.move(box.x - 18, box.y - 8, { steps: 4 });
+await page.mouse.up();
+await page.waitForTimeout(150);
+assert('a drag keeps focus on the handle', await page.evaluate(() => document.activeElement?.classList.contains('bz-h')));
+
 // --- the 404 shares the brand, not a hardcoded off-brand theme ---
 const nf = readFileSync(new URL('../404.html', import.meta.url), 'utf8');
 assert('404 links the shared stylesheet', /href="\/styles\.css"/.test(nf));
