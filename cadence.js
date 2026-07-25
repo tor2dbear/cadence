@@ -1668,9 +1668,19 @@ function exitTool(){
   const NAIVE="exit as slow as enter, everything linear, no stagger — the motion reads as sluggish and undesigned.";
   const line=document.getElementById("opinionLine");
   const toggle=document.getElementById("tasteToggle");
+  const ROTATE_MS=4800, OUT_MS=160;   // calmer cadence; a brief exit before each swap
   let naive=false, tick=0, timer=null;
   const stop=()=>{ if(timer){ clearInterval(timer); timer=null; } };
-  const rotate=()=>{ if(!line) return; line.textContent=TASTE[tick%TASTE.length]; tick++; };
+  const setState=(text,warn)=>{ line.textContent=text; line.classList.toggle("warn",!!warn); line.classList.toggle("ok",!warn); };
+  // swap the observation with the page's OWN motion: the old line lifts + fades
+  // out (exit), the new one settles in from below (enter). Reduced-motion → cut.
+  function swap(text,warn){
+    if(reduce||!line){ if(line) setState(text,warn); return; }
+    line.classList.add("is-out");
+    setTimeout(()=>{ setState(text,warn); line.classList.remove("is-out"); line.classList.add("is-in");
+      void line.offsetWidth; line.classList.remove("is-in"); }, OUT_MS);
+  }
+  const rotate=()=>{ if(!line) return; swap(TASTE[tick%TASTE.length],false); tick++; };
   // reserve the tallest observation's height so the rotating text (1–3 lines,
   // depending on the string and the viewport width) never reflows the cards
   // below. Measured across every candidate at the current width; recomputed on
@@ -1684,16 +1694,30 @@ function exitTool(){
     line.textContent=keep; line.style.minHeight=max+"px";
   }
   let rz; addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(reserveLine,150); },{passive:true});
-  function sync(){
+  // rotation pauses while the reader is engaged with the section so they can
+  // read. Hover and focus are tracked SEPARATELY (they're independent — losing
+  // focus while still hovering must not resume), and (re)start is gated on
+  // neither being active — so a toggle-click back to crafted, with the switch
+  // still hovered/focused, doesn't restart it (its focusin already fired).
+  const host=line?(line.closest(".ltaste")||line):null;
+  let hovering=false, focusedIn=false;
+  const maybeStart=()=>{ if(!naive && !reduce && !timer && !hovering && !focusedIn) timer=setInterval(rotate,ROTATE_MS); };
+  function sync(animate){
     if(land) land.classList.toggle("naive", naive);   // drives the active label + curve/stagger vars
     if(toggle) toggle.setAttribute("aria-pressed", naive?"true":"false");
     if(!line) return;
     stop();
-    if(naive){ line.textContent=NAIVE; line.className="opinion warn"; }
-    else { line.className="opinion ok"; rotate(); if(!reduce) timer=setInterval(rotate,3600); }
+    if(naive){ animate?swap(NAIVE,true):setState(NAIVE,true); }
+    else { const t=TASTE[tick%TASTE.length]; tick++; animate?swap(t,false):setState(t,false); maybeStart(); }
   }
-  if(toggle) toggle.addEventListener("click",()=>{ naive=!naive; sync(); });
-  sync();
+  if(toggle) toggle.addEventListener("click",()=>{ naive=!naive; sync(true); });
+  if(host){
+    host.addEventListener("mouseenter",()=>{ hovering=true; stop(); });
+    host.addEventListener("mouseleave",()=>{ hovering=false; maybeStart(); });
+    host.addEventListener("focusin",()=>{ focusedIn=true; stop(); });
+    host.addEventListener("focusout",()=>{ focusedIn=false; maybeStart(); });
+  }
+  sync(false);
   reserveLine();
   // re-measure once the self-hosted mono has actually loaded (it changes the
   // wrapping, and thus the reserved height)

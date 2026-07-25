@@ -49,4 +49,34 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
   await page.close();
 }
 
+// ---- 3. the section moves with taste: the observation swaps with an animated
+// exit (not a hard text cut), and the three proof tiles run at pairwise-
+// different, slower periods so they breathe instead of pulsing in lockstep ----
+{
+  const page = await browser.newPage({ viewport: { width: 1000, height: 1200 } });
+  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(120);
+  await page.locator('#tasteToggle').click();          // trigger a swap
+  await page.waitForTimeout(30);
+  assert('the opinion line swaps with an animated exit (mid-flight, not an instant cut)',
+    await page.locator('#opinionLine').evaluate(el => el.classList.contains('is-out') || getComputedStyle(el).opacity !== '1'));
+  await page.waitForTimeout(300);
+  const dur = await page.evaluate(() => {
+    const g = s => getComputedStyle(document.querySelector(s)).animationDuration;
+    return [g('.lt-reveal span'), g('.lt-orb'), g('.lt-curve svg')];
+  });
+  assert('the three proof tiles run at pairwise-different (desynced) periods', new Set(dur).size === 3);
+  assert('the tiles loop slower than ~4s (calmer, longer holds)', dur.every(d => parseFloat(d) >= 4));
+  // the easing curve must keep clear margin from the tile edges — its endpoints
+  // sat near the rounded corners and read as clipped on some screens
+  const curveGap = await page.evaluate(() => {
+    const p = document.querySelector('.lt-curve path'); if (!p) return 99;
+    const st = document.querySelector('.lt-curve').getBoundingClientRect(), pr = p.getBoundingClientRect();
+    return Math.min(pr.top - st.top, st.bottom - pr.bottom);
+  });
+  assert('the easing curve is not clipped by its tile (keeps ≥10px margin)', curveGap >= 10);
+  await page.close();
+}
+
 await browser.close();

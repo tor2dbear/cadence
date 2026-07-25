@@ -403,13 +403,13 @@ html.boot-tool #landing{display:none}
 
 .landing{
   /* the tasteful defaults — the same shape as the tool's starter system */
-  --l-ease:cubic-bezier(.22,1,.36,1); --l-in:640ms; --l-stag:80ms;
+  --l-ease:cubic-bezier(.22,1,.36,1); --l-out:cubic-bezier(.4,0,1,1); --l-in:640ms; --l-stag:80ms;
   --l-spring:linear(0,.006,.025,.1,.281,.489,.676,.82,.925,.99,1.02,1.03,1.024,1.012,1.002,.997,.997,1,1.001,1);
   --l-curve:cubic-bezier(.22,1,.36,1);
   min-height:100vh;display:flex;flex-direction:column;gap:34px;
   max-width:960px;margin-inline:auto;padding:22px 26px 60px;
   position:relative;isolation:isolate}   /* hosts the full-bleed hero backdrop (z-index:-1) */
-.landing.naive{ --l-ease:linear; --l-stag:0ms; --l-spring:linear(0,1); --l-curve:linear }
+.landing.naive{ --l-ease:linear; --l-out:linear; --l-stag:0ms; --l-spring:linear(0,1); --l-curve:linear }
 
 .lnav{display:flex;align-items:center;justify-content:space-between}
 .lbrand{display:inline-flex;align-items:center;gap:9px;font-family:var(--serif);font-size:18px;letter-spacing:-.01em;font-weight:600;color:var(--ink)}
@@ -547,9 +547,17 @@ html.boot-tool #landing{display:none}
   .landing .rise{opacity:0;transform:translateY(18px);
     transition:opacity var(--l-in) var(--l-ease),transform var(--l-in) var(--l-ease);transition-delay:calc(var(--i,0) * var(--l-stag))}
   .landing.in .rise{opacity:1;transform:none}
-  .lt-reveal span{animation:ltReveal 2.9s var(--l-ease) infinite;animation-delay:calc(var(--bi) * var(--l-stag))}
-  .lt-orb{animation:ltSpring 2.6s infinite;animation-timing-function:var(--l-spring)}
-  .lt-curve svg{animation:ltDraw 2.9s var(--l-curve) infinite}
+  /* slower, and pairwise-different periods so the three tiles drift out of
+     lockstep — they breathe instead of pulsing in unison */
+  .lt-reveal span{animation:ltReveal 4.6s var(--l-ease) infinite;animation-delay:calc(var(--bi) * var(--l-stag))}
+  .lt-orb{animation:ltSpring 5.3s infinite;animation-timing-function:var(--l-spring)}
+  .lt-curve svg{animation:ltDraw 4.9s var(--l-curve) infinite}
+  /* the opinion line swaps with the page's own motion: exit up + fade, then the
+     new observation settles in from below (enter). --l-ease flattens to linear
+     in plain mode, so even this swap goes "plain" when you flip the toggle. */
+  .opinion{transition:color var(--l-in) var(--l-ease),opacity 240ms var(--l-ease),transform 240ms var(--l-ease)}
+  .opinion.is-out{opacity:0;transform:translateY(-5px);transition:opacity 150ms var(--l-out),transform 150ms var(--l-out)}
+  .opinion.is-in{opacity:0;transform:translateY(6px);transition:none}
 }
 @keyframes ltReveal{0%,12%{opacity:0;transform:translateY(11px)}34%,72%{opacity:1;transform:none}92%,100%{opacity:0;transform:translateY(11px)}}
 @keyframes ltSpring{0%,12%{left:0}56%,88%{left:calc(100% - 22px)}100%{left:0}}
