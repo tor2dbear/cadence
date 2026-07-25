@@ -22,11 +22,27 @@ assert('tool visible, landing hidden', await shown('#toolview') && !(await shown
 // the wordmark is now an actual home link, not inert text
 assert('wordmark is a home link', await page.locator('#brandHome').count() === 1);
 
-// …and it sits on the same line as the rest of the header (it used to ride
-// ~8px high because the icon+text flexbox threw off baseline alignment)
-const centerY = sel => page.locator(sel).evaluate(el => { const b = el.getBoundingClientRect(); return (b.top + b.bottom) / 2; });
-const wc = await centerY('#brandHome'), tc = await centerY('header.top .tag');
-assert('wordmark vertically aligns with the tagline beside it', Math.abs(wc - tc) < 2);
+// …and the wordmark shares a true text baseline with the tagline beside it
+// (the header baseline-aligns them; the mark rides inline, optically centred on
+// the wordmark, so it must NOT be a bounding-box-centre check — measure the
+// actual baseline by dropping a vertical-align:baseline marker into each).
+const baselineY = sel => page.locator(sel).evaluate(el => {
+  const m = document.createElement('span');
+  m.style.cssText = 'display:inline-block;width:1px;height:1px;vertical-align:baseline';
+  el.appendChild(m);
+  const y = m.getBoundingClientRect().bottom;   // empty inline-block: bottom == baseline
+  m.remove();
+  return y;
+});
+const wc = await baselineY('#brandHome'), tc = await baselineY('header.top .tag');
+assert('wordmark shares a baseline with the tagline beside it', Math.abs(wc - tc) < 1.5);
+
+// on a compact viewport the tagline is dropped (redundant with the landing, and
+// it only crowds an already-cramped header) — hidden, not just wrapped onto its
+// own line
+await page.setViewportSize({ width: 390, height: 820 });
+assert('tagline is hidden on a compact viewport', !(await shown('header.top .tag')));
+await page.setViewportSize({ width: 1100, height: 820 });
 assert('home link has an accessible label',
   !!(await page.locator('#brandHome').getAttribute('aria-label')));
 
