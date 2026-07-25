@@ -1694,20 +1694,29 @@ function exitTool(){
     line.textContent=keep; line.style.minHeight=max+"px";
   }
   let rz; addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(reserveLine,150); },{passive:true});
+  // rotation pauses while the reader is engaged with the section so they can
+  // read. Hover and focus are tracked SEPARATELY (they're independent — losing
+  // focus while still hovering must not resume), and (re)start is gated on
+  // neither being active — so a toggle-click back to crafted, with the switch
+  // still hovered/focused, doesn't restart it (its focusin already fired).
+  const host=line?(line.closest(".ltaste")||line):null;
+  let hovering=false, focusedIn=false;
+  const maybeStart=()=>{ if(!naive && !reduce && !timer && !hovering && !focusedIn) timer=setInterval(rotate,ROTATE_MS); };
   function sync(animate){
     if(land) land.classList.toggle("naive", naive);   // drives the active label + curve/stagger vars
     if(toggle) toggle.setAttribute("aria-pressed", naive?"true":"false");
     if(!line) return;
     stop();
     if(naive){ animate?swap(NAIVE,true):setState(NAIVE,true); }
-    else { const t=TASTE[tick%TASTE.length]; tick++; animate?swap(t,false):setState(t,false); if(!reduce) timer=setInterval(rotate,ROTATE_MS); }
+    else { const t=TASTE[tick%TASTE.length]; tick++; animate?swap(t,false):setState(t,false); maybeStart(); }
   }
   if(toggle) toggle.addEventListener("click",()=>{ naive=!naive; sync(true); });
-  // pause the rotation while the reader is hovering/focusing the section
-  const host=line?(line.closest(".ltaste")||line):null;
-  if(host){ const resume=()=>{ if(!naive&&!reduce&&!timer) timer=setInterval(rotate,ROTATE_MS); };
-    host.addEventListener("mouseenter",stop); host.addEventListener("mouseleave",resume);
-    host.addEventListener("focusin",stop); host.addEventListener("focusout",resume); }
+  if(host){
+    host.addEventListener("mouseenter",()=>{ hovering=true; stop(); });
+    host.addEventListener("mouseleave",()=>{ hovering=false; maybeStart(); });
+    host.addEventListener("focusin",()=>{ focusedIn=true; stop(); });
+    host.addEventListener("focusout",()=>{ focusedIn=false; maybeStart(); });
+  }
   sync(false);
   reserveLine();
   // re-measure once the self-hosted mono has actually loaded (it changes the

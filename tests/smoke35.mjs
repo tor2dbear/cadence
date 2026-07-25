@@ -12,10 +12,15 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 const readme = read('README.md');
 const guide = read('guide.html');
 
-// capabilities that BOTH the README and the guide must mention
+// capabilities that BOTH the README and the guide must mention. Match
+// feature-SPECIFIC phrases, not bare keywords: a plain /import/ also matches the
+// README's unrelated roadmap line, so deleting the shipped system-file docs
+// would still pass. Require the `.cadence.json` phrase itself.
+// \s+ (not a literal space) so markdown line-wrapping between the two words —
+// "My\n  systems" in the README — can't silently defeat the tripwire.
 const CAPS = [
-  ['save & name systems', /save|my system/],
-  ['import / export a system file', /import|\.cadence\.json/],
+  ['save & name systems', /my\s+system|save\s+a\s+system/],
+  ['import / export a system file', /\.cadence\.json/],
 ];
 for (const [name, re] of CAPS) {
   assert(`README documents: ${name}`, re.test(readme));
