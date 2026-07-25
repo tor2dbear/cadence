@@ -134,8 +134,11 @@ body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacS
 
 /* accordion — expands in place with `move` (grid-rows 0fr→1fr) */
 .acc__row{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
-.acc__chev{color:var(--ink-faint);transition:transform var(--role-move-duration) var(--role-move-ease)}
+.acc__chev{color:var(--ink-faint);transition:transform var(--role-move-duration) var(--role-move-ease);display:inline-flex}
 .acc.open .acc__chev{transform:rotate(90deg)}
+.gi{display:inline-block;vertical-align:-0.12em;fill:none;color:inherit;pointer-events:none}
+.playseq .gi{vertical-align:-0.06em}
+.acc__chev .gi{vertical-align:middle;display:block}
 .acc__wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--role-move-duration) var(--role-move-ease)}
 .acc.open .acc__wrap{grid-template-rows:1fr}
 .acc__inner{overflow:hidden}
@@ -261,12 +264,16 @@ body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacS
 </style>
 </head>
 <body>
+<svg width="0" height="0" class="icondefs" aria-hidden="true" focusable="false" style="position:absolute"><defs>
+  <symbol id="ic-play" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5.8 4.3 12 8 5.8 11.7Z"/></symbol>
+  <symbol id="ic-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5 10.5 8 6.5 11.5"/></symbol>
+</defs></svg>
 <div class="progress" id="progress" aria-hidden="true"></div>
 <div class="app">
   <div class="demohd">
     <a class="demohome" href="index.html" target="_blank" rel="noopener" title="Open the Cadence designer in a new tab" aria-label="Cadence — open the designer"><img class="logomark" src="favicon.svg" alt="" width="18" height="18" />cadence</a>
     <h1>Live demo — motion applied</h1>
-    <button class="playseq" id="playSeq">▶ Play sequence</button>
+    <button class="playseq" id="playSeq"><svg class="gi" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-play"/></svg>&nbsp;Play sequence</button>
   </div>
 
   <div class="shell">
@@ -311,7 +318,7 @@ body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacS
         <div class="card acc" id="acc">
           <div class="acc__row" id="accRow">
             <div class="card__hd" style="margin:0"><h2>Advanced <span class="tag cardtag"><b data-role-name="move">move</b> <i data-role-dur="move"></i></span></h2></div>
-            <span class="acc__chev">›</span>
+            <span class="acc__chev"><svg class="gi chev-ic" width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-chevron"/></svg></span>
           </div>
           <div class="acc__wrap"><div class="acc__inner">
             <p>Height and chevron ride the same <code>move</code> token, so the panel opening reads as one gesture rather than two.</p>

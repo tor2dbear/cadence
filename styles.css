@@ -352,8 +352,15 @@ button.btn{background:var(--accent);color:var(--on-accent);border:0;border-radiu
 .rd.warn .ic{color:var(--warn)} .rd.ok .ic{color:var(--accent)}
 /* inline glyph icons (reload / close / external / arrow) — hand-drawn SVG that
    inherit the surrounding text colour and sit on the text baseline */
-.gi{display:inline-block;vertical-align:-0.14em;fill:none;color:inherit}
+.gi{display:inline-block;vertical-align:-0.14em;fill:none;color:inherit;pointer-events:none}  /* clicks pass through to the button (delegation reads e.target) */
 button > .gi{vertical-align:middle}
+/* disclosure chevrons: one drawn glyph, rotated by the control's own open state */
+.chev-ic{transition:transform .18s ease}
+.block__chev{display:inline-flex}
+.block__toggle[aria-expanded="true"] .chev-ic{transform:rotate(90deg)}   /* ▸ closed → ▾ open */
+.intent__more{display:inline-flex;align-items:center}
+.intent__more .chev-ic{transform:rotate(90deg)}                          /* more → ▾ down */
+.intent__more[aria-expanded="true"] .chev-ic{transform:rotate(-90deg)}   /* less → ▴ up */
 /* the prescription half of a warning: what to actually do about it */
 .rd__fix{color:var(--ink);font-family:var(--mono);font-size:11px}
 /* one-click apply for the deterministic fixes */

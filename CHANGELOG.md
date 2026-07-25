@@ -5,6 +5,28 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.13.2] — 2026-07-25
+
+### Changed
+- **The last icon-shaped unicode glyphs join the drawn set**, so every affordance
+  speaks one visual language. **Play** ▶ (Live demo, Play all, and the demo's Play
+  sequence) becomes a drawn `ic-play`; the **disclosure chevrons** ▸▾▴ (distance
+  toggle, each intent's more/less, the demo accordion) become one `ic-chevron`
+  rotated by the control's own open state; and the **inline remove ×** on ladder
+  steps, distances, easings, modes and intents now uses the same drawn `ic-close`
+  the panels close with — no more two kinds of cross in one view. Text-forward
+  buttons (Save/Export/Preview/+Add/tempo ±) and typographic prose arrows
+  (`→`, `↗`, `scroll ↓`) stay as-is by design.
+- Icons are now `pointer-events:none`, so a click always lands on its button —
+  the delegated handlers read `e.target`, and an SVG child would otherwise
+  swallow the click.
+
+### Guarded
+- `smoke41` gains the play/chevron symbols, asserts the play links and the
+  distance/intent chevrons point at the sprite, checks the chevron rotates on
+  open, verifies inline removes use the drawn cross, and fails if any
+  `▶▸▾▴›` glyph survives in the live tool.
+
 ## [0.13.1] — 2026-07-25
 
 ### Changed
