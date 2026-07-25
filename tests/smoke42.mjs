@@ -47,6 +47,14 @@ await page.keyboard.press('ArrowRight');
 await page.waitForTimeout(150);
 assert('arrow keys move the handle (value changes)', (await h.getAttribute('aria-valuetext')) !== vt0);
 assert('focus stays on the handle while editing', await page.evaluate(() => document.activeElement?.classList.contains('bz-h')));
+// editing normalizes the preset dropdown IN PLACE (custom), so tabbing away never
+// tears out the focus destination — a rebuild here would drop focus to <body>
+const sel = '.ecard:has(.ecard__plot[data-i="0"]) select[data-scope="ease"]';
+assert('an edited curve flips its preset to custom in place', (await page.$eval(sel, s => s.value)) === 'custom');
+await page.keyboard.press('Shift+Tab');
+await page.waitForTimeout(150);
+assert('focus is preserved when leaving an edited curve (not lost to body)',
+  (await page.evaluate(() => document.activeElement?.tagName)) !== 'BODY');
 
 // --- the 404 shares the brand, not a hardcoded off-brand theme ---
 const nf = readFileSync(new URL('../404.html', import.meta.url), 'utf8');

@@ -35,6 +35,9 @@ fi
 # the guide shares styles.css (no cadence.js) — cache-bust its stylesheet too
 [ -f dist/guide.html ] && sed -i "s|href=\"styles.css\"|href=\"styles.css?v=${SHA:0:7}\"|" dist/guide.html
 [ -f dist/changelog.html ] && sed -i "s|href=\"styles.css\"|href=\"styles.css?v=${SHA:0:7}\"|" dist/changelog.html
+# the 404 shares styles.css too, but links it root-absolute (it's served at any
+# depth), so cache-bust the leading-slash form to keep its theme deploy-atomic
+[ -f dist/404.html ] && sed -i "s|href=\"/styles.css\"|href=\"/styles.css?v=${SHA:0:7}\"|" dist/404.html
 
 # Inject Cloudflare Web Analytics into the deployed pages only. It loads an
 # external beacon, so keeping it out of the source means the offline Playwright

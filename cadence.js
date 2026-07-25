@@ -262,6 +262,22 @@ function updateSpringPlot(i){
   const poly=document.querySelector(`.ecard__plot[data-i="${i}"] polyline.bz-curve`); if(!poly) return;
   poly.setAttribute("points", springPoints(easings[i].spring));
 }
+// normalize a cubic easing's preset dropdown IN PLACE (matched preset vs "custom")
+// after an edit — mirrors what renderEasings computes, but without rebuilding the
+// card, so a focused/being-tabbed-to element inside it is never detached.
+function syncEasingSelect(i){
+  const e=easings[i]; if(!e || e.type!=="cubic") return;
+  const plot=document.querySelector(`.ecard__plot[data-i="${i}"]`);
+  const sel=plot && plot.closest(".ecard") && plot.closest(".ecard").querySelector('select[data-scope="ease"]');
+  if(!sel) return;
+  const match=Object.keys(PRESETS).find(k=>JSON.stringify(PRESETS[k])===JSON.stringify(e.bez));
+  let custom=sel.querySelector('option[value="custom"]');
+  if(match){ if(custom) custom.remove(); sel.value=match; }
+  else{
+    if(!custom){ custom=document.createElement("option"); custom.value="custom"; custom.textContent="custom"; sel.insertBefore(custom, sel.firstChild); }
+    sel.value="custom";
+  }
+}
 function renderEasings(){
   const el=document.getElementById("easings");
   el.innerHTML = easings.map((e,i)=>{
@@ -1289,9 +1305,9 @@ document.addEventListener("pointerup", ()=>{
   rerenderAll();                            // normalize the preset dropdown (custom vs matched)
 });
 // keyboard editing of the bézier handles — the same model mutation the drag does,
-// so curves are adjustable without a pointer. In-place plot update keeps focus on
-// the handle (render() rebuilds only #out, not the card).
-let bzKbdDirty=false;
+// so curves are adjustable without a pointer. Both the plot and the preset dropdown
+// are updated IN PLACE (never rebuilt), so keyboard focus is never detached — a
+// rerenderAll() here would tear out the element the user is tabbing toward.
 const BZ_KEYS={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,1],ArrowDown:[0,-1]};
 document.addEventListener("keydown", e=>{
   const h=e.target.closest && e.target.closest(".bz-h"); if(!h) return;
@@ -1302,17 +1318,7 @@ document.addEventListener("keydown", e=>{
   const b=easings[i].bez;
   b[o]=+Math.min(1,Math.max(0,b[o]+d[0]*step)).toFixed(3);
   b[o+1]=+Math.min(1+BZPAD,Math.max(-BZPAD,b[o+1]+d[1]*step)).toFixed(3);
-  bzKbdDirty=true;
-  updateEasingPlot(i); bzDownstream();
-});
-// when focus leaves the plot after keyboard edits, normalize the preset dropdown
-// (mirrors pointerup) — but not when tabbing between the two handles of one plot
-document.addEventListener("focusout", e=>{
-  const h=e.target.closest && e.target.closest(".bz-h"); if(!h || !bzKbdDirty) return;
-  const plot=h.closest(".ecard__plot");
-  if(e.relatedTarget && plot && plot.contains(e.relatedTarget)) return;
-  bzKbdDirty=false;
-  rerenderAll();
+  updateEasingPlot(i); syncEasingSelect(i); bzDownstream();
 });
 // global tempo: scale the whole ladder, preserving proportions
 function scaleTempo(f){
