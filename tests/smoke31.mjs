@@ -442,3 +442,16 @@ const msgs = out => out.map(f => f.msg).join("\n");
   assert("DTCG duration objects parse to ms", sys && sys.durations.map(d => d.name + ":" + d.ms).join(",") === "fast:150,base:200");
   assert("DTCG cubicBezier arrays parse to an easing", sys.easings.length === 1 && sys.easings[0].name === "standard" && sys.easings[0].bez.join(",") === "0.2,0,0.2,1");
 }
+
+// 21. duplicate declarations collapse to the cascade winner; nested delay
+// sections are excluded recursively (Codex P2s)
+{
+  const { parsePalette } = require("../system-read.js");
+  const dup = parsePalette(`--dur-fast: 100ms; --dur-fast: 120ms; --dur-base: 200ms; --dur-slow: 300ms;`);
+  assert("a repeated declaration collapses to the last value", dup.durations.length === 3 &&
+    dup.durations.find(d => d.name === "dur-fast").ms === 120 && !dup.durations.some(d => /-2$/.test(d.name)));
+
+  const nested = parsePalette(`{ "duration": { "fast": "100ms", "base": "200ms", "slow": "300ms" },
+    "delay": { "modal": { "short": "500ms", "long": "900ms" } } }`);
+  assert("nested delay sections are excluded from the ladder", nested.durations.length === 3 && !nested.durations.some(d => d.ms >= 500));
+}

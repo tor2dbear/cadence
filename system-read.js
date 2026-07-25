@@ -396,10 +396,21 @@
       const v = body.match(/\$?value\s*["']?\s*[:=]\s*["']?\s*(cubic-bezier\s*\([^)]*\)|\d*\.?\d+\s*m?s|ease-in-out|ease-in|ease-out|ease|linear)/i);
       return v ? `${key}: ${v[1]} ` : whole;
     });
-    // drop whole delay/stagger SECTIONS (e.g. Tailwind's `transitionDelay: { … }`)
-    // — their leaf keys are often numeric (`500: '500ms'`), so the per-name skip
-    // below can't catch them, and delays/staggers aren't ladder rungs.
-    text = text.replace(/[\w-]*(?:delay|stagger)[\w-]*\s*["']?\s*[:=]\s*\{[^{}]*\}/gi, " ");
+    // drop whole delay/stagger SECTIONS (e.g. Tailwind's `transitionDelay: { … }`,
+    // or a nested `delay: { modal: { short: "500ms" } }`) — their leaf keys are
+    // often numeric/semantic, so the per-name skip below can't catch them, and
+    // delays/staggers aren't ladder rungs. Brace-aware so nested bodies go too.
+    text = (function dropSections(s) {
+      const re = /[\w-]*(?:delay|stagger)[\w-]*\s*["']?\s*[:=]\s*\{/gi;
+      let m;
+      while ((m = re.exec(s))) {
+        let depth = 1, j = re.lastIndex;
+        while (j < s.length && depth > 0) { const c = s[j++]; if (c === "{") depth++; else if (c === "}") depth--; }
+        s = s.slice(0, m.index) + " " + s.slice(j);
+        re.lastIndex = m.index + 1;
+      }
+      return s;
+    })(text);
     const cleanName = raw => (raw || "").replace(/^[-\s"'.]+|[-\s"',;]+$/g, "").replace(/[^A-Za-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "token";
     const durs = [], eas = [];
     let m;
@@ -432,11 +443,11 @@
       if (bez) eas.push({ name: cleanName(m[1]), type: "cubic", bez });
     }
     if (!durs.length && !eas.length) return null;
-    // de-dup identical (name+value) rows, then make names unique for token export
-    const uniqRows = (arr, sig) => { const seen = new Set(); return arr.filter(x => { const k = sig(x); if (seen.has(k)) return false; seen.add(k); return true; }); };
-    const uniqNames = arr => { const seen = {}; return arr.map(x => { let n = x.name, k = 2; while (seen[n]) n = x.name + "-" + (k++); seen[n] = 1; return Object.assign({}, x, { name: n }); }); };
-    const durations = uniqNames(uniqRows(durs, x => x.name + ":" + x.ms).sort((a, b) => a.ms - b.ms));
-    const easings = uniqNames(uniqRows(eas, x => x.name + ":" + x.bez.join(",")));
+    // a repeated source name is the CSS cascade / a JS object-key override — the
+    // LAST occurrence wins, not a new `-2` rung. Collapse by name, keeping the last.
+    const lastByName = arr => { const m = new Map(); for (const x of arr) m.set(x.name, x); return [...m.values()]; };
+    const durations = lastByName(durs).sort((a, b) => a.ms - b.ms);
+    const easings = lastByName(eas);
     // no intents come out of a raw token dump — the read assesses the primitives
     // (ladder, easing set) and the comparative fingerprint, and stays quiet on the
     // intent-level checks it has no data for.
