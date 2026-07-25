@@ -409,3 +409,13 @@ const msgs = out => out.map(f => f.msg).join("\n");
   assert("intent-marked easings don't duplicate the primitives", sys.easings.length === 2 && !sys.easings.some(e => /enter|exit/.test(e.name)));
   assert("no phantom duplicate-easing warning from resolved aliases", !systemRead(sys).some(f => /nearly identical/.test(f.msg)));
 }
+
+// 18. an intent marker only drops the declaration it marks — primitives that
+// share a compact line before it survive (Codex P2 on multi-entry lines)
+{
+  const { parsePalette } = require("../system-read.js");
+  const sys = parsePalette(`transitionDuration: { fast: '100ms', base: '200ms', enter: '200ms', // intent
+    slow: '300ms' }`);
+  assert("primitives before an inline intent marker survive", sys.durations.some(d => d.name === "fast") && sys.durations.some(d => d.name === "base"));
+  assert("only the marked alias is dropped", !sys.durations.some(d => d.name === "enter"));
+}

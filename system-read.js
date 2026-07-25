@@ -366,9 +366,12 @@
     // Cadence's own exports emit resolved semantic-intent rows inline-marked
     // `… , // intent` (and `// per-item stagger`) alongside the primitives. Those
     // are aliases of the ladder/easing set, not new tokens — counting them would
-    // double the ladder and flag phantom duplicate easings. Drop those rows FIRST,
-    // before the comment strip below removes the marker that identifies them.
-    text = text.replace(/^.*\/\/\s*(?:intent|per-item stagger)\b.*$/gim, "");
+    // double the ladder and flag phantom duplicate easings. Drop just the MARKED
+    // declaration (the `name: value` immediately before the marker) + its comment,
+    // not the whole line, so compact rows keep any primitives that precede it. Run
+    // FIRST, before the comment strip removes the marker. A quoted value is taken
+    // whole so a cubic-bezier's inner commas don't cut it short.
+    text = text.replace(/[A-Za-z0-9][\w-]*\s*["']?\s*[:=]\s*(?:"[^"]*"|'[^']*'|[^,;{}\n/]*)\s*,?\s*\/\/\s*(?:intent|per-item stagger)\b[^\n]*/gi, "");
     // strip comments first, so disabled/legacy tokens (`/* --old: 3000ms; */`,
     // a `//`-commented line) don't join the live read. `//` only when it starts a
     // token (line start / after whitespace), so URLs like https:// survive.
