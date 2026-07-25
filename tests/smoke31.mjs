@@ -367,3 +367,20 @@ const msgs = out => out.map(f => f.msg).join("\n");
   const u = parsePalette(`--ref: url(https://x.com/a); --fast: 150ms; --base: 200ms;`);
   assert("https:// URLs survive comment-stripping", u.durations.length === 2);
 }
+
+// 16. more parsePalette / scoring edge cases (Codex re-review P2s)
+{
+  const { parsePalette, scoreSystem } = require("../system-read.js");
+  // Tailwind's numeric duration keys ('75': '75ms') must parse, not return null
+  const tw = parsePalette(`transitionDuration: { '75': '75ms', '100': '100ms', '150': '150ms', '300': '300ms' }`);
+  assert("numeric Tailwind keys parse", tw && tw.durations.length === 4 && tw.durations.some(d => d.name === "75"));
+
+  // a duration-only paste is under-assessed (no easing dimension) → not a false A
+  const donly = parsePalette(`--fast: 100ms; --base: 200ms; --slow: 400ms;`);
+  const sc = scoreSystem(donly);
+  assert("duration-only paste is not awarded A", sc.grade !== "A");
+  assert("duration-only paste exposes no easing dimension", !sc.categories.some(c => c.key === "easing"));
+  // the engine must not emit a nonsensical "0 distinct easings" finding
+  const { systemRead } = require("../system-read.js");
+  assert("no '0 distinct easings' finding when there are none", !systemRead(donly).some(f => /^0 distinct easings/.test(f.msg)));
+}

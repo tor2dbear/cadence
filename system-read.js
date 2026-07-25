@@ -161,7 +161,10 @@
       }
     }
     if (dup) push("warn", WARN, `“${dup[0]}” and “${dup[1]}” are nearly identical curves. A tight easing set is easier to apply consistently — trim one.`, `Delete “${dup[1]}” and point its users at “${dup[0]}”.`, { op: "dropEasing", ease: dup[1], into: dup[0] });
-    else push("ok", OK, `${easings.length} distinct easings — a lean, legible set.`);
+    // only assess the easing set when there's actually one — a system with no
+    // easings (e.g. a duration-only paste) has nothing to praise here, and must
+    // NOT read as an assessed dimension (else the score awards a false A).
+    else if (easings.length) push("ok", OK, `${easings.length} distinct easings — a lean, legible set.`);
 
     // 3. enter/exit asymmetry
     cat = "asymmetry";
@@ -336,7 +339,7 @@
       ? `${warns} thing${warns > 1 ? "s" : ""} to review.`
       : coreCovered
         ? "No warnings — the system reads as considered throughout."
-        : "Too little system to fully assess — build out the duration ladder for a confident read.";
+        : "Too little system to fully assess — a confident read needs both a duration ladder (2+ rungs) and an easing set.";
     // per-dimension: the worst finding in each category present (a warn outranks
     // an ok; higher sev leads), so the scorecard shows where to look.
     const categories = CATS.map(([key, label]) => {
@@ -367,7 +370,7 @@
     // flatten Style-Dictionary / DTCG leaves — `fast: { value: "150ms", type… }` —
     // to `fast: 150ms`, so the read keys off the OUTER token name, not the inner
     // `value` property (nested braces mean the innermost leaf matches first).
-    text = text.replace(/([A-Za-z][\w-]*)\s*["']?\s*[:=]\s*\{([^{}]*)\}/g, (whole, key, body) => {
+    text = text.replace(/([A-Za-z0-9][\w-]*)\s*["']?\s*[:=]\s*\{([^{}]*)\}/g, (whole, key, body) => {
       const v = body.match(/\$?value\s*["']?\s*[:=]\s*["']?\s*(cubic-bezier\s*\([^)]*\)|\d*\.?\d+\s*m?s|ease-in-out|ease-in|ease-out|ease|linear)/i);
       return v ? `${key}: ${v[1]} ` : whole;
     });
@@ -377,7 +380,9 @@
     // <name> [quote] :|= [quote] <value> — the optional quote between the name
     // and the separator lets JSON keys ("fast": …) parse alongside CSS vars
     // (--fast: …) and JS literals (fast: …).
-    const NV = `([A-Za-z][\\w-]*)\\s*["']?\\s*[:=]\\s*["']?\\s*`;
+    // the name may start with a digit — Tailwind's duration scale uses numeric
+    // keys ('75': '75ms'). cleanName() sanitises whatever is captured.
+    const NV = `([A-Za-z0-9][\\w-]*)\\s*["']?\\s*[:=]\\s*["']?\\s*`;
     // durations: value is <number>(ms|s)
     const dre = new RegExp(NV + `(\\d*\\.?\\d+)\\s*(ms|s)\\b`, "g");
     while ((m = dre.exec(text))) {
