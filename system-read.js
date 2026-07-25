@@ -424,10 +424,12 @@
     // so `100MS` / `.3S` must parse too — hence the `i` flag + lowercased unit.
     const dre = new RegExp(NV + `(\\d*\\.?\\d+)\\s*(ms|s)\\b`, "gi");
     while ((m = dre.exec(text))) {
-      // stagger/delay are time values but NOT ladder rungs — Cadence's own JSON /
-      // Style-Dictionary exports emit them, so counting them as durations would
-      // invent rungs and trip false uneven-ladder / comparative warnings.
-      if (/stagger|delay/i.test(m[1])) continue;
+      // Skip non-primitive time values: stagger/delay (any name), and a leaf
+      // named exactly `duration` — the latter is a resolved SEMANTIC token's
+      // property (`enter: { duration: "200ms" }`), not a scale rung. A primitive
+      // carries a scale in its name (`duration-fast`, `fast`), so the anchored
+      // match leaves those alone.
+      if (/stagger|delay/i.test(m[1]) || /^(?:transition-?|animation-?|motion-?|css-?)?duration$/i.test(m[1])) continue;
       let ms = parseFloat(m[2]) * (m[3].toLowerCase() === "s" ? 1000 : 1);
       if (!(ms > 0) || ms > 60000) continue;                 // skip 0s and absurd values
       durs.push({ name: cleanName(m[1]), ms: Math.round(ms) });
@@ -436,6 +438,9 @@
     // (?![\w-]) after a keyword stops "linear" matching inside "linear-gradient".
     const ere = new RegExp(NV + `(cubic-bezier\\s*\\([^)]*\\)|(?:ease-in-out|ease-in|ease-out|ease|linear)(?![\\w-]))`, "gi");
     while ((m = ere.exec(text))) {
+      // a leaf named exactly `easing`/`timing-function` is a semantic token's
+      // property (`enter: { easing: "ease-out" }`), not a named curve in the set.
+      if (/^(?:transition-?|animation-?|motion-?|css-?)?(?:easing|timing-?function)$/i.test(m[1])) continue;
       let bez = null;
       const cb = m[2].match(/cubic-bezier\s*\(([^)]*)\)/i);
       if (cb) { const n = cb[1].split(",").map(x => parseFloat(x)); if (n.length === 4 && n.every(x => !isNaN(x))) bez = n; }

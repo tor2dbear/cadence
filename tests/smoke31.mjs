@@ -455,3 +455,21 @@ const msgs = out => out.map(f => f.msg).join("\n");
     "delay": { "modal": { "short": "500ms", "long": "900ms" } } }`);
   assert("nested delay sections are excluded from the ladder", nested.durations.length === 3 && !nested.durations.some(d => d.ms >= 500));
 }
+
+// 22. resolved semantic leaves (enter: { duration, easing }) are not primitives
+// (Codex P2 — the JSON counterpart of the Tailwind // intent alias case)
+{
+  const { parsePalette } = require("../system-read.js");
+  const semanticOnly = parsePalette(`{ "enter": { "duration": "200ms", "easing": "ease-out" },
+    "exit": { "duration": "150ms", "easing": "ease-in" } }`);
+  assert("a resolved-semantic-only file yields no primitives", semanticOnly === null);
+
+  const mixed = parsePalette(`{ "primitives": { "duration": { "fast": "150ms", "base": "200ms", "slow": "300ms" },
+    "easing": { "standard": "cubic-bezier(.2,0,.2,1)" } },
+    "semantic": { "enter": { "duration": "200ms", "easing": "ease-out" } } }`);
+  assert("primitives are read while semantic leaves are skipped", mixed.durations.map(d => d.name).join(",") === "fast,base,slow" && mixed.easings.length === 1);
+
+  // a primitive that carries a scale in its name is NOT skipped
+  const scaled = parsePalette(`--duration-fast: 150ms; --duration-base: 200ms;`);
+  assert("scale-suffixed duration primitives still parse", scaled.durations.length === 2);
+}
