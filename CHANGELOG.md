@@ -5,6 +5,31 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.13.3] — 2026-07-25
+
+### Changed
+- **The 404 page rejoins the brand.** It carried its own hardcoded dark/teal theme
+  and a system sans-serif — a visibly different product. It now links the shared
+  `styles.css`, so it inherits the Sand/Ink-navy tokens, Fraunces heading and
+  light/dark handling, with only a small 404-specific layout block left inline.
+  Asset and stylesheet links are root-absolute so they resolve at any 404 depth.
+
+### Accessibility
+- **The System-read verdict is announced to screen readers.** A polite `role="status"`
+  live region carries a short phrase ("System read: grade B, 1 finding to review")
+  that updates as you edit; the visible badge is `aria-hidden` so nothing double-reads,
+  and the findings list is a labelled region to read on demand. The opinion layer is
+  the product's soul — it's no longer silent to AT.
+- **The bézier curve handles are keyboard-operable.** Each control point is now a
+  focusable `role="slider"` — arrow keys nudge it (Shift for larger steps), the
+  value is exposed via `aria-valuetext` ("time 24%, value 0.30"), and focus is kept
+  on the handle while editing. Curves were pointer-only before.
+
+### Guarded
+- `smoke42` covers the status live-region and its updates, the labelled findings
+  region, the slider-role handles + arrow-key movement with focus retained, and
+  that the 404 links the shared stylesheet and dropped the old off-brand palette.
+
 ## [0.13.2] — 2026-07-25
 
 ### Changed

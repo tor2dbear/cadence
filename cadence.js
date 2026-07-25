@@ -237,8 +237,8 @@ function easingSVG(e){
     <line class="bz-arm" x1="${p0[0]}" y1="${p0[1]}" x2="${c1[0]}" y2="${c1[1]}"/>
     <line class="bz-arm" x1="${p3[0]}" y1="${p3[1]}" x2="${c2[0]}" y2="${c2[1]}"/>
     <path class="bz-curve" d="M${p0[0]},${p0[1]} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p3[0]},${p3[1]}"/>
-    <circle class="bz-h" data-pt="1" cx="${c1[0]}" cy="${c1[1]}" r="7"/>
-    <circle class="bz-h" data-pt="2" cx="${c2[0]}" cy="${c2[1]}" r="7"/>
+    <circle class="bz-h" data-pt="1" cx="${c1[0]}" cy="${c1[1]}" r="7" tabindex="0" role="slider" aria-label="${e.name} curve · control point 1 — arrow keys adjust (Shift for larger steps)" aria-valuemin="0" aria-valuemax="1" aria-valuenow="${x1}" aria-valuetext="time ${Math.round(x1*100)}%, value ${y1.toFixed(2)}"/>
+    <circle class="bz-h" data-pt="2" cx="${c2[0]}" cy="${c2[1]}" r="7" tabindex="0" role="slider" aria-label="${e.name} curve · control point 2 — arrow keys adjust (Shift for larger steps)" aria-valuemin="0" aria-valuemax="1" aria-valuenow="${x2}" aria-valuetext="time ${Math.round(x2*100)}%, value ${y2.toFixed(2)}"/>
   </svg>`;
 }
 // update a plot's SVG in place (keeps elements alive so a drag/slide isn't interrupted)
@@ -254,6 +254,9 @@ function updateEasingPlot(i){
   const hs=svg.querySelectorAll(".bz-h");
   hs[0].setAttribute("cx",c1[0]); hs[0].setAttribute("cy",c1[1]);
   hs[1].setAttribute("cx",c2[0]); hs[1].setAttribute("cy",c2[1]);
+  // keep the slider values in sync so screen readers hear each keyboard nudge
+  hs[0].setAttribute("aria-valuenow",x1); hs[0].setAttribute("aria-valuetext",`time ${Math.round(x1*100)}%, value ${y1.toFixed(2)}`);
+  hs[1].setAttribute("aria-valuenow",x2); hs[1].setAttribute("aria-valuetext",`time ${Math.round(x2*100)}%, value ${y2.toFixed(2)}`);
 }
 function updateSpringPlot(i){
   const poly=document.querySelector(`.ecard__plot[data-i="${i}"] polyline.bz-curve`); if(!poly) return;
@@ -630,6 +633,11 @@ function critique(){
     badge.className = "hintcount"+(sc.warns?" warn":"");
     badge.title = `Score ${sc.score}/100 — ${sc.summary}`;
   }
+  // announce the verdict to screen readers as a short, natural phrase (polite:
+  // rapid edits coalesce to the settled state). The visible badge is aria-hidden
+  // so the two don't double-read.
+  const st=document.getElementById("readStatus");
+  if(st) st.textContent = `System read: grade ${sc.grade}, ${sc.warns ? sc.warns+(sc.warns===1?" finding":" findings")+" to review" : "all clear"}.`;
 }
 // ---------- apply a system-read fix (one click: mutate the model, re-read) ----------
 // return the name of a linear easing, adding one if the set has none
@@ -1279,6 +1287,32 @@ document.addEventListener("pointerup", ()=>{
   bzDrag=null;
   document.querySelectorAll(".bz-h.drag").forEach(h=>h.classList.remove("drag"));
   rerenderAll();                            // normalize the preset dropdown (custom vs matched)
+});
+// keyboard editing of the bézier handles — the same model mutation the drag does,
+// so curves are adjustable without a pointer. In-place plot update keeps focus on
+// the handle (render() rebuilds only #out, not the card).
+let bzKbdDirty=false;
+const BZ_KEYS={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,1],ArrowDown:[0,-1]};
+document.addEventListener("keydown", e=>{
+  const h=e.target.closest && e.target.closest(".bz-h"); if(!h) return;
+  const d=BZ_KEYS[e.key]; if(!d) return;
+  e.preventDefault();
+  const plot=h.closest(".ecard__plot"); if(!plot) return;
+  const i=+plot.dataset.i, o=(+h.dataset.pt===1)?0:2, step=e.shiftKey?0.1:0.02;
+  const b=easings[i].bez;
+  b[o]=+Math.min(1,Math.max(0,b[o]+d[0]*step)).toFixed(3);
+  b[o+1]=+Math.min(1+BZPAD,Math.max(-BZPAD,b[o+1]+d[1]*step)).toFixed(3);
+  bzKbdDirty=true;
+  updateEasingPlot(i); bzDownstream();
+});
+// when focus leaves the plot after keyboard edits, normalize the preset dropdown
+// (mirrors pointerup) — but not when tabbing between the two handles of one plot
+document.addEventListener("focusout", e=>{
+  const h=e.target.closest && e.target.closest(".bz-h"); if(!h || !bzKbdDirty) return;
+  const plot=h.closest(".ecard__plot");
+  if(e.relatedTarget && plot && plot.contains(e.relatedTarget)) return;
+  bzKbdDirty=false;
+  rerenderAll();
 });
 // global tempo: scale the whole ladder, preserving proportions
 function scaleTempo(f){
