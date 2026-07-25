@@ -5,6 +5,21 @@ rather than releases; the format loosely follows
 [Keep a Changelog](https://keepachangelog.com). The version badge in the app
 shows the deployed semver plus the commit it was built from, stamped at deploy.
 
+## [0.11.3] — 2026-07-25
+
+### Fixed
+- **The tool header's wordmark and tagline now share a baseline** — they were
+  laid out as a centred flex row, so the mark's height threw the tagline off the
+  wordmark's baseline. The mark + wordmark are now laid out inline (a real text
+  baseline) with the mark optically centred on the wordmark, and the header
+  baseline-aligns the tagline to it.
+
+### Changed
+- **The header tagline is hidden on compact viewports** — on phones it wrapped
+  onto its own line and crowded an already-tight header while only repeating what
+  the landing already says; it now shows on the full desktop layout and drops in
+  the stacked layout.
+
 ## [0.11.2] — 2026-07-25
 
 ### Fixed
