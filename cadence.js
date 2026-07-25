@@ -1319,11 +1319,16 @@ document.getElementById("copy").addEventListener("click",()=>{
 // commit — the conventional filename per tab, not a copy-paste into a hand-named
 // file. Client-side Blob + <a download>, no server (same as the .cadence.json
 // export). Uses #out's text, so it matches exactly what Copy would give.
+// Scroll and Transitions are integration RECIPES, not drop-in stylesheets — each
+// appends a JS fallback (an IntersectionObserver / a startViewTransition scaffold)
+// after the CSS, so a .css name would be a lie: the JS glue that makes them work
+// cross-browser would be discarded. Ship those two as .txt recipes; the rest are
+// genuinely single-language.
 const EXPORT_FILE={
   css:["tokens.css","text/css"], json:["tokens.json","application/json"],
   tailwind:["tailwind.config.js","text/javascript"], sd:["style-dictionary.tokens.json","application/json"],
-  ts:["motion.ts","text/typescript"], scroll:["scroll.css","text/css"],
-  vt:["view-transitions.css","text/css"], rationale:["rationale.md","text/markdown"],
+  ts:["motion.ts","text/typescript"], scroll:["scroll-driven-recipe.txt","text/plain"],
+  vt:["view-transitions-recipe.txt","text/plain"], rationale:["rationale.md","text/markdown"],
 };
 document.getElementById("download").addEventListener("click",()=>{
   const [fname,mime]=EXPORT_FILE[fmt]||["tokens.txt","text/plain"];

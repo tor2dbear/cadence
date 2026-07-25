@@ -29,6 +29,9 @@ const CASES = [
   ['tailwind', 'tailwind.config.js', 'transitionDuration'],
   ['json', 'tokens.json', '{'],
   ['rationale', 'rationale.md', '# Motion system rationale'],
+  // Scroll / Transitions are CSS+JS recipes → a .txt name, not a misleading .css
+  ['scroll', 'scroll-driven-recipe.txt', 'scroll-driven'],
+  ['vt', 'view-transitions-recipe.txt', 'view transition'],
 ];
 for (const [fmt, expected, marker] of CASES) {
   await page.locator(`.tab[data-fmt="${fmt}"]`).click();
