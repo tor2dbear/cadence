@@ -356,7 +356,7 @@ function renderIntents(){
       <div class="intent__top">
         <span class="intent__dot" style="background:${colorOf(i)}" aria-hidden="true"></span>
         <input class="intent__name" value="${it.name}" data-scope="iname" data-i="${i}" aria-label="intent name">
-        <span class="intent__purpose">${it.purpose||""}</span>
+        <input class="intent__purpose" value="${(it.purpose||"").replace(/"/g,"&quot;")}" data-scope="ipurpose" data-i="${i}" aria-label="what this intent is for" placeholder="its role" spellcheck="false">
         ${intents.length>1?`<button class="intent__rm" data-scope="irm" data-i="${i}" title="remove" aria-label="remove intent">${rmSvg}</button>`:""}
       </div>
       <div class="intent__ref">${durF}${easeF}</div>
@@ -544,7 +544,13 @@ function play(i){
     // stretches through the fast part of the easing and retracts at the ends.
     const rail=root.querySelector(".orb-rail");
     const dots=[...rail.querySelectorAll(".orb, .orb-echo")]; // head first, then echoes
-    const START="14px", END="calc(100% - 40px)", step=Math.max(9,(parseInt(r.d)||200)/15);
+    // travel honours the intent's distance token when it has one: the comet crosses
+    // a fraction of the rail proportional to the px (720px "screen" = full width),
+    // so editing the distance primitive is visible here. No distance → full travel.
+    const START="14px";
+    const frac = r.distPx!=null ? Math.max(0.12, Math.min(1, r.distPx/720)) : 1;
+    const END = frac===1 ? "calc(100% - 40px)" : `calc(14px + (100% - 54px) * ${frac.toFixed(3)})`;
+    const step=Math.max(9,(parseInt(r.d)||200)/15);
     const setTrans=()=>dots.forEach((el,i)=>{ el.style.transition=`left ${r.d} ${r.e} ${i*step}ms`; });
     dots.forEach(el=>{ el.style.transition="none"; el.style.left=START; });
     void rail.offsetWidth; setTrans();
@@ -1226,6 +1232,7 @@ document.addEventListener("input", e=>{
   if(sc==="dur"){ durations[i].ms=+t.value; refreshTokens(); renderDurations(); render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="xpx"){ distances[i].px=+t.value; const v=t.closest(".drow")?.querySelector(".drow__val"); if(v)v.textContent=t.value+"px"; render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iname"){ intents[i].name=t.value.trim()||intents[i].name; render(); critique(); writeURL(); }
+  if(sc==="ipurpose"){ intents[i].purpose=safeName(t.value); render(); critique(); writeURL(); }
   if(sc==="istag"){ bindOf(intents[i]).stagger=Math.max(0,Math.min(400,+t.value||0)); render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="irevat"){ bindOf(intents[i]).reveal=Math.max(0,Math.min(100,+t.value||0)); render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="sk"||sc==="sd"){
