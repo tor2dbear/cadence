@@ -1762,13 +1762,16 @@ const DEFAULT_ENC = encodeState();
   if(h && h!=="tool"){ try{ applyEncoded(h); }catch(_){ /* malformed link → keep defaults */ } }
   mode = h ? "tool" : "landing";
 })();
-// re-apply when the hash changes on an already-open page (pasting a shared
-// link into the address bar, or back/forward). Our own writes use
-// replaceState, which never fires hashchange — so this can't loop.
+// browser Back/Forward (and pasting a shared link into the address bar) navigate
+// between the landing and the tool: an empty hash is the landing, any hash is the
+// tool. Our own in-tool edits use replaceState (which never fires hashchange), and
+// entering/leaving the tool pushState — so this only runs for real navigation and
+// can't loop.
 window.addEventListener("hashchange", ()=>{
   const h=location.hash.replace(/^#/,"");
-  if(!h || h==="tool" || h===encodeState()) return;
-  try{ applyEncoded(h); mode="tool"; setBootClass(); rerenderAll(); }catch(_){}
+  if(!h){ goLanding(); return; }                                       // → landing (Back from the tool)
+  if(h!=="tool" && h!==encodeState()){ try{ applyEncoded(h); }catch(_){ /* malformed → keep current */ } }
+  goTool();                                                            // → tool (Forward, or a shared link)
 });
 
 // ---------- landing view: the product demonstrating its own thesis ----------
@@ -1776,8 +1779,26 @@ function setBootClass(){
   const r=document.documentElement.classList;
   r.toggle("boot-landing", mode!=="tool"); r.toggle("boot-tool", mode==="tool");
 }
+// browser-nav (Back/Forward) view swaps — lighter than the button ceremonies below
+// (no View Transition, which can't wrap the async popstate), but they re-run the
+// landing's reveal and the tool's replay so the destination feels alive.
+function goLanding(){
+  if(mode==="landing"){ setBootClass(); return; }
+  mode="landing"; setBootClass(); window.scrollTo(0,0);
+  const land=document.getElementById("landing");
+  if(land){ land.classList.remove("in"); requestAnimationFrame(()=>requestAnimationFrame(()=>land.classList.add("in"))); }
+}
+function goTool(){
+  const entering = mode!=="tool";
+  mode="tool"; setBootClass(); rerenderAll();
+  if(entering){ window.scrollTo(0,0); if(!reduce){ setTimeout(playAll,120); startBenchIdle(); } }
+}
 function enterTool(){
   if(mode==="tool") return;
+  // a real history entry for the tool, so the browser Back button returns to the
+  // landing (and Forward comes back); in-tool edits then replaceState in place.
+  const enc=encodeState(), hash = enc===DEFAULT_ENC ? "tool" : enc;
+  try{ history.pushState(null,"",location.pathname+location.search+"#"+hash); }catch(_){}
   const go=()=>{ mode="tool"; setBootClass(); writeURL(); window.scrollTo(0,0); if(!reduce){ setTimeout(playAll,120); startBenchIdle(); }
     // dock the live preview beside the editor so the edit→see loop is felt at once
     if(matchMedia("(min-width:1001px)").matches) setTimeout(openPreview,80); };
@@ -1787,9 +1808,10 @@ function enterTool(){
 function exitTool(){
   if(mode==="tool"){
     const go=()=>{ mode="landing"; setBootClass();
-      // drop the state hash so a reload stays on the intro; in-memory state is
-      // kept, so re-entering the tool restores the same system.
-      try{ history.replaceState(null,"",location.pathname+location.search); }catch(_){}
+      // push (not replace) an empty-hash entry so this is a real forward navigation:
+      // browser Back re-enters the tool, Forward returns here, and a reload stays on
+      // the intro. In-memory state is kept, so re-entering restores the same system.
+      try{ history.pushState(null,"",location.pathname+location.search); }catch(_){}
       window.scrollTo(0,0);
       const land=document.getElementById("landing");
       if(land){ land.classList.remove("in"); requestAnimationFrame(()=>requestAnimationFrame(()=>land.classList.add("in"))); }

@@ -30,6 +30,11 @@ stamped at deploy time.
   product's differentiator was under-described; `smoke35` now guards it.
 
 ### Fixed
+- **The browser Back and Forward buttons now move between the landing and the
+  tool.** Entering the editor was a silent in-place URL replace, so Back never
+  returned to the intro; entering and leaving are now real navigations, so Back
+  goes home and Forward returns to the editor, while in-tool edits still update
+  the share link in place (no history spam).
 - **Scroll-driven and view-transition are now mutually exclusive on an intent.**
   Both could be enabled at once — contradictory (one binds motion to scroll, the
   other to a DOM state swap) and double-emitting in the exports. Enabling one now
