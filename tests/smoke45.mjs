@@ -69,6 +69,20 @@ const draggedEnd = await page.evaluate(async () => {
 assert('dragging the distance slider replays the orb to the new endpoint',
   /calc\(/.test(draggedEnd) && draggedEnd !== '14px' && draggedEnd !== 'calc(100% - 40px)');
 
+// the intent row (name + purpose + remove) must fit a narrow card — the inputs
+// shrink so the remove button stays on-screen (was overflowing at 320px)
+const narrow = await browser.newPage({ viewport: { width: 320, height: 700 } });
+await narrow.goto(BASE + '#tool', { waitUntil: 'networkidle' });
+await narrow.reload({ waitUntil: 'networkidle' });
+await narrow.waitForTimeout(200);
+const fits = await narrow.evaluate(() => {
+  const card = document.querySelector('.intent');
+  const rm = card.querySelector('.intent__rm').getBoundingClientRect();
+  return rm.right <= card.getBoundingClientRect().right + 1 && document.documentElement.scrollWidth <= innerWidth + 1;
+});
+assert('the intent row fits a 320px card with the remove button on-screen', fits);
+await narrow.close();
+
 assert('no console/page errors', errors.length === 0);
 if (errors.length) errors.forEach(e => console.log('   ! ' + e));
 

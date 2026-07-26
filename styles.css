@@ -247,9 +247,12 @@ svg.bz{display:block;width:100%;height:100%}
 .intent{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:9px}
 .intent__top{display:flex;align-items:center;gap:8px}
 .intent__dot{width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
-.intent__name{font-family:var(--mono);font-weight:600;font-size:12.5px;color:var(--ink);background:transparent;border:0;border-bottom:1px dashed transparent;width:120px;padding:1px 0}
+/* both inputs get min-width:0 so they can shrink on a narrow card (flex items
+   don't by default) — otherwise the row overflows and the remove button is
+   pushed off-screen at ~320px */
+.intent__name{font-family:var(--mono);font-weight:600;font-size:12.5px;color:var(--ink);background:transparent;border:0;border-bottom:1px dashed transparent;flex:0 1 120px;min-width:0;padding:1px 0}
 .intent__name:focus{outline:none;border-bottom-color:var(--line)}
-.intent__purpose{color:var(--ink-faint);font-size:11px;margin-left:auto;font-family:var(--mono);background:transparent;border:0;border-bottom:1px dashed transparent;text-align:right;width:132px;padding:1px 0}
+.intent__purpose{color:var(--ink-faint);font-size:11px;margin-left:auto;font-family:var(--mono);background:transparent;border:0;border-bottom:1px dashed transparent;text-align:right;flex:0 1 132px;min-width:0;padding:1px 0}
 .intent__purpose:focus{outline:none;border-bottom-color:var(--line);color:var(--ink-dim)}
 .intent__purpose::placeholder{color:var(--ink-faint);opacity:.55}
 .intent__rm{background:transparent;border:0;color:var(--ink-faint);cursor:pointer;font-size:15px;line-height:1;padding:0 2px}
