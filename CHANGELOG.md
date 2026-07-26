@@ -11,6 +11,11 @@ stamped at deploy time.
 
 ## [Unreleased]
 
+### Fixed
+- The `/changelog` page's version-number links rendered in the browser-default
+  blue — unreadable on the dark theme. They now inherit the heading colour with a
+  quiet accent underline, matching the page's other links.
+
 ## [0.5.0] — 2026-07-25
 
 Accessibility and export correctness.
