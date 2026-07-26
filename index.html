@@ -36,9 +36,11 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
 {"@type":"Question","name":"What are motion design tokens?","acceptedAnswer":{"@type":"Answer","text":"Named, reusable values for animation — durations, easing curves, stagger and distance — stored as tokens (CSS variables, JSON, Style Dictionary) so an interface's motion stays consistent and is editable in one place instead of hard-coded per component."}},
+{"@type":"Question","name":"Does Cadence review or critique my motion system?","acceptedAnswer":{"@type":"Answer","text":"Yes — beyond editing, Cadence has an opinion. Its system read scores the system 0–100 with a letter grade and a per-dimension scorecard, ranks findings worst-first each with a one-line fix (many one-click to apply), benchmarks it against shipped design systems, and exports the whole critique as a shareable Rationale in Markdown — all in your browser."}},
 {"@type":"Question","name":"How do I export easing and duration to CSS, Tailwind or Style Dictionary?","acceptedAnswer":{"@type":"Answer","text":"Tune the scales and intents in Cadence and open the export panel. It emits ready-to-paste CSS custom properties, a Tailwind theme extension, Style Dictionary tokens, TypeScript and JSON — the code updates live as you edit the system."}},
 {"@type":"Question","name":"Does it support scroll-driven animations and view transitions?","acceptedAnswer":{"@type":"Answer","text":"Yes. Alongside the token exports, Cadence emits recipes for CSS scroll-driven animations (animation-timeline: scroll() and view()) and the View Transitions API, each with a graceful fallback where the feature isn't supported."}},
-{"@type":"Question","name":"Is Cadence free, and does it need an account?","acceptedAnswer":{"@type":"Answer","text":"Yes — it's free, runs entirely in your browser as a single static page, and needs no account or sign-up. Nothing you build is uploaded; systems are shared by URL."}}
+{"@type":"Question","name":"Can I save or import my own motion systems?","acceptedAnswer":{"@type":"Answer","text":"Yes. Save and name systems in your browser with no account, export or import a portable .cadence.json file, and share any system by URL — durable and portable while the page stays a single static file."}},
+{"@type":"Question","name":"Is Cadence free, and does it need an account?","acceptedAnswer":{"@type":"Answer","text":"Yes and no — it's free and needs no account or sign-up, and it runs entirely in your browser as a single static page. Nothing you build is uploaded."}}
 ]}
 </script>
 <script>/* set the boot view before first paint — empty hash → landing, else tool */
@@ -246,12 +248,16 @@
     <dl class="lfaq">
       <dt>What are motion design tokens?</dt>
       <dd>Named, reusable values for animation — durations, easing curves, stagger and distance — stored as tokens (CSS variables, JSON, Style Dictionary) so an interface's motion stays consistent and is editable in one place instead of hard-coded per component.</dd>
+      <dt>Does Cadence review or critique my motion system?</dt>
+      <dd>Yes — beyond editing, Cadence has an opinion. Its system read scores the system 0–100 with a letter grade and a per-dimension scorecard, ranks findings worst-first each with a one-line fix (many one-click to apply), benchmarks it against shipped design systems, and exports the whole critique as a shareable Rationale in Markdown — all in your browser.</dd>
       <dt>How do I export easing and duration to CSS, Tailwind or Style Dictionary?</dt>
       <dd>Tune the scales and intents in Cadence and open the export panel. It emits ready-to-paste CSS custom properties, a Tailwind theme extension, Style Dictionary tokens, TypeScript and JSON — the code updates live as you edit the system.</dd>
       <dt>Does it support scroll-driven animations and view transitions?</dt>
       <dd>Yes. Alongside the token exports, Cadence emits recipes for CSS scroll-driven animations (<code>animation-timeline: scroll()</code> and <code>view()</code>) and the View Transitions API, each with a graceful fallback where the feature isn't supported.</dd>
+      <dt>Can I save or import my own motion systems?</dt>
+      <dd>Yes. Save and name systems in your browser with no account, export or import a portable <code>.cadence.json</code> file, and share any system by URL — durable and portable while the page stays a single static file.</dd>
       <dt>Is Cadence free, and does it need an account?</dt>
-      <dd>Yes and no — it's free, runs entirely in your browser as a single static page, and needs no account or sign-up. Nothing you build is uploaded; systems are shared by URL.</dd>
+      <dd>Yes and no — it's free and needs no account or sign-up, and it runs entirely in your browser as a single static page. Nothing you build is uploaded.</dd>
     </dl>
   </section>
 

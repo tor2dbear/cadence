@@ -11,6 +11,17 @@ stamped at deploy time.
 
 ## [Unreleased]
 
+### Added
+- **The landing FAQ now surfaces the opinion layer and saving systems** — new
+  entries explain that Cadence critiques a system (score, ranked fixes, Rationale)
+  and that you can save / import your own systems, so the differentiator isn't
+  described only in the guide.
+
+### Fixed
+- **The landing FAQ's structured data matches the page again.** The JSON-LD
+  `FAQPage` had drifted from the visible FAQ (one answer differed); the two are
+  back in sync and `smoke30` now checks them entry-for-entry.
+
 ## [0.6.0] — 2026-07-26
 
 Editor authoring round-out, honest Back/Forward navigation, and a documented
