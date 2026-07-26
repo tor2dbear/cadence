@@ -1413,15 +1413,26 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
 // A missing API (insecure context) or a rejected write used to still flash the
 // success label — a lie. On failure, tell the user to copy manually, and select
 // the source text when there is one so the keyboard shortcut just works.
-function flashBtn(btn, msg, restore, ms){ if(!btn) return; btn.textContent=msg; setTimeout(()=>{ btn.textContent=restore; }, ms); }
+function flashBtn(btn, msg, restore, ms){
+  if(!btn) return;
+  clearTimeout(btn._flashTimer);            // a prior flash's timer must not restore over this one
+  btn.textContent=msg;
+  btn._flashTimer=setTimeout(()=>{ btn.textContent=restore; }, ms);
+}
 function copyToClipboard(text, btn, okMsg, restore, selectEl){
+  // tag this attempt so a late result from a superseded click (rapid retry, or a
+  // delayed permission prompt) can't overwrite the newest feedback
+  const seq = btn ? (btn._copySeq=(btn._copySeq||0)+1) : 0;
+  const stale = ()=> btn && btn._copySeq!==seq;
+  const ok=()=>{ if(!stale()) flashBtn(btn, okMsg, restore, 1300); };
   const fail=()=>{
+    if(stale()) return;
     if(selectEl){ try{ const r=document.createRange(); r.selectNodeContents(selectEl); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }catch(_){} }
     flashBtn(btn, selectEl?"Press ⌘/Ctrl+C":"Couldn't copy — it's in the address bar", restore, 2400);
   };
   try{
     const p = navigator.clipboard && navigator.clipboard.writeText(text);
-    if(p && typeof p.then==="function") p.then(()=>flashBtn(btn, okMsg, restore, 1300), fail);
+    if(p && typeof p.then==="function") p.then(ok, fail);
     else fail();
   }catch(_){ fail(); }
 }

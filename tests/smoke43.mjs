@@ -54,6 +54,20 @@ await p.waitForTimeout(200);
 const failLabel = await p.$eval('#copy', el => el.textContent);
 assert('JS: a failed copy does not lie about success', !/copied/i.test(failLabel) && failLabel !== 'Copy');
 
+// rapid retry / delayed permission: a late result from a superseded click must
+// not overwrite the newest feedback (manual resolvers make this deterministic)
+await p.evaluate(() => { window.__res = []; Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: () => new Promise(r => window.__res.push(r)) } }); });
+await p.click('#copy');  // attempt A — pending
+await p.click('#copy');  // attempt B — supersedes A
+await p.evaluate(() => window.__res[1]());  // resolve the NEWEST → "Copied ✓"
+await p.waitForTimeout(60);
+const afterNew = await p.$eval('#copy', el => el.textContent);
+await p.evaluate(() => window.__res[0]());  // resolve the OLD one late → must be ignored
+await p.waitForTimeout(60);
+const afterOld = await p.$eval('#copy', el => el.textContent);
+assert('JS: a superseded copy result does not overwrite the newest feedback',
+  /copied/i.test(afterNew) && afterOld === afterNew);
+
 assert('no console/page errors', errors.length === 0);
 if (errors.length) errors.forEach(e => console.log('   ! ' + e));
 
