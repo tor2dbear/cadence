@@ -12,11 +12,28 @@ stamped at deploy time.
 ## [Unreleased]
 
 ### Added
+- **An intent's purpose is now editable** — a small field per intent (it was
+  display-only). The purpose rides along in the JSON / Style Dictionary /
+  Rationale exports and the share link.
 - **A no-JS notice on the landing.** With JavaScript disabled, a note explains
   that the interactive designer needs it, while the (static) landing content
   stays readable.
 
+### Changed
+- **The bench reflects the distance primitive.** The orb lens now travels a
+  fraction of the rail proportional to the intent's distance token (720px
+  "screen" = full width) instead of always crossing the whole width, so editing
+  the distance scale is visible in the preview.
+- **The guide now documents the opinion layer** — the ranked system read with
+  one-click Apply, the composite verdict + scorecard, the comparative "vs the
+  field" read, the Rationale export, and reading another system's palette. The
+  product's differentiator was under-described; `smoke35` now guards it.
+
 ### Fixed
+- **Scroll-driven and view-transition are now mutually exclusive on an intent.**
+  Both could be enabled at once — contradictory (one binds motion to scroll, the
+  other to a DOM state swap) and double-emitting in the exports. Enabling one now
+  clears the other, and a legacy/shared link carrying both loads scroll-driven only.
 - **The landing degrades gracefully without JavaScript.** The boot gate never
   ran, so both views stacked and the hero's staggered reveals stayed at
   `opacity:0`; the landing is now the default view (the no-JS fallback) with its

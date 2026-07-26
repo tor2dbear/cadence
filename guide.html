@@ -140,7 +140,15 @@
     <p>Both should ship with an <strong>honest fallback</strong> for browsers that don't support them yet — Cadence emits the recipe and the fallback together.</p>
 
     <h2>The opinion: a system should critique itself</h2>
-    <p>Structure is half the job; the other half is judgement. A good motion system flags its own problems — an easing set that's grown too large, an <code>exit</code> that's slower than its <code>enter</code>, a duration ladder with uneven steps. That built-in critique is the difference between a pile of tokens and a system with a point of view.</p>
+    <p>Structure is half the job; the other half is judgement. This is Cadence's differentiator: a built-in <strong>system read</strong> that critiques your system as you build it, so you end up with a point of view, not a pile of tokens.</p>
+    <ul>
+      <li><strong>Ranked findings, worst-first</strong> — it flags an <code>exit</code> slower than its <code>enter</code>, a redundant easing, an uneven duration ladder, over-budget durations or staggers, an idle spatial/effects split, and distances that jump too fast to read. Each finding carries a one-line fix, and the deterministic ones offer a <strong>one-click Apply</strong> that changes the model for you.</li>
+      <li><strong>A verdict, not just a list</strong> — a composite <strong>grade</strong> (A–E) and 0–100 score with a per-dimension scorecard (ladder, easing set, enter/exit, budgets, vs the field), so the read opens with an answer instead of a scroll.</li>
+      <li><strong>Benchmarked against the field</strong> — your ladder growth and overall tempo are measured against shipped systems (Material 3, Carbon, Fluent…), so the numbers get a reference frame.</li>
+      <li><strong>A Rationale export</strong> — the whole critique (verdict, scorecard, every finding and its fix) as shareable Markdown, so you can defend the system to a team without opening the editor.</li>
+      <li><strong>Read someone else's system</strong> — paste a third-party token set (CSS custom properties, a <code>tokens.json</code>, or a Tailwind fragment) and the same critique runs over it.</li>
+    </ul>
+    <p>That built-in critique is the difference between a pile of tokens and a system with a point of view.</p>
 
     <div class="gcta">
       <a class="gcta__btn" href="index.html#tool">Build your motion system →</a>

@@ -21,6 +21,8 @@ const guide = read('guide.html');
 const CAPS = [
   ['save & name systems', /my\s+system|save\s+a\s+system/],
   ['import / export a system file', /\.cadence\.json/],
+  // the differentiator — the self-critiquing opinion layer — must stay documented
+  ['the self-critiquing opinion layer', /system\s+read|critiques?\s+itself|opinion layer/],
 ];
 for (const [name, re] of CAPS) {
   assert(`README documents: ${name}`, re.test(readme));
