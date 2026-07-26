@@ -19,10 +19,14 @@ stamped at deploy time.
   riding the active easing curve — comet trail, velocity-driven motion blur, and
   a soft wash of the role colour breathing behind it. Springs are sampled to a
   `linear()` polyline just as the tool exports them. One file, no dependencies,
-  no runtime requests; a `#label` mode reveals a minimal instrument caption, and
-  under `prefers-reduced-motion` (e.g. iOS "Reduce Motion") it falls back to a
-  calm cross-fade loop — the lit intent still cycles, but with no travel, comet
-  or motion blur — rather than freezing.
+  no runtime requests. It behaves like a **video, not a responsive layout**: the
+  whole composition lives in one SVG on a fixed 16:9 frame, so it scales
+  uniformly (letterboxed) and never reflows. Hash flags, combinable: `#light`
+  renders it in Cadence's light palette (parchment / ink-navy) instead of dark,
+  and `#label` reveals a minimal mono caption naming each lit intent's token
+  composition. Under `prefers-reduced-motion` (e.g. iOS "Reduce Motion") it falls
+  back to a calm cross-fade loop — the lit intent still cycles, but with no
+  travel, comet or motion blur — rather than freezing.
 
 ## [0.6.0] — 2026-07-26
 
