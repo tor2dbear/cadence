@@ -152,13 +152,9 @@
     <circle cx="42" cy="150" r="1.9" fill="var(--faint)"/>
     <circle cx="278" cy="55" r="1.9" fill="var(--faint)"/>
 
-    <!-- minimal instrument caption (inside the SVG, so it scales like the rest) -->
-    <g id="cap" opacity="0" font-family="var(--mono)">
-      <text id="capText" x="42" y="173" font-size="6">
-        <tspan id="capIntent" font-weight="700" fill="var(--role)">enter</tspan><tspan id="capRest" fill="var(--brand)" fill-opacity=".78"></tspan>
-      </text>
-      <text id="capDur" x="278" y="173" text-anchor="end" font-size="5.8" fill="var(--brand)"></text>
-    </g>
+    <!-- instrument caption — JS fills it with token "chips" (tag/code feel);
+         inside the SVG so it scales with everything else -->
+    <g id="cap" opacity="0"></g>
   </svg>
 </div>
 
@@ -229,10 +225,43 @@
       chip=$("chip"), cross=$("cross"), crossV=$("crossV"), crossH=$("crossH"),
       handles=$("handles"), h1line=$("h1line"), h2line=$("h2line"), h1dot=$("h1dot"), h2dot=$("h2dot"),
       mblurG=$("mblurG"), washRect=$("washRect"), trail=$("trail"),
-      cap=$("cap"), capIntent=$("capIntent"), capRest=$("capRest"), capDur=$("capDur"),
-      root=document.documentElement;
+      cap=$("cap"), root=document.documentElement;
 
   if(showcap){ cap.style.transition="opacity .5s ease"; }
+
+  // ---- token "chips" — the tag/code readout, laid out in SVG units -----
+  function mkChip(text,fs,color,strong){
+    var g=document.createElementNS(NS,"g"),
+        r=document.createElementNS(NS,"rect"),
+        t=document.createElementNS(NS,"text");
+    t.setAttribute("font-size",fs); t.setAttribute("font-weight",strong?"700":"500");
+    t.setAttribute("fill",color); t.setAttribute("dominant-baseline","central");
+    t.textContent=text;
+    r.setAttribute("fill",color); r.setAttribute("fill-opacity",strong?".12":".07");
+    r.setAttribute("stroke",color); r.setAttribute("stroke-opacity",strong?".5":".32");
+    r.setAttribute("stroke-width","0.5"); r.setAttribute("rx","2.2");
+    g.appendChild(r); g.appendChild(t);
+    return {g:g,r:r,t:t};
+  }
+  function buildCaption(it){
+    while(cap.firstChild) cap.removeChild(cap.firstChild);
+    var FS=5.2, padX=3, padY=2.3, gap=3.4, cy=170, h=FS+padY*2, x=X0;
+    [{text:it.key,color:it.color,strong:true},
+     {text:it.comp[0],color:"var(--brand)"},
+     {text:it.comp[1],color:"var(--brand)"}].forEach(function(ci){
+      var c=mkChip(ci.text,FS,ci.color,ci.strong); cap.appendChild(c.g);
+      var w=c.t.getBBox().width;
+      c.r.setAttribute("x",x); c.r.setAttribute("y",cy-h/2);
+      c.r.setAttribute("width",w+padX*2); c.r.setAttribute("height",h);
+      c.t.setAttribute("x",x+padX); c.t.setAttribute("y",cy);
+      x+=w+padX*2+gap;
+    });
+    var d=mkChip(it.dur+"ms",FS,"var(--brand)",false); cap.appendChild(d.g);
+    var dw=d.t.getBBox().width, dx=X1-(dw+padX*2);
+    d.r.setAttribute("x",dx); d.r.setAttribute("y",cy-h/2);
+    d.r.setAttribute("width",dw+padX*2); d.r.setAttribute("height",h);
+    d.t.setAttribute("x",dx+padX); d.t.setAttribute("y",cy);
+  }
 
   var TRAILN=18, trailC=[], hist=[];
   for(var i=0;i<TRAILN;i++){var c=document.createElementNS(NS,"circle");c.setAttribute("r","2.6");trail.appendChild(c);trailC.push(c);}
@@ -253,12 +282,7 @@
       h1dot.setAttribute("cx",c1x);h1dot.setAttribute("cy",c1y);
       h2dot.setAttribute("cx",c2x);h2dot.setAttribute("cy",c2y);
     }else handles.style.display="none";
-    if(showcap){
-      capIntent.textContent=it.key;
-      capRest.textContent=" · "+it.comp[0]+" · "+it.comp[1];   // token composition; raw val omitted to fit
-      capDur.textContent=it.dur+"ms";
-      cap.style.opacity=1;
-    }
+    if(showcap){ buildCaption(it); cap.style.opacity=1; }
   }
 
   function placeOrb(t){
