@@ -52,6 +52,20 @@ assert('a small distance shortens the orb travel', /\*\s*0?\.\d|12%/.test(small)
 assert('a large distance travels the full rail', full === 'calc(100% - 40px)');
 assert('no distance keeps the full travel (unchanged default)', none === full);
 
+// a distance of exactly 0px is a permitted value — the orb must stay put, not
+// jump to the 0.12 visibility floor that only positive distances get
+const zero = await page.evaluate(async () => {
+  probes[0].kind = 'orb'; probes[0].intent = intents[0].id;
+  const di = distances.findIndex(d => d.name === 'nudge');
+  distances[di].px = 0;
+  intents[0].binds[0].distance = 'nudge';
+  renderBench(); play(0);
+  await new Promise(r => setTimeout(r, 120));
+  return document.querySelector('.probe[data-i="0"] .orb')?.style.left;
+});
+// the browser folds `calc(14px + (100% - 54px) * 0.000)` down to `calc(0% + 14px)` == START
+assert('a zero distance keeps the orb stationary (no 0.12 floor)', /^(14px|calc\(\s*0%\s*\+\s*14px\s*\))$/.test(zero));
+
 // dragging the distance slider replays the orb live (its endpoint is captured at
 // play() time, so the input handler must re-trigger it)
 const draggedEnd = await page.evaluate(async () => {
@@ -69,6 +83,24 @@ const draggedEnd = await page.evaluate(async () => {
 });
 assert('dragging the distance slider replays the orb to the new endpoint',
   /calc\(/.test(draggedEnd) && draggedEnd !== '14px' && draggedEnd !== 'calc(100% - 40px)');
+
+// an overlapping replay (edit the slider while the orb is mid-flight) must cancel
+// the prior play's 1400ms return-to-START timer, or the stale timer yanks the
+// freshly-replayed orb home a few ms after it starts
+const notYanked = await page.evaluate(async () => {
+  probes[0].kind = 'orb'; probes[0].intent = intents[0].id;
+  intents[0].binds[0].distance = 'screen';   // full travel
+  renderBench(); play(0);                     // arms a reset timer ~1400ms out
+  await new Promise(r => setTimeout(r, 300));  // still inside that window
+  const di = distances.findIndex(d => d.name === 'screen');
+  const el = document.createElement('input');
+  el.type = 'range'; el.dataset.scope = 'xpx'; el.dataset.i = String(di); el.value = String(distances[di].px);
+  document.body.appendChild(el);
+  el.dispatchEvent(new Event('input', { bubbles: true }));  // replays (~180ms debounce)
+  await new Promise(r => setTimeout(r, 1250));  // past the FIRST play's original 1400ms mark
+  return document.querySelector('.probe[data-i="0"] .orb')?.style.left;
+});
+assert('an overlapping replay is not reset by the prior play\'s stale timer', notYanked !== '14px');
 
 // assigning a distance via the dropdown (a change event) must also replay the orb
 const assignedEnd = await page.evaluate(async () => {

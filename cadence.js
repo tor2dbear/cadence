@@ -501,6 +501,7 @@ function anim(el,props,r,delay=0){
   el.style.transition=Object.keys(props).map(p=>`${p} ${r.d} ${r.e} ${delay}ms`).join(", ");
   requestAnimationFrame(()=>{ for(const p in props) el.style[p]=props[p]; });
 }
+const orbResetTimers={};   // per-probe reset handle, so an overlapping replay cancels the stale return-to-START
 function play(i){
   const p=probes[i], r=resolve(findIntent(p.intent));
   const root=document.querySelector(`.probe[data-i="${i}"]`);
@@ -548,14 +549,17 @@ function play(i){
     // a fraction of the rail proportional to the px (720px "screen" = full width),
     // so editing the distance primitive is visible here. No distance → full travel.
     const START="14px";
-    const frac = r.distPx!=null ? Math.max(0.12, Math.min(1, r.distPx/720)) : 1;
+    // zero distance stays put (a real, permitted value); the 0.12 visibility floor
+    // applies only to positive distances so a small nudge is still perceptible.
+    const frac = r.distPx!=null ? (r.distPx<=0 ? 0 : Math.max(0.12, Math.min(1, r.distPx/720))) : 1;
     const END = frac===1 ? "calc(100% - 40px)" : `calc(14px + (100% - 54px) * ${frac.toFixed(3)})`;
     const step=Math.max(9,(parseInt(r.d)||200)/15);
-    const setTrans=()=>dots.forEach((el,i)=>{ el.style.transition=`left ${r.d} ${r.e} ${i*step}ms`; });
+    const setTrans=()=>dots.forEach((el,k)=>{ el.style.transition=`left ${r.d} ${r.e} ${k*step}ms`; });
     dots.forEach(el=>{ el.style.transition="none"; el.style.left=START; });
     void rail.offsetWidth; setTrans();
     requestAnimationFrame(()=>dots.forEach(el=>el.style.left=END));
-    setTimeout(()=>{ setTrans(); requestAnimationFrame(()=>dots.forEach(el=>el.style.left=START)); },1400);
+    clearTimeout(orbResetTimers[i]);   // an in-flight replay must not be reset by the prior play's timer
+    orbResetTimers[i]=setTimeout(()=>{ setTrans(); requestAnimationFrame(()=>dots.forEach(el=>el.style.left=START)); },1400);
   }
   if(p.kind==="button"){
     const b=root.querySelector(".btnpad");
