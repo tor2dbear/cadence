@@ -53,6 +53,19 @@ await page.waitForTimeout(120);
 const after = await page.evaluate(() => history.length);
 assert('editing does not spam the history stack', after === before);
 
+// revisiting a pristine #tool entry restores the DEFAULT system — a later in-memory
+// edit must not stay active — and must not rewrite that historical entry's hash to
+// the edited state (the "#tool" sentinel decodes to the default, not "keep current")
+const def0 = await page.evaluate(() => DEFAULT_S.d[0][1]);   // the default first-duration ms
+const pristine = await page.evaluate(async d => {
+  durations[0].ms = d + 111;                    // diverge the in-memory state
+  location.hash = 'tool';                        // navigate onto a pristine #tool entry
+  await new Promise(r => setTimeout(r, 150));
+  return { ms: durations[0].ms, hash: location.hash };
+}, def0);
+assert('revisiting #tool restores the default state (edit does not persist)', pristine.ms === def0);
+assert('revisiting #tool keeps a clean #tool hash (no rewrite to an edited hash)', pristine.hash === '#tool');
+
 // a shared/deep link still boots straight into the tool (unchanged)
 const deep = await browser.newPage({ viewport: { width: 1300, height: 1000 } });
 await deep.goto(BASE + '#tool', { waitUntil: 'networkidle' });

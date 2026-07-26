@@ -1770,7 +1770,12 @@ const DEFAULT_ENC = encodeState();
 window.addEventListener("hashchange", ()=>{
   const h=location.hash.replace(/^#/,"");
   if(!h){ goLanding(); return; }                                       // → landing (Back from the tool)
-  if(h!=="tool" && h!==encodeState()){ try{ applyEncoded(h); }catch(_){ /* malformed → keep current */ } }
+  // "#tool" is the pristine default system (DEFAULT_ENC is the empty diff), so a
+  // hash decides the state to restore. Revisiting an entry must reinstate its own
+  // state — otherwise a later edit stays active and goTool()'s writeURL() would
+  // rewrite this historical entry to the edited hash.
+  const enc = h==="tool" ? DEFAULT_ENC : h;
+  if(enc!==encodeState()){ try{ applyEncoded(enc); }catch(_){ /* malformed → keep current */ } }
   goTool();                                                            // → tool (Forward, or a shared link)
 });
 
