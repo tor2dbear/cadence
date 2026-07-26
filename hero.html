@@ -124,12 +124,13 @@
       <line id="crossH" x1="42" y1="140" x2="42" y2="140"/>
     </g>
 
-    <!-- control-point handles (cubic intents only) -->
+    <!-- control-point handles (cubic intents only) — the editing "levers" are
+         part of the instrument, so they carry the PRIMARY brand colour -->
     <g id="handles" opacity="0">
-      <line id="h1line" stroke="var(--role)" stroke-width="1" opacity=".5"/>
-      <line id="h2line" stroke="var(--role)" stroke-width="1" opacity=".5"/>
-      <circle id="h1dot" r="2.2" fill="var(--bg)" stroke="var(--role)" stroke-width="1.3"/>
-      <circle id="h2dot" r="2.2" fill="var(--bg)" stroke="var(--role)" stroke-width="1.3"/>
+      <line id="h1line" stroke="var(--brand)" stroke-width="1" opacity=".55"/>
+      <line id="h2line" stroke="var(--brand)" stroke-width="1" opacity=".55"/>
+      <circle id="h1dot" r="2.2" fill="var(--bg)" stroke="var(--brand)" stroke-width="1.3"/>
+      <circle id="h2dot" r="2.2" fill="var(--bg)" stroke="var(--brand)" stroke-width="1.3"/>
     </g>
 
     <!-- active curve: bloomed underlay + crisp stroke -->
