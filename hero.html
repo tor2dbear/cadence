@@ -164,14 +164,19 @@
   "use strict";
   var NS="http://www.w3.org/2000/svg", $=function(id){return document.getElementById(id)};
   var hash=location.hash||"";
-  if(/light/.test(hash)) document.body.classList.add("light");
   var showcap=/label/.test(hash);
-  var LIGHT=document.body.classList.contains("light");
-  // faint-fan opacity — the pale role hues need a touch more presence on light
-  var INACT=LIGHT?0.26:0.12;
-  // legible-on-parchment role colours for light (deepened, same hue family;
-  // move/emphasized/exit align to the tool's own light accent-2 / violet / warn)
+  // THEME. Default `auto` follows prefers-color-scheme live, so the hero matches
+  // a portfolio that tracks the OS. #light / #dark hard-lock it. A host page can
+  // also drive it at runtime — postMessage({theme:'light'|'dark'|'auto'}) — to
+  // mirror a manual theme toggle. See the embed snippet in the repo README.
+  var forced = /dark/.test(hash) ? 'dark' : (/light/.test(hash) ? 'light' : null);
+  var mode = forced || 'auto';
+  var mq = window.matchMedia && matchMedia('(prefers-color-scheme: dark)');
+  var resolve = function(){ return mode==='auto' ? ((mq&&mq.matches)?'dark':'light') : mode; };
+  // role colours per theme: bright on dark, deepened (legible on parchment) on light
+  var ROLE_DARK ={enter:"#8ad0c6",move:"#e9b872",emphasized:"#b79cf0",exit:"#e08b7f"};
   var ROLE_LIGHT={enter:"#177f70",move:"#9a5e23",emphasized:"#6a4a86",exit:"#b0402a"};
+  var INACT=0.12;   // faint-fan opacity (set per theme; a touch stronger on light)
 
   // ---- plot geometry (SVG user units, 320×180 = 16:9) -----------------
   // Y0 raised (was 150) to open a clear band at the bottom for the demo track,
@@ -201,7 +206,14 @@
     {key:"emphasized", color:"#b79cf0", comp:["duration.slow","anticipate · overshoot"], val:"cubic-bezier(.34,1.56,.64,1)", dur:360, ease:cubic(.34,1.56,.64,1), h:[.34,1.56,.64,1]},
     {key:"exit", color:"#e08b7f", comp:["duration.slow","spring → linear()"], val:"spring(stiffness 200 · damping 14)", dur:640, ease:spring(200,14), h:null}
   ];
-  if(LIGHT) INTENTS.forEach(function(it){it.color=ROLE_LIGHT[it.key];});
+  // paint the initial theme before the fan is built (it reads INACT + colours)
+  (function initTheme(){
+    var light=resolve()==='light';
+    document.body.classList.toggle('light',light);
+    INACT=light?0.26:0.12;
+    var pal=light?ROLE_LIGHT:ROLE_DARK;
+    INTENTS.forEach(function(it){ it.color=pal[it.key]; });
+  })();
 
   // pre-sample each intent → path string + total length (for the draw-on)
   var N=72;
@@ -311,9 +323,26 @@
     return {px:px,py:py};
   }
 
+  var idx=0;
+
+  // ---- live theme switching (OS change + host postMessage) ------------
+  function retheme(){
+    var light=resolve()==='light';
+    document.body.classList.toggle('light',light);
+    INACT=light?0.26:0.12;
+    var pal=light?ROLE_LIGHT:ROLE_DARK;
+    INTENTS.forEach(function(it){ it.color=pal[it.key]; });
+    fanPaths.forEach(function(p,j){ p.setAttribute('opacity', j===idx?'0':String(INACT)); });
+    applyIntent(INTENTS[idx],idx);   // recolour --role, the active curve/orb + caption dot
+  }
+  if(mq && mq.addEventListener) mq.addEventListener('change', function(){ if(mode==='auto') retheme(); });
+  window.addEventListener('message', function(e){
+    var t=e && e.data && e.data.theme;
+    if(t==='light'||t==='dark'||t==='auto'){ mode=t; retheme(); }
+  });
+
   // ---- reduced motion: a CALM opacity-only loop (not a freeze) ---------
   var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion:reduce)").matches;
-  var idx=0;
   if(reduce){
     trailC.forEach(function(c){c.style.opacity=0;});
     chip.style.opacity=0;

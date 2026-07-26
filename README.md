@@ -39,6 +39,35 @@ python3 -m http.server 4173
 | `styles.css` | Styles |
 | `cadence.js` | Model, rendering, animation, and the system-read layer |
 | `demo.html` | Standalone live demo — the system applied to a real UI |
+| `hero.html` | Standalone, self-contained hero animation (for a portfolio / embed) |
+
+## Embedding the hero
+
+`hero.html` is a **self-contained, dependency-free** hero animation that showcases
+the tool's core — the motion system as a fan of easing curves, one intent lit at a
+time. It's built to be dropped into another site (a portfolio works-case), so it
+behaves like a **video, not a responsive layout**: the whole composition lives in
+one SVG on a fixed 16:9 frame and scales uniformly.
+
+The deployed copy sends `frame-ancestors 'self'`, so **copy the file into the host
+site** and serve it same-origin rather than iframing the live URL cross-origin:
+
+```html
+<iframe src="/cadence-hero.html" title="Cadence — a motion system designer"
+        loading="lazy" style="width:100%;aspect-ratio:16/9;border:0"></iframe>
+```
+
+**Theme.** With no hash it follows `prefers-color-scheme` live (matches a host that
+tracks the OS). `#light` / `#dark` hard-lock it. For a host with a *manual* theme
+toggle, mirror it with one line wherever you flip the theme:
+
+```js
+iframe.contentWindow.postMessage({ theme: isDark ? 'dark' : 'light' }, '*'); // or 'auto'
+```
+
+**Hash flags** (combinable, e.g. `#light,label`): `#light` / `#dark` lock the theme;
+`#label` reveals the token readout (intent + composition chips). `prefers-reduced-motion`
+falls back to a calm cross-fade.
 
 ## Status
 
