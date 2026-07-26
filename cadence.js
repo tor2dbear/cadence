@@ -62,8 +62,12 @@ const VT_TYPE = ["root","shared"];
 const VT_DEFAULT = {type:"root"};
 // a stable colour per intent (by position) so the bench reads by role, not one
 // flat teal. Defaults land on enter=teal, exit=red, move=amber, emphasized=violet.
+// role colours live in CSS as --intent-0..6 (one set per theme, see styles.css),
+// so colorOf returns the token, not a hex: the bench recolours correctly on light
+// vs dark and updates live when the OS theme changes. The bright (dark-theme)
+// values are kept here as the canonical reference / palette length.
 const INTENT_COLORS = ["#8ad0c6","#e08b7f","#e9b872","#b79cf0","#7ab8f0","#d69ce0","#9ad17f"];
-const colorOf = i => INTENT_COLORS[((i%INTENT_COLORS.length)+INTENT_COLORS.length)%INTENT_COLORS.length];
+const colorOf = i => `var(--intent-${((i%INTENT_COLORS.length)+INTENT_COLORS.length)%INTENT_COLORS.length})`;
 // each intent carries one binding {dur, ease, stagger, prop} per mode. `stagger`
 // (ms) is the per-item delay for sequenced elements; `prop` is the target.
 let intents = [

@@ -11,6 +11,14 @@ stamped at deploy time.
 
 ## [Unreleased]
 
+### Fixed
+- **Role colours are now legible on the light theme.** The per-intent bench
+  colours were a single bright set used in both themes; on the light (parchment)
+  surface they sat at ~1.4–2.3:1 contrast — effectively invisible. They're now
+  theme-aware CSS tokens (`--intent-0…6`): deepened, same-hue variants on light
+  (all clear WCAG 3:1 for graphics) and the original bright set on dark, so the
+  bench recolours correctly per theme and updates live when the OS theme changes.
+
 ### Added
 - **A standalone, text-free hero animation** (`hero.html`) for showcasing
   Cadence off-site (a portfolio hero band, an embed). It carries the motion, not

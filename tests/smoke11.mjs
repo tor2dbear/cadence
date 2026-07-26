@@ -10,23 +10,25 @@ const assert = (n, c) => console.log(`${c ? 'PASS' : 'FAIL'}  ${n}`);
 await page.goto(BASE + '#tool', { waitUntil: 'networkidle' });
 { const _x=page.locator('#exportToggle'); if(await _x.count()) await _x.click(); }  // open export panel (reflow column)
 
-// intent dots colour by role
+// intent dots colour by role. Role colours are theme-aware CSS tokens
+// (--intent-N); the suite runs in the light default, so these are the deepened,
+// legible-on-parchment values (dark theme mirrors them bright).
 const dot0 = await page.locator('.intent__dot').first().evaluate(el => getComputedStyle(el).backgroundColor);
-assert('enter dot is teal', dot0 === 'rgb(138, 208, 198)');
+assert('enter dot is teal (light)', dot0 === 'rgb(23, 127, 112)');
 assert('5 intent dots', (await page.locator('.intent__dot').count()) === 5);
 
 // probes inherit their intent's colour
 const scope0 = await page.locator('.probe[data-i="0"] .scope__dot').first().evaluate(el => getComputedStyle(el).backgroundColor);
-assert('probe 0 (enter) scope teal', scope0 === 'rgb(138, 208, 198)');
+assert('probe 0 (enter) scope teal (light)', scope0 === 'rgb(23, 127, 112)');
 const orb1 = await page.locator('.probe[data-i="1"] .orb').evaluate(el => getComputedStyle(el).backgroundColor);
-assert('probe 1 (exit) orb red', orb1 === 'rgb(224, 139, 127)');
+assert('probe 1 (exit) orb red (light)', orb1 === 'rgb(176, 64, 42)');
 const orb2 = await page.locator('.probe[data-i="2"] .orb').evaluate(el => getComputedStyle(el).backgroundColor);
-assert('probe 2 (move) orb amber', orb2 === 'rgb(233, 184, 114)');
-// changing a probe's intent recolours it (the orb lens is kept — it can show
-// exit fine — so read the probe's --accent directly, lens-agnostic)
+assert('probe 2 (move) orb amber (light)', orb2 === 'rgb(154, 94, 35)');
+// changing a probe's intent recolours it — the probe's --accent points at the
+// new intent's role token (index 1 = exit), lens-agnostic and theme-independent
 await page.locator('.probe[data-i="2"] .probe__sel').selectOption({ label: 'exit' });
 const acc2b = await page.locator('.probe[data-i="2"]').evaluate(el => getComputedStyle(el).getPropertyValue('--accent').trim());
-assert('repoint probe → recolours to exit red', acc2b === '#e08b7f');
+assert('repoint probe → recolours to exit (light)', acc2b === '#b0402a');
 
 // intro strip: visible, dismissible, remembered across reload
 assert('intro visible initially', !(await page.locator('#intro').getAttribute('hidden') !== null));

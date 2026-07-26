@@ -19,6 +19,11 @@
   --ink:#211d15; --ink-dim:#655f51; --ink-faint:#9a9079;
   --accent:#22356e; --accent-2:#a8632f; --warn:#b0402a; --violet:#6a4a86;
   --on-accent:#f6f1e6; --accent-hi:#33468f;
+  /* per-intent role colours (by position). Deepened for legibility on the light
+     surface — the bright set (dark theme) drops to ~1.4:1 on parchment; these
+     clear WCAG 3:1 for graphics. Mirrored bright in the dark block below. */
+  --intent-0:#177f70; --intent-1:#b0402a; --intent-2:#9a5e23; --intent-3:#6a4a86;
+  --intent-4:#2b6c9c; --intent-5:#97509f; --intent-6:#4f7f2e;
   /* the code surface is a fixed warm-dark terminal in both themes */
   --code-bg:#211d16; --code-ink:#d8cfbf; --code-tk:#9ab0f0; --code-tk2:#e2a878; --code-cm:#8b8069;
   --radius:12px;
@@ -34,6 +39,9 @@
     --ink:#ece5d6; --ink-dim:#a79d8a; --ink-faint:#79705f;
     --accent:#8ea2e8; --accent-2:#d89a68; --warn:#e08b7f; --violet:#b79cf0;
     --on-accent:#191712; --accent-hi:#a6b6ef;
+    /* bright role colours — high contrast on the dark surface */
+    --intent-0:#8ad0c6; --intent-1:#e08b7f; --intent-2:#e9b872; --intent-3:#b79cf0;
+    --intent-4:#7ab8f0; --intent-5:#d69ce0; --intent-6:#9ad17f;
   }
 }
 *{box-sizing:border-box}
