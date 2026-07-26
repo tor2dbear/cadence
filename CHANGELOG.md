@@ -12,13 +12,15 @@ stamped at deploy time.
 ## [Unreleased]
 
 ### Added
-- **A standalone hero animation** (`hero.html`) for showcasing Cadence off-site
-  (a portfolio, an embed): one orb rides a live easing curve as the intent —
-  `enter` / `move` / `emphasized` / `exit` — and its named tokens cycle beneath
-  it, springs sampled to a `linear()` polyline just as the tool exports them.
-  One file, no dependencies, no runtime requests; a `#bare` mode drops the copy
-  for use as a pure backdrop, and `prefers-reduced-motion` renders a calm static
-  frame.
+- **A standalone, text-free hero animation** (`hero.html`) for showcasing
+  Cadence off-site (a portfolio hero band, an embed). It carries the motion, not
+  the words: the whole system is drawn as a fan of the four role-coloured intents
+  (`enter` / `move` / `emphasized` / `exit`), one lit at a time, with an orb
+  riding the active easing curve — comet trail, velocity-driven motion blur, and
+  a soft wash of the role colour breathing behind it. Springs are sampled to a
+  `linear()` polyline just as the tool exports them. One file, no dependencies,
+  no runtime requests; a `#label` mode reveals a minimal instrument caption, and
+  `prefers-reduced-motion` renders a calm static frame.
 
 ## [0.6.0] — 2026-07-26
 
