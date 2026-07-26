@@ -117,6 +117,11 @@ const page = `<!doctype html>
   .cl-ver{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;
     font-family:var(--serif);font-weight:600;letter-spacing:-.01em;margin:48px 0 6px;padding-top:22px;border-top:1px solid var(--line)}
   .cl-num{font-size:clamp(22px,3.4vw,28px)}
+  /* the version-number links inherit the heading colour (a bare <a> would fall to
+     the browser default blue — unreadable on the dark theme); a quiet accent
+     underline signals the link, brightening on hover */
+  .cl-num a{color:inherit;text-decoration:none;border-bottom:2px solid color-mix(in srgb,var(--accent) 45%,transparent);transition:color .15s ease,border-color .15s ease}
+  .cl-num a:hover{color:var(--accent);border-color:var(--accent)}
   .cl-ver time{font-family:var(--mono);font-size:12px;font-weight:400;color:var(--ink-faint)}
   .cl-sec{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:20px 0 8px}
   .changelog ul{margin:0 0 8px;padding-left:20px}

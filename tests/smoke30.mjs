@@ -67,6 +67,9 @@ assert('build.sh generates the changelog from CHANGELOG.md', /gen-changelog\.mjs
     /<span class="cl-num"><a href="[^"]*releases\/tag\/v0\.5\.0"[^>]*>0\.5\.0<\/a><\/span>/.test(clHtml));
   assert('changelog links Unreleased to the compare view',
     /<span class="cl-num"><a href="[^"]*compare\/v0\.5\.0\.\.\.HEAD"[^>]*>Unreleased<\/a><\/span>/.test(clHtml));
+  // the version links must be themed, not left at the browser-default blue (unreadable on dark)
+  assert('changelog version links carry a themed colour rule',
+    /\.cl-num a\s*\{[^}]*color:/.test(clHtml));
   assert('changelog generator carries BreadcrumbList', /"@type":"BreadcrumbList"/.test(clHtml));
   assert('changelog generator leaves no raw markdown bold', !/\*\*/.test(clHtml.replace(/<[^>]+>/g, '')));
   assert('changelog carries the wordmark curve + a staggered entrance',
