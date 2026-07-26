@@ -1227,6 +1227,17 @@ function updateResolvedLines(){
   });
 }
 
+// the orb lens travels by the intent's distance token, but END is captured when
+// play() starts — so a distance-slider drag wouldn't move an on-screen orb. Replay
+// the orb probes showing this distance (debounced, so a drag doesn't restart every
+// frame; explicit, so it works even with the idle loop paused behind the dock).
+let distReplayTimer=null;
+function replayDistanceProbes(distName){
+  clearTimeout(distReplayTimer);
+  distReplayTimer=setTimeout(()=>{
+    probes.forEach((p,idx)=>{ if(p.kind!=="orb") return; const it=findIntent(p.intent); if(it && bindOf(it).distance===distName) play(idx); });
+  },180);
+}
 // ---------- events (delegated) ----------
 // Enter commits an edit (name/stagger inputs) by blurring — no waiting for focus loss
 document.addEventListener("keydown", e=>{
@@ -1235,7 +1246,7 @@ document.addEventListener("keydown", e=>{
 document.addEventListener("input", e=>{
   const t=e.target, sc=t.dataset.scope, i=+t.dataset.i;
   if(sc==="dur"){ durations[i].ms=+t.value; refreshTokens(); renderDurations(); render(); critique(); updateResolvedLines(); writeURL(); }
-  if(sc==="xpx"){ distances[i].px=+t.value; const v=t.closest(".drow")?.querySelector(".drow__val"); if(v)v.textContent=t.value+"px"; render(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="xpx"){ distances[i].px=+t.value; const v=t.closest(".drow")?.querySelector(".drow__val"); if(v)v.textContent=t.value+"px"; render(); critique(); updateResolvedLines(); writeURL(); replayDistanceProbes(distances[i].name); }
   if(sc==="iname"){ intents[i].name=t.value.trim()||intents[i].name; render(); critique(); writeURL(); }
   if(sc==="ipurpose"){ intents[i].purpose=t.value; render(); critique(); writeURL(); }  // prose, kept raw — escaped at each sink, not run through the token-name sanitizer
   if(sc==="istag"){ bindOf(intents[i]).stagger=Math.max(0,Math.min(400,+t.value||0)); render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }

@@ -51,6 +51,24 @@ assert('a small distance shortens the orb travel', /\*\s*0?\.\d|12%/.test(small)
 assert('a large distance travels the full rail', full === 'calc(100% - 40px)');
 assert('no distance keeps the full travel (unchanged default)', none === full);
 
+// dragging the distance slider replays the orb live (its endpoint is captured at
+// play() time, so the input handler must re-trigger it)
+const draggedEnd = await page.evaluate(async () => {
+  probes[0].kind = 'orb'; probes[0].intent = intents[0].id;
+  intents[0].binds[0].distance = 'nudge';
+  renderBench();
+  const di = distances.findIndex(d => d.name === 'nudge');
+  distances[di].px = 600;
+  const el = document.createElement('input');
+  el.type = 'range'; el.dataset.scope = 'xpx'; el.dataset.i = String(di); el.value = '600';
+  document.body.appendChild(el);
+  el.dispatchEvent(new Event('input', { bubbles: true }));   // the event the slider fires
+  await new Promise(r => setTimeout(r, 450));                // past the debounce + the rAF that sets END
+  return document.querySelector('.probe[data-i="0"] .orb')?.style.left;
+});
+assert('dragging the distance slider replays the orb to the new endpoint',
+  /calc\(/.test(draggedEnd) && draggedEnd !== '14px' && draggedEnd !== 'calc(100% - 40px)');
+
 assert('no console/page errors', errors.length === 0);
 if (errors.length) errors.forEach(e => console.log('   ! ' + e));
 
