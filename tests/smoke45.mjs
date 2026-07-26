@@ -32,8 +32,9 @@ const x = page.locator('#exportToggle');
 if (await x.count()) await x.click();
 const tab = async fmt => { await page.click(`.tab[data-fmt="${fmt}"]`); await page.waitForTimeout(80); return page.locator('#out').innerText(); };
 assert('purpose rides along in the JSON export', (await tab('json')).includes('open & close <x>'));
-assert('purpose rides along in the Style Dictionary export', (await tab('sd')).includes('open & close <x>'));
-assert('purpose rides along in the Rationale export', (await tab('rationale')).includes('open & close <x>'));
+assert('purpose rides along in the Style Dictionary export (on a child token)', (await tab('sd')).includes('open & close <x>'));
+// the Rationale is a Markdown deliverable — purpose is HTML-escaped so "<x>" survives rendering
+assert('purpose rides along in the Rationale export, escaped for Markdown', (await tab('rationale')).includes('open &amp; close &lt;x&gt;'));
 assert('no script injection from purpose text', await page.evaluate(() => !document.querySelector('.intent__purpose ~ script, script[data-x]')));
 
 // --- distance drives the orb travel ---
