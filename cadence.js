@@ -1159,7 +1159,7 @@ function applyState(o){
   const it = o.i.map(x=>{
     // new: [name, purpose, [[dur,ease],...]]  ·  legacy: [name, dur, ease, purpose]
     const binds = Array.isArray(x[2])
-      ? x[2].map(b=>{ const o={dur:safeName(b[0]),ease:safeName(b[1]),stagger:+b[2]||0,prop:safeName(b[3]||"all")}; if(b[4]) o.effectsEase=safeName(b[4]); if(b[5]) o.distance=safeName(b[5]); if(typeof b[6]!=="undefined" && +b[6]>=0) o.reveal=Math.max(0,Math.min(100,+b[6])); if(Array.isArray(b[7])){ o.scrub={tl:safeName(b[7][0]||"view"),range:safeName(b[7][1]||"cover"),fx:safeName(b[7][2]||"progress")}; delete o.reveal; } if(Array.isArray(b[8])){ o.vt={type:safeName(b[8][0]||"root")}; } return o; })
+      ? x[2].map(b=>{ const o={dur:safeName(b[0]),ease:safeName(b[1]),stagger:+b[2]||0,prop:safeName(b[3]||"all")}; if(b[4]) o.effectsEase=safeName(b[4]); if(b[5]) o.distance=safeName(b[5]); if(typeof b[6]!=="undefined" && +b[6]>=0) o.reveal=Math.max(0,Math.min(100,+b[6])); if(Array.isArray(b[7])){ o.scrub={tl:safeName(b[7][0]||"view"),range:safeName(b[7][1]||"cover"),fx:safeName(b[7][2]||"progress")}; delete o.reveal; } if(Array.isArray(b[8]) && o.reveal==null && !o.scrub){ o.vt={type:safeName(b[8][0]||"root")}; } return o; })
       : [{dur:safeName(x[1]),ease:safeName(x[2]),stagger:0,prop:"all"}];
     const purpose = Array.isArray(x[2]) ? safeName(x[1]||"") : safeName(x[3]||"");
     // pad/trim bindings so every intent has exactly one per mode
@@ -1260,12 +1260,15 @@ document.addEventListener("change", e=>{
   if(sc==="iease"){ bindOf(intents[i]).ease=t.value; render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iprop"){ bindOf(intents[i]).prop=t.value; render(); renderBench(); updateResolvedLines(); writeURL(); }
   if(sc==="isplit"){ const bb=bindOf(intents[i]); if(t.checked) bb.effectsEase=bb.ease; else delete bb.effectsEase; rerenderAll(); }
-  if(sc==="ireveal"){ const bb=bindOf(intents[i]); if(t.checked){ bb.reveal=15; delete bb.scrub; } else { delete bb.reveal; delete bb.scrub; } rerenderAll(); }
+  // scroll-driven and view-transition are mutually exclusive — one binds motion to
+  // scroll position/entry, the other animates a DOM state swap; an intent can't be
+  // both, so enabling one clears the other (like reveal/scrub already exclude)
+  if(sc==="ireveal"){ const bb=bindOf(intents[i]); if(t.checked){ bb.reveal=15; delete bb.scrub; delete bb.vt; } else { delete bb.reveal; delete bb.scrub; } rerenderAll(); }
   if(sc==="iscrollmode"){ const bb=bindOf(intents[i]); if(t.value==="scrub"){ delete bb.reveal; bb.scrub={...SCRUB_DEFAULT}; } else { delete bb.scrub; bb.reveal=15; } rerenderAll(); }
   if(sc==="iscrubtl"){ const bb=bindOf(intents[i]); if(bb.scrub) bb.scrub.tl=t.value; rerenderAll(); }
   if(sc==="iscrubrange"){ const bb=bindOf(intents[i]); if(bb.scrub) bb.scrub.range=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iscrubfx"){ const bb=bindOf(intents[i]); if(bb.scrub) bb.scrub.fx=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
-  if(sc==="ivt"){ const bb=bindOf(intents[i]); if(t.checked) bb.vt={...VT_DEFAULT}; else delete bb.vt; rerenderAll(); }
+  if(sc==="ivt"){ const bb=bindOf(intents[i]); if(t.checked){ bb.vt={...VT_DEFAULT}; delete bb.reveal; delete bb.scrub; } else delete bb.vt; rerenderAll(); }
   if(sc==="ivttype"){ const bb=bindOf(intents[i]); if(bb.vt) bb.vt.type=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="ieff"){ bindOf(intents[i]).effectsEase=t.value; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   // re-point a probe: keep its current lens if that lens can still show the new
