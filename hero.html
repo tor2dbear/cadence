@@ -69,9 +69,10 @@
   /* minimal instrument caption — hidden unless #label is set */
   .cap{
     position:absolute;left:clamp(18px,4vw,44px);bottom:clamp(18px,4vw,40px);
+    right:clamp(18px,4vw,44px);
     font-family:var(--mono);
     display:none;
-    align-items:baseline;gap:12px;
+    align-items:baseline;gap:14px;flex-wrap:wrap;
     opacity:0;transform:translateY(6px);
   }
   body.showcap .cap{display:flex}
@@ -83,7 +84,14 @@
     background:color-mix(in oklab,var(--role) 12%,transparent);
     transition:color .45s ease,border-color .45s ease,background .45s ease;
   }
+  .cap__comp{font-size:.84rem;color:var(--faint)}
+  .cap__comp b{color:#ece5d6;font-weight:500}
   .cap__val{font-size:.8rem;color:var(--faint);letter-spacing:.02em}
+  .cap__dur{
+    font-size:.78rem;color:#ece5d6;
+    padding:3px 9px;border:1px solid var(--line);border-radius:6px;
+    margin-left:auto;
+  }
 
   @media (prefers-reduced-motion:reduce){
     .cap{transition:none}
@@ -171,7 +179,9 @@
 
   <div class="cap" id="cap">
     <span class="cap__intent" id="capIntent">enter</span>
+    <span class="cap__comp" id="capComp"></span>
     <span class="cap__val" id="capVal"></span>
+    <span class="cap__dur" id="capDur"></span>
   </div>
 </div>
 
@@ -202,10 +212,10 @@
   }
 
   var INTENTS=[
-    {key:"enter", color:"#8ad0c6", val:"cubic-bezier(.05,.7,.1,1)", dur:280, ease:cubic(.05,.7,.1,1), h:[.05,.7,.1,1]},
-    {key:"move", color:"#e9b872", val:"cubic-bezier(.4,0,.2,1)", dur:320, ease:cubic(.4,0,.2,1), h:[.4,0,.2,1]},
-    {key:"emphasized", color:"#b79cf0", val:"cubic-bezier(.34,1.56,.64,1)", dur:360, ease:cubic(.34,1.56,.64,1), h:[.34,1.56,.64,1]},
-    {key:"exit", color:"#e08b7f", val:"spring(stiffness 200 · damping 14)", dur:640, ease:spring(200,14), h:null}
+    {key:"enter", color:"#8ad0c6", comp:["duration.base","emphasized-decelerate"], val:"cubic-bezier(.05,.7,.1,1)", dur:280, ease:cubic(.05,.7,.1,1), h:[.05,.7,.1,1]},
+    {key:"move", color:"#e9b872", comp:["duration.base","standard"], val:"cubic-bezier(.4,0,.2,1)", dur:320, ease:cubic(.4,0,.2,1), h:[.4,0,.2,1]},
+    {key:"emphasized", color:"#b79cf0", comp:["duration.slow","anticipate · overshoot"], val:"cubic-bezier(.34,1.56,.64,1)", dur:360, ease:cubic(.34,1.56,.64,1), h:[.34,1.56,.64,1]},
+    {key:"exit", color:"#e08b7f", comp:["duration.slow","spring → linear()"], val:"spring(stiffness 200 · damping 14)", dur:640, ease:spring(200,14), h:null}
   ];
 
   // pre-sample each intent → path string + total length (for the draw-on)
@@ -234,7 +244,8 @@
       chip=$("chip"), cross=$("cross"), crossV=$("crossV"), crossH=$("crossH"),
       handles=$("handles"), h1line=$("h1line"), h2line=$("h2line"), h1dot=$("h1dot"), h2dot=$("h2dot"),
       mblurG=$("mblurG"), washRect=$("washRect"), trail=$("trail"),
-      cap=$("cap"), capIntent=$("capIntent"), capVal=$("capVal"), root=document.documentElement;
+      cap=$("cap"), capIntent=$("capIntent"), capComp=$("capComp"), capVal=$("capVal"),
+      capDur=$("capDur"), root=document.documentElement;
 
   var TRAILN=18, trailC=[], hist=[];
   for(var i=0;i<TRAILN;i++){var c=document.createElementNS(NS,"circle");c.setAttribute("r","3");trail.appendChild(c);trailC.push(c);}
@@ -257,7 +268,10 @@
       h2dot.setAttribute("cx",c2x);h2dot.setAttribute("cy",c2y);
     }else handles.style.display="none";
     if(document.body.classList.contains("showcap")){
-      capIntent.textContent=it.key; capVal.textContent=it.val;
+      capIntent.textContent=it.key;
+      capComp.innerHTML="<b>"+it.comp[0]+"</b> · "+it.comp[1];
+      capVal.textContent=it.val;
+      capDur.textContent=it.dur+"ms";
       document.body.classList.remove("capin"); void cap.offsetWidth; document.body.classList.add("capin");
     }
   }
