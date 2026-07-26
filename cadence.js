@@ -1231,11 +1231,11 @@ function updateResolvedLines(){
 // play() starts — so a distance-slider drag wouldn't move an on-screen orb. Replay
 // the orb probes showing this distance (debounced, so a drag doesn't restart every
 // frame; explicit, so it works even with the idle loop paused behind the dock).
-let distReplayTimer=null;
-function replayDistanceProbes(distName){
-  clearTimeout(distReplayTimer);
-  distReplayTimer=setTimeout(()=>{
-    probes.forEach((p,idx)=>{ if(p.kind!=="orb") return; const it=findIntent(p.intent); if(it && bindOf(it).distance===distName) play(idx); });
+let orbReplayTimer=null;
+function replayOrbProbes(match){
+  clearTimeout(orbReplayTimer);
+  orbReplayTimer=setTimeout(()=>{
+    probes.forEach((p,idx)=>{ if(p.kind!=="orb") return; const it=findIntent(p.intent); if(it && match(it)) play(idx); });
   },180);
 }
 // ---------- events (delegated) ----------
@@ -1246,7 +1246,7 @@ document.addEventListener("keydown", e=>{
 document.addEventListener("input", e=>{
   const t=e.target, sc=t.dataset.scope, i=+t.dataset.i;
   if(sc==="dur"){ durations[i].ms=+t.value; refreshTokens(); renderDurations(); render(); critique(); updateResolvedLines(); writeURL(); }
-  if(sc==="xpx"){ distances[i].px=+t.value; const v=t.closest(".drow")?.querySelector(".drow__val"); if(v)v.textContent=t.value+"px"; render(); critique(); updateResolvedLines(); writeURL(); replayDistanceProbes(distances[i].name); }
+  if(sc==="xpx"){ distances[i].px=+t.value; const v=t.closest(".drow")?.querySelector(".drow__val"); if(v)v.textContent=t.value+"px"; render(); critique(); updateResolvedLines(); writeURL(); const dn=distances[i].name; replayOrbProbes(it=>bindOf(it).distance===dn); }
   if(sc==="iname"){ intents[i].name=t.value.trim()||intents[i].name; render(); critique(); writeURL(); }
   if(sc==="ipurpose"){ intents[i].purpose=t.value; render(); critique(); writeURL(); }  // prose, kept raw — escaped at each sink, not run through the token-name sanitizer
   if(sc==="istag"){ bindOf(intents[i]).stagger=Math.max(0,Math.min(400,+t.value||0)); render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
@@ -1278,7 +1278,7 @@ document.addEventListener("change", e=>{
   if(sc==="dname"){ renameScale(durations,i,t.value,"dur"); }
   if(sc==="ename"){ renameScale(easings,i,t.value,"ease"); }
   if(sc==="xname"){ renameScale(distances,i,t.value,"distance"); }
-  if(sc==="idist"){ const bb=bindOf(intents[i]); if(t.value) bb.distance=t.value; else delete bb.distance; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
+  if(sc==="idist"){ const bb=bindOf(intents[i]); if(t.value) bb.distance=t.value; else delete bb.distance; render(); renderBench(); critique(); updateResolvedLines(); writeURL(); const id=intents[i].id; replayOrbProbes(it=>it.id===id); }
   if(sc==="idur"){ bindOf(intents[i]).dur=t.value; refreshTokens(); render(); renderBench(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iease"){ bindOf(intents[i]).ease=t.value; render(); critique(); updateResolvedLines(); writeURL(); }
   if(sc==="iprop"){ bindOf(intents[i]).prop=t.value; render(); renderBench(); updateResolvedLines(); writeURL(); }

@@ -69,6 +69,22 @@ const draggedEnd = await page.evaluate(async () => {
 assert('dragging the distance slider replays the orb to the new endpoint',
   /calc\(/.test(draggedEnd) && draggedEnd !== '14px' && draggedEnd !== 'calc(100% - 40px)');
 
+// assigning a distance via the dropdown (a change event) must also replay the orb
+const assignedEnd = await page.evaluate(async () => {
+  probes[0].kind = 'orb'; probes[0].intent = intents[0].id;
+  delete intents[0].binds[0].distance; renderBench();
+  const el = document.createElement('select');
+  el.dataset.scope = 'idist'; el.dataset.i = '0';
+  const a = document.createElement('option'); a.value = '';
+  const c = document.createElement('option'); c.value = 'nudge';
+  el.append(a, c); el.value = 'nudge'; document.body.appendChild(el);
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 450));
+  return document.querySelector('.probe[data-i="0"] .orb')?.style.left;
+});
+assert('assigning a distance via the dropdown replays the orb',
+  /calc\(/.test(assignedEnd) && assignedEnd !== '14px' && assignedEnd !== 'calc(100% - 40px)');
+
 // the intent row (name + purpose + remove) must fit a narrow card — the inputs
 // shrink so the remove button stays on-screen (was overflowing at 320px)
 const narrow = await browser.newPage({ viewport: { width: 320, height: 700 } });
