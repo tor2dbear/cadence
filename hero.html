@@ -271,16 +271,38 @@
     return {px:px,py:py};
   }
 
-  // ---- reduced motion: one calm static frame --------------------------
+  // ---- reduced motion: a CALM loop (not a freeze) ---------------------
+  // Respect the OS "Reduce Motion" setting (common on iOS) without going dead:
+  // no travel, no motion blur, no comet — just slow opacity cross-fades as the
+  // lit intent changes. Opacity fades aren't vestibular-triggering, so this is a
+  // safe, on-message fallback for a motion showcase.
   var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion:reduce)").matches;
   var idx=0;
   if(reduce){
-    applyIntent(INTENTS[0],0);
-    curve.style.strokeDashoffset="0"; curveGlow.style.strokeDashoffset="0";
-    placeOrb(1); orb.style.opacity=orbGlow.style.opacity=1;
-    cross.style.opacity=".55"; handles.style.opacity=".85";
-    chip.setAttribute("x",CHIP_X0+INTENTS[0].ease(1)*CHIP_W-6);
-    if(document.body.classList.contains("showcap")) document.body.classList.add("capin");
+    trailC.forEach(function(c){c.style.opacity=0;});
+    chip.style.opacity=0;                                    // no travelling chip
+    curve.style.transition=curveGlow.style.transition="opacity .8s ease";
+    orb.style.transition=orbGlow.style.transition=cross.style.transition="opacity .8s ease";
+    var showCalm=function(i){
+      applyIntent(INTENTS[i],i);
+      curve.style.strokeDashoffset="0"; curveGlow.style.strokeDashoffset="0";
+      placeOrb(1);
+      curve.style.opacity=curveGlow.style.opacity=orb.style.opacity=orbGlow.style.opacity=1;
+      cross.style.opacity=".4"; handles.style.opacity=INTENTS[i].h?".85":0;
+      if(document.body.classList.contains("showcap")) document.body.classList.add("capin");
+    };
+    var last=null, CALM=3200, FADE=800;
+    var calm=function(now){
+      if(last===null){ last=now; showCalm(idx); }
+      else if(now-last>=CALM){
+        last=now;
+        curve.style.opacity=curveGlow.style.opacity=orb.style.opacity=orbGlow.style.opacity=0;
+        cross.style.opacity=0; handles.style.opacity=0;
+        setTimeout(function(){ idx=(idx+1)%INTENTS.length; showCalm(idx); }, FADE);
+      }
+      requestAnimationFrame(calm);
+    };
+    requestAnimationFrame(calm);
     return;
   }
 

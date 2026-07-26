@@ -20,7 +20,9 @@ stamped at deploy time.
   a soft wash of the role colour breathing behind it. Springs are sampled to a
   `linear()` polyline just as the tool exports them. One file, no dependencies,
   no runtime requests; a `#label` mode reveals a minimal instrument caption, and
-  `prefers-reduced-motion` renders a calm static frame.
+  under `prefers-reduced-motion` (e.g. iOS "Reduce Motion") it falls back to a
+  calm cross-fade loop — the lit intent still cycles, but with no travel, comet
+  or motion blur — rather than freezing.
 
 ## [0.6.0] — 2026-07-26
 
