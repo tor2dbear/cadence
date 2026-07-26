@@ -40,7 +40,7 @@
        it carries the instrument chrome + readout, so the piece reads in the
        brand palette while the four role colours stay on the curves/orb. */
     --bg:#191712; --ink:#ece5d6; --ink-dim:#a79d8a; --ink-faint:#79705f;
-    --brand:#8ea2e8;
+    --brand:#8ea2e8; --on-brand:#191712;   /* on-brand = readable text on a brand fill */
     --line:rgba(142,162,232,.17); --line-2:rgba(142,162,232,.085);
     --faint:#7182b4; --vignette:rgba(142,162,232,.05);
     /* --role is swapped per intent by the driver; seed with enter */
@@ -49,7 +49,7 @@
   }
   body.light{
     --bg:#ece5d6; --ink:#211d15; --ink-dim:#655f51; --ink-faint:#9a9079;
-    --brand:#22356e;                                  /* the signature navy */
+    --brand:#22356e; --on-brand:#f6f1e6;              /* the signature navy */
     --line:rgba(34,53,110,.22); --line-2:rgba(34,53,110,.11);
     --faint:#3f4f86; --vignette:rgba(34,53,110,.05);
   }
@@ -215,11 +215,12 @@
     it.d=d; it.len=len;
   });
 
-  // ---- the fan: all four intents, faintly, always present -------------
+  // ---- the fan: the whole system at rest, drawn in the PRIMARY brand colour
+  //      (only the active intent lights up in its role colour, below) ---------
   var fan=$("fan"), fanPaths=[];
   INTENTS.forEach(function(it){
     var p=document.createElementNS(NS,"path");
-    p.setAttribute("d",it.d); p.setAttribute("stroke",it.color); p.setAttribute("opacity",String(INACT));
+    p.setAttribute("d",it.d); p.setAttribute("stroke","var(--brand)"); p.setAttribute("opacity",String(INACT));
     fan.appendChild(p); fanPaths.push(p);
   });
 
@@ -246,24 +247,37 @@
     g.appendChild(r); g.appendChild(t);
     return {g:g,r:r,t:t};
   }
+  function placeChip(c,x,w,cy,h,padX){
+    c.r.setAttribute("x",x); c.r.setAttribute("y",cy-h/2);
+    c.r.setAttribute("width",w); c.r.setAttribute("height",h);
+    c.t.setAttribute("x",x+padX); c.t.setAttribute("y",cy);
+  }
   function buildCaption(it){
     while(cap.firstChild) cap.removeChild(cap.firstChild);
     var FS=5.2, padX=3, padY=2.3, gap=3.4, cy=170, h=FS+padY*2, x=X0;
-    [{text:it.key,color:it.color,strong:true},
-     {text:it.comp[0],color:"var(--brand)"},
-     {text:it.comp[1],color:"var(--brand)"}].forEach(function(ci){
-      var c=mkChip(ci.text,FS,ci.color,ci.strong); cap.appendChild(c.g);
-      var w=c.t.getBBox().width;
-      c.r.setAttribute("x",x); c.r.setAttribute("y",cy-h/2);
-      c.r.setAttribute("width",w+padX*2); c.r.setAttribute("height",h);
-      c.t.setAttribute("x",x+padX); c.t.setAttribute("y",cy);
-      x+=w+padX*2+gap;
+    // intent chip — SOLID brand fill + a role-coloured dot (the tool's own
+    // intent-dot convention): the tag reads primary, the dot keeps the role cue
+    var ig=document.createElementNS(NS,"g"),
+        ir=document.createElementNS(NS,"rect"),
+        idot=document.createElementNS(NS,"circle"),
+        itx=document.createElementNS(NS,"text");
+    itx.setAttribute("font-size",FS); itx.setAttribute("font-weight","700");
+    itx.setAttribute("fill","var(--on-brand)"); itx.setAttribute("dominant-baseline","central");
+    itx.textContent=it.key;
+    ig.appendChild(ir); ig.appendChild(idot); ig.appendChild(itx); cap.appendChild(ig);
+    var tw=itx.getBBox().width, dotR=1.5, dotGap=2.6, iw=padX+dotR*2+dotGap+tw+padX;
+    ir.setAttribute("x",x); ir.setAttribute("y",cy-h/2); ir.setAttribute("width",iw);
+    ir.setAttribute("height",h); ir.setAttribute("rx","2.2"); ir.setAttribute("fill","var(--brand)");
+    idot.setAttribute("cx",x+padX+dotR); idot.setAttribute("cy",cy); idot.setAttribute("r",dotR); idot.setAttribute("fill",it.color);
+    itx.setAttribute("x",x+padX+dotR*2+dotGap); itx.setAttribute("y",cy);
+    x+=iw+gap;
+    // composition + duration — brand-outlined chips
+    [it.comp[0],it.comp[1],it.dur+"ms"].forEach(function(txt,i){
+      var c=mkChip(txt,FS,"var(--brand)",false); cap.appendChild(c.g);
+      var w=c.t.getBBox().width+padX*2;
+      if(i===2){ var dx=X1-w; placeChip(c,dx,w,cy,h,padX); }   // duration → right edge
+      else { placeChip(c,x,w,cy,h,padX); x+=w+gap; }
     });
-    var d=mkChip(it.dur+"ms",FS,"var(--brand)",false); cap.appendChild(d.g);
-    var dw=d.t.getBBox().width, dx=X1-(dw+padX*2);
-    d.r.setAttribute("x",dx); d.r.setAttribute("y",cy-h/2);
-    d.r.setAttribute("width",dw+padX*2); d.r.setAttribute("height",h);
-    d.t.setAttribute("x",dx+padX); d.t.setAttribute("y",cy);
   }
 
   var TRAILN=18, trailC=[], hist=[];
