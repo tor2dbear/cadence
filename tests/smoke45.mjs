@@ -22,15 +22,19 @@ const purpose = page.locator('.intent__purpose').first();
 assert('intent purpose is an input, not static text', (await purpose.evaluate(el => el.tagName)) === 'INPUT');
 await purpose.click();
 await purpose.fill('');
-await purpose.type('makes the point');
+await purpose.type('open & close <x>');   // prose punctuation must survive (not the token sanitizer)
 await page.waitForTimeout(150);
-assert('editing purpose updates the model', (await page.evaluate(() => intents[0].purpose)) === 'makes the point');
+assert('editing purpose keeps prose punctuation (not stripped)', (await page.evaluate(() => intents[0].purpose)) === 'open & close <x>');
 assert('the purpose field keeps focus while typing', await page.evaluate(() => document.activeElement?.classList.contains('intent__purpose')));
+assert('purpose round-trips through the share link intact',
+  (await page.evaluate(() => { writeURL(); applyEncoded(location.hash.replace(/^#/, '')); return intents[0].purpose; })) === 'open & close <x>');
 const x = page.locator('#exportToggle');
 if (await x.count()) await x.click();
-await page.click('.tab[data-fmt="json"]');
-await page.waitForTimeout(100);
-assert('purpose rides along in the JSON export', (await page.locator('#out').innerText()).includes('makes the point'));
+const tab = async fmt => { await page.click(`.tab[data-fmt="${fmt}"]`); await page.waitForTimeout(80); return page.locator('#out').innerText(); };
+assert('purpose rides along in the JSON export', (await tab('json')).includes('open & close <x>'));
+assert('purpose rides along in the Style Dictionary export', (await tab('sd')).includes('open & close <x>'));
+assert('purpose rides along in the Rationale export', (await tab('rationale')).includes('open & close <x>'));
+assert('no script injection from purpose text', await page.evaluate(() => !document.querySelector('.intent__purpose ~ script, script[data-x]')));
 
 // --- distance drives the orb travel ---
 const end = dist => page.evaluate(async d => {
