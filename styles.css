@@ -438,9 +438,18 @@ pre.code{background:var(--code-bg);border:1px solid var(--line);border-radius:9p
    Cadence's own default system; the "with taste / naïve" toggle flips those
    tokens so the page visibly degrades, proving the thesis in one gesture.
    ============================================================================ */
-/* boot gate (set inline in <head> before paint, so no flash of the wrong view) */
-html.boot-landing #toolview{display:none}
+/* boot gate (set inline in <head> before paint, so no flash of the wrong view).
+   The landing is the DEFAULT view — which is also the no-JS fallback: with the
+   boot script never run, no class is set, so the tool stays hidden and the
+   (static, readable) landing shows instead of both stacking. boot-tool reveals
+   the editor. */
+#toolview{display:none}
+html.boot-tool #toolview{display:block}
 html.boot-tool #landing{display:none}
+/* no-JS note (rendered only inside <noscript>): the interactive tool needs JS */
+.nojs-note{margin:18px 0 0;padding:11px 14px;max-width:60ch;border:1px solid var(--line);border-radius:9px;
+  background:var(--panel);font-size:14px;line-height:1.55;color:var(--ink-dim)}
+.nojs-note a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
 
 /* the landing → tool entrance is itself a View Transition (dogfooding the
    newest feature). The wordmark is a SHARED element: it morphs from the landing

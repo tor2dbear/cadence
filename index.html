@@ -43,6 +43,12 @@
 </script>
 <script>/* set the boot view before first paint — empty hash → landing, else tool */
 (function(){var h=location.hash.replace(/^#/,"");document.documentElement.className+=(h?" boot-tool":" boot-landing");})();</script>
+<noscript><style>
+  /* without JS the staggered/scroll-driven reveals never get their .in class, so
+     the landing content would stay at opacity:0 — reveal it statically instead */
+  .landing .rise{opacity:1!important;transform:none!important;transition:none!important}
+  .landing .reveal-scroll{opacity:1!important;transform:none!important;animation:none!important}
+</style></noscript>
 </head>
 <body>
 
@@ -142,6 +148,10 @@
       <button class="lbtn lbtn--primary" id="startTool">Start designing&nbsp;<svg class="gi" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><use href="#ic-arrow"/></svg></button>
       <a class="lbtn" href="guide.html">Read the&nbsp;guide</a>
     </div>
+
+    <noscript>
+      <p class="nojs-note" role="note">The interactive designer needs JavaScript — with it disabled, “Start designing” won’t open the editor. You can still read <a href="guide.html">the guide</a> and everything below, and the exported tokens are plain CSS with no runtime dependency.</p>
+    </noscript>
 
     <!-- signature: the page critiques its OWN motion — flip it to feel why taste matters -->
     <div class="ltaste rise" style="--i:4">

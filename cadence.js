@@ -1409,9 +1409,36 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
   t.classList.add("active"); fmt=t.dataset.fmt; render();
 }));
+// honest clipboard feedback: only say "Copied" when the write actually resolves.
+// A missing API (insecure context) or a rejected write used to still flash the
+// success label — a lie. On failure, tell the user to copy manually, and select
+// the source text when there is one so the keyboard shortcut just works.
+function flashBtn(btn, msg, restore, ms){
+  if(!btn) return;
+  clearTimeout(btn._flashTimer);            // a prior flash's timer must not restore over this one
+  btn.textContent=msg;
+  btn._flashTimer=setTimeout(()=>{ btn.textContent=restore; }, ms);
+}
+function copyToClipboard(text, btn, okMsg, restore, selectEl){
+  // tag this attempt so a late result from a superseded click (rapid retry, or a
+  // delayed permission prompt) can't overwrite the newest feedback
+  const seq = btn ? (btn._copySeq=(btn._copySeq||0)+1) : 0;
+  const stale = ()=> btn && btn._copySeq!==seq;
+  const ok=()=>{ if(!stale()) flashBtn(btn, okMsg, restore, 1300); };
+  const fail=()=>{
+    if(stale()) return;
+    if(selectEl){ try{ const r=document.createRange(); r.selectNodeContents(selectEl); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }catch(_){} }
+    flashBtn(btn, selectEl?"Press ⌘/Ctrl+C":"Couldn't copy — it's in the address bar", restore, 2400);
+  };
+  try{
+    const p = navigator.clipboard && navigator.clipboard.writeText(text);
+    if(p && typeof p.then==="function") p.then(ok, fail);
+    else fail();
+  }catch(_){ fail(); }
+}
 document.getElementById("copy").addEventListener("click",()=>{
-  navigator.clipboard?.writeText(document.getElementById("out").textContent);
-  const b=document.getElementById("copy"); b.textContent="Copied ✓"; setTimeout(()=>b.textContent="Copy",1200);
+  const out=document.getElementById("out");
+  copyToClipboard(out.textContent, document.getElementById("copy"), "Copied ✓", "Copy", out);
 });
 // download the active format as a file with the name an engineer expects to
 // commit — the conventional filename per tab, not a copy-paste into a hand-named
@@ -1471,8 +1498,7 @@ document.getElementById("download").addEventListener("click",()=>{
 })();
 document.getElementById("share").addEventListener("click",()=>{
   writeURL();
-  navigator.clipboard?.writeText(location.href);
-  const b=document.getElementById("share"); b.textContent="Link copied ✓"; setTimeout(()=>b.textContent="Copy share link",1400);
+  copyToClipboard(location.href, document.getElementById("share"), "Link copied ✓", "Copy share link");
 });
 
 // systems picker: built-in Presets (from TEMPLATES) + "My systems" you save to
