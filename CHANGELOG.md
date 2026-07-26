@@ -11,6 +11,15 @@ stamped at deploy time.
 
 ## [Unreleased]
 
+### Added
+- **A standalone hero animation** (`hero.html`) for showcasing Cadence off-site
+  (a portfolio, an embed): one orb rides a live easing curve as the intent —
+  `enter` / `move` / `emphasized` / `exit` — and its named tokens cycle beneath
+  it, springs sampled to a `linear()` polyline just as the tool exports them.
+  One file, no dependencies, no runtime requests; a `#bare` mode drops the copy
+  for use as a pure backdrop, and `prefers-reduced-motion` renders a calm static
+  frame.
+
 ## [0.6.0] — 2026-07-26
 
 Editor authoring round-out, honest Back/Forward navigation, and a documented

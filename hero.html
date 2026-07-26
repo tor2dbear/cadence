@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cadence — hero</title>
+<meta name="description" content="A self-contained hero animation showcasing Cadence: one orb rides a live easing curve as the intent (enter / move / emphasized / exit) — and its named tokens — change with it." />
+<!--
+  Cadence — standalone hero animation.
+
+  ONE file, ZERO dependencies, no external requests at runtime — true to the
+  product's own thesis ("one static page, no framework, no runtime"). Drop it in
+  a portfolio, <iframe> it, or lift the markup wholesale.
+
+  What it shows (the tool's CORE, in one loop): a single easing curve draws
+  itself and cycles through four semantic intents — enter, move, emphasized,
+  exit — and an orb rides *that exact curve*, so the shape you read is the motion
+  you feel. Springs are sampled to a linear() polyline, exactly as Cadence
+  exports them. A mono readout names the token behind each frame.
+
+  Modes:
+    • default            — full hero (copy + animated stage)
+    • #bare  / ?bare     — animation only (for use as an embedded backdrop)
+
+  Everything is driven by real easing / spring maths in one requestAnimationFrame
+  loop, so the background curve and the orb's motion are the SAME function.
+  prefers-reduced-motion renders a single calm static frame instead.
+
+  Palette is Cadence's own: bg #191712, accent teal, and the four role colours
+  (enter #8ad0c6 · exit #e08b7f · move #e9b872 · emphasized #b79cf0).
+-->
+<style>
+  :root{
+    --bg:#191712;
+    --panel:#201d16;
+    --panel-2:#1b1811;
+    --ink:#ece5d6;
+    --muted:#9c9482;
+    --faint:#6c6656;
+    --line:rgba(236,229,214,.10);
+    --line-2:rgba(236,229,214,.055);
+    --teal:#8ad0c6;
+    /* --role is swapped per intent by the driver; seed it with enter's teal */
+    --role:#8ad0c6;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+    min-height:100svh;
+  }
+
+  /* ---- layout ---------------------------------------------------------- */
+  .hero{
+    max-width:1180px;
+    margin-inline:auto;
+    padding:clamp(24px,5vw,72px) clamp(20px,5vw,56px);
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);
+    align-items:center;
+    gap:clamp(28px,5vw,64px);
+    min-height:100svh;
+  }
+  @media (max-width:860px){
+    .hero{grid-template-columns:1fr;min-height:auto}
+  }
+
+  /* ---- copy ------------------------------------------------------------ */
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:.75rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 20px;
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+  }
+  .eyebrow .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--role);
+    box-shadow:0 0 12px var(--role);
+    transition:background .5s ease,box-shadow .5s ease;
+  }
+  h1{
+    font-size:clamp(2.1rem,5.4vw,3.5rem);
+    line-height:1.04;
+    letter-spacing:-.02em;
+    font-weight:600;
+    margin:0 0 20px;
+    text-wrap:balance;
+  }
+  h1 .accent{
+    color:var(--role);
+    transition:color .5s ease;
+  }
+  .lede{
+    font-size:clamp(1rem,1.4vw,1.12rem);
+    color:var(--muted);
+    max-width:46ch;
+    margin:0 0 32px;
+  }
+  .lede code{
+    font-family:var(--mono);
+    font-size:.85em;
+    color:var(--ink);
+    background:rgba(236,229,214,.06);
+    padding:.08em .38em;
+    border-radius:5px;
+  }
+  .cta{display:flex;flex-wrap:wrap;gap:12px}
+  .btn{
+    font:inherit;
+    font-size:.95rem;
+    font-weight:500;
+    text-decoration:none;
+    padding:11px 20px;
+    border-radius:10px;
+    display:inline-flex;align-items:center;gap:8px;
+    transition:transform .18s cubic-bezier(.34,1.56,.64,1),background .2s ease,border-color .2s ease;
+  }
+  .btn:active{transform:translateY(1px) scale(.99)}
+  .btn--primary{
+    background:var(--teal);
+    color:#12211e;
+  }
+  .btn--primary:hover{background:#9bd9d0;transform:translateY(-1px)}
+  .btn--ghost{
+    color:var(--ink);
+    border:1px solid var(--line);
+    background:transparent;
+  }
+  .btn--ghost:hover{border-color:rgba(236,229,214,.28);background:rgba(236,229,214,.04)}
+  .btn .arw{transition:transform .18s cubic-bezier(.34,1.56,.64,1)}
+  .btn:hover .arw{transform:translateX(3px)}
+
+  /* ---- stage ----------------------------------------------------------- */
+  .stage{
+    margin:0;
+    position:relative;
+    background:
+      radial-gradient(120% 80% at 80% 0%,rgba(138,208,198,.06),transparent 60%),
+      linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);
+    border-radius:var(--r);
+    padding:clamp(14px,2vw,22px);
+    box-shadow:0 30px 80px -40px rgba(0,0,0,.8),inset 0 1px 0 rgba(236,229,214,.04);
+    overflow:hidden;
+  }
+  .stage::before{ /* corner label — reads like an instrument panel */
+    content:"scope · easing × time";
+    position:absolute;top:14px;left:16px;
+    font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;
+    color:var(--faint);
+    z-index:2;pointer-events:none;
+  }
+  .stage svg.plot{display:block;width:100%;height:auto}
+
+  /* readout — the token behind the current frame */
+  .readout{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid var(--line-2);
+    font-family:var(--mono);
+  }
+  .readout__intent{
+    flex:none;
+    font-size:1.02rem;
+    font-weight:600;
+    color:var(--role);
+    padding:5px 12px;
+    border:1px solid color-mix(in oklab,var(--role) 45%,transparent);
+    border-radius:8px;
+    background:color-mix(in oklab,var(--role) 12%,transparent);
+    transition:color .45s ease,border-color .45s ease,background .45s ease;
+    min-width:104px;text-align:center;
+  }
+  .readout__mid{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+  .readout__comp{font-size:.82rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .readout__comp b{color:var(--ink);font-weight:500}
+  .readout__val{font-size:.8rem;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .readout__dur{
+    flex:none;
+    font-size:.82rem;color:var(--ink);
+    padding:4px 10px;border:1px solid var(--line);border-radius:7px;
+  }
+  /* tiny entrance cascade on each intent change (dogfooding stagger) */
+  .readout .cyc{opacity:0;transform:translateY(6px)}
+  .readout.in .cyc{opacity:1;transform:none;transition:opacity .4s ease,transform .4s cubic-bezier(.22,1,.36,1)}
+  .readout.in .readout__comp{transition-delay:.05s}
+  .readout.in .readout__val{transition-delay:.1s}
+
+  .foot{
+    max-width:1180px;margin:0 auto;
+    padding:0 clamp(20px,5vw,56px) 28px;
+    font-family:var(--mono);font-size:.72rem;color:var(--faint);
+    display:flex;gap:18px;flex-wrap:wrap;align-items:center;
+  }
+  .foot a{color:var(--muted);text-decoration:none}
+  .foot a:hover{color:var(--ink)}
+
+  /* ---- bare mode (animation only) ------------------------------------- */
+  body.bare .hero{grid-template-columns:1fr;min-height:100svh;padding:clamp(16px,3vw,32px)}
+  body.bare .hero__copy,body.bare .foot{display:none}
+  body.bare .stage{border:none;background:transparent;box-shadow:none}
+
+  @media (prefers-reduced-motion:reduce){
+    .btn,.btn .arw,.readout .cyc,.eyebrow .dot,h1 .accent{transition:none}
+  }
+</style>
+</head>
+<body>
+
+<main class="hero" aria-label="Cadence — a motion system designer">
+  <div class="hero__copy">
+    <p class="eyebrow"><span class="dot" aria-hidden="true"></span>Cadence · Motion system designer</p>
+    <h1>Motion as tokens,<br>with an <span class="accent">opinion</span>.</h1>
+    <p class="lede">Cadence turns duration and easing into named scales, composes
+      them into semantic intents — <code>enter</code>, <code>move</code>,
+      <code>exit</code> — and grades the whole system. Export as CSS, Tailwind,
+      Style&nbsp;Dictionary or JSON.</p>
+    <div class="cta">
+      <a class="btn btn--primary" href="https://cadence.tor2dbear.com/">Open&nbsp;Cadence <span class="arw" aria-hidden="true">→</span></a>
+      <a class="btn btn--ghost" href="https://cadence.tor2dbear.com/demo.html">Live&nbsp;demo</a>
+    </div>
+  </div>
+
+  <figure class="stage">
+    <!-- The plot lives in a fixed user-space (viewBox), so all geometry below is
+         resolution-independent and the SVG scales cleanly to any hero width. -->
+    <svg class="plot" viewBox="0 0 320 214" role="img"
+         aria-label="An easing curve cycling through Cadence's motion intents, with an orb travelling along it.">
+      <defs>
+        <!-- velocity-driven horizontal motion blur (feGaussianBlur takes a
+             separate x/y stdDeviation) — the demo chip smears with its speed,
+             the orb-comet lens in miniature -->
+        <filter id="mblur" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur id="mblurG" stdDeviation="0 0" />
+        </filter>
+        <radialGradient id="orbGlow">
+          <stop offset="0%" stop-color="var(--role)" stop-opacity=".55"/>
+          <stop offset="100%" stop-color="var(--role)" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- static backdrop: a couple of very faint ghost curves + frame -->
+      <g stroke="var(--line-2, rgba(236,229,214,.055))" fill="none" stroke-width="1">
+        <path d="M48,176 C120,176 150,60 284,44" opacity=".5"/>
+        <path d="M48,176 C90,120 210,110 284,44" opacity=".35"/>
+      </g>
+      <!-- plot frame (baseline + left axis) and gridlines -->
+      <g stroke="var(--line,rgba(236,229,214,.10))" fill="none" stroke-width="1">
+        <line x1="48" y1="176" x2="284" y2="176"/>
+        <line x1="48" y1="44" x2="48" y2="176"/>
+      </g>
+      <g stroke="var(--line-2,rgba(236,229,214,.055))" fill="none" stroke-width="1" stroke-dasharray="2 4">
+        <line x1="48" y1="110" x2="284" y2="110"/>
+        <line x1="166" y1="44" x2="166" y2="176"/>
+      </g>
+
+      <!-- crosshair: reads the curve at the current time t -->
+      <g id="cross" stroke="var(--role)" stroke-width="1" opacity="0" stroke-dasharray="1 3">
+        <line id="crossV" x1="48" y1="176" x2="48" y2="176"/>
+        <line id="crossH" x1="48" y1="176" x2="48" y2="176"/>
+      </g>
+
+      <!-- control-point handles (cubic intents only) -->
+      <g id="handles" opacity="0">
+        <line id="h1line" x1="48" y1="176" x2="48" y2="176" stroke="var(--role)" stroke-width="1" opacity=".45"/>
+        <line id="h2line" x1="284" y1="44" x2="284" y2="44" stroke="var(--role)" stroke-width="1" opacity=".45"/>
+        <circle id="h1dot" r="2.6" fill="var(--bg)" stroke="var(--role)" stroke-width="1.4"/>
+        <circle id="h2dot" r="2.6" fill="var(--bg)" stroke="var(--role)" stroke-width="1.4"/>
+      </g>
+
+      <!-- the easing curve itself (draws on each cycle) -->
+      <path id="curve" fill="none" stroke="var(--role)" stroke-width="2.4"
+            stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- demo track: the chip below translates along it with the same easing -->
+      <line x1="48" y1="198" x2="284" y2="198" stroke="var(--line-2,rgba(236,229,214,.055))" stroke-width="1"/>
+      <!-- demo chip: translates with the SAME easing, smeared by its velocity -->
+      <g filter="url(#mblur)">
+        <rect id="chip" x="44" y="192" width="12" height="12" rx="3" fill="var(--role)"/>
+      </g>
+
+      <!-- orb + comet trail (trail circles are created by JS) -->
+      <g id="trail"></g>
+      <circle id="orbGlowC" r="11" fill="url(#orbGlow)"/>
+      <circle id="orb" r="4.4" fill="var(--role)"/>
+
+      <!-- endpoint anchors -->
+      <circle cx="48" cy="176" r="2.2" fill="var(--faint,#6c6656)"/>
+      <circle cx="284" cy="44" r="2.2" fill="var(--faint,#6c6656)"/>
+    </svg>
+
+    <figcaption class="readout" id="readout">
+      <span class="readout__intent cyc" id="rIntent">enter</span>
+      <span class="readout__mid">
+        <span class="readout__comp cyc" id="rComp"></span>
+        <span class="readout__val cyc" id="rVal"></span>
+      </span>
+      <span class="readout__dur cyc" id="rDur">260ms</span>
+    </figcaption>
+  </figure>
+</main>
+
+<footer class="foot">
+  <span>Built with Cadence — a static, dependency-free motion system designer.</span>
+  <a href="https://github.com/tor2dbear/cadence">Source ↗</a>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var NS="http://www.w3.org/2000/svg";
+  var $=function(id){return document.getElementById(id)};
+
+  // bare mode → drop the copy, let the stage stand alone
+  if(/(^|[?#&])bare(=1)?($|[&])/.test(location.hash+location.search) || location.hash==="#bare"){
+    document.body.classList.add("bare");
+  }
+
+  // ---- plot geometry (SVG user units) ---------------------------------
+  var X0=48, X1=284, W=X1-X0;      // time axis
+  var Y0=176, H=132;               // progress axis (Y0 = 0%, up = 100%)
+  var xAt=function(t){return X0+t*W};
+  var yAt=function(v){return Y0-v*H};
+
+  // ---- easing maths ----------------------------------------------------
+  // Cubic-bézier timing function: solve x(s)=t by bisection (x-monotonic for
+  // control x in [0,1]), then return y(s). Handles overshoot (y>1) natively.
+  function cubic(x1,y1,x2,y2){
+    var bx=function(s){return 3*(1-s)*(1-s)*s*x1+3*(1-s)*s*s*x2+s*s*s;};
+    var by=function(s){return 3*(1-s)*(1-s)*s*y1+3*(1-s)*s*s*y2+s*s*s;};
+    return function(t){var lo=0,hi=1,s=t;for(var i=0;i<22;i++){s=(lo+hi)/2;(bx(s)<t)?lo=s:hi=s;}return by(s);};
+  }
+  // Damped spring, value 0→1. Underdamped gives real multi-bounce, which we
+  // sample to a polyline — exactly how Cadence renders springs (→ CSS linear()).
+  function spring(k,c){
+    var m=1, w0=Math.sqrt(k/m), zeta=c/(2*Math.sqrt(k*m)), WIN=0.92;
+    var wd=w0*Math.sqrt(Math.max(1e-6,1-zeta*zeta));
+    return function(t){var tt=t*WIN;
+      if(zeta<1){return 1-Math.exp(-zeta*w0*tt)*(Math.cos(wd*tt)+(zeta*w0/wd)*Math.sin(wd*tt));}
+      return 1-Math.exp(-w0*tt)*(1+w0*tt);};
+  }
+
+  // ---- the intents (the reel) -----------------------------------------
+  var INTENTS=[
+    {key:"enter", color:"#8ad0c6", comp:["duration.base","emphasized-decelerate"],
+     val:"cubic-bezier(.05,.7,.1,1)", dur:280, ease:cubic(.05,.7,.1,1), h:[.05,.7,.1,1]},
+    {key:"move", color:"#e9b872", comp:["duration.base","standard"],
+     val:"cubic-bezier(.4,0,.2,1)", dur:320, ease:cubic(.4,0,.2,1), h:[.4,0,.2,1]},
+    {key:"emphasized", color:"#b79cf0", comp:["duration.slow","anticipate · overshoot"],
+     val:"cubic-bezier(.34,1.56,.64,1)", dur:360, ease:cubic(.34,1.56,.64,1), h:[.34,1.56,.64,1]},
+    {key:"exit", color:"#e08b7f", comp:["duration.slow","spring → linear()"],
+     val:"spring(stiffness 200 · damping 14)", dur:640, ease:spring(200,14), h:null}
+  ];
+
+  // pre-sample each intent's curve into a path string + total length (for the
+  // draw-on), plus a lookup for the orb/chip so we never recompute per frame.
+  var N=72;
+  INTENTS.forEach(function(it){
+    var d="", len=0, px, py, ppx, ppy;
+    for(var i=0;i<=N;i++){
+      var t=i/N, v=it.ease(t); px=xAt(t); py=yAt(v);
+      d+=(i?"L":"M")+px.toFixed(2)+","+py.toFixed(2);
+      if(i){len+=Math.hypot(px-ppx,py-ppy);}
+      ppx=px; ppy=py;
+    }
+    it.d=d; it.len=len;
+  });
+
+  // ---- DOM handles -----------------------------------------------------
+  var curve=$("curve"), orb=$("orb"), orbGlow=$("orbGlowC"), chip=$("chip"),
+      cross=$("cross"), crossV=$("crossV"), crossH=$("crossH"),
+      handles=$("handles"), h1line=$("h1line"), h2line=$("h2line"),
+      h1dot=$("h1dot"), h2dot=$("h2dot"), mblurG=$("mblurG"),
+      readout=$("readout"), rIntent=$("rIntent"), rComp=$("rComp"),
+      rVal=$("rVal"), rDur=$("rDur"), trail=$("trail"), root=document.documentElement;
+
+  // comet trail: a pool of circles, oldest faintest
+  var TRAILN=16, trailC=[], hist=[];
+  for(var i=0;i<TRAILN;i++){
+    var c=document.createElementNS(NS,"circle");
+    c.setAttribute("r","3"); trail.appendChild(c); trailC.push(c);
+  }
+
+  var CHIP_X0=44, CHIP_W=W; // chip rides the full width, aligned under the plot
+
+  function applyIntent(it){
+    root.style.setProperty("--role",it.color);
+    curve.setAttribute("d",it.d);
+    curve.style.strokeDasharray=it.len+" "+it.len;
+    // readout text + cascade re-trigger
+    rIntent.textContent=it.key;
+    rComp.innerHTML="<b>"+it.comp[0]+"</b> · "+it.comp[1];
+    rVal.textContent=it.val;
+    rDur.textContent=it.dur+"ms";
+    readout.classList.remove("in"); void readout.offsetWidth; readout.classList.add("in");
+    // handles (cubic only)
+    if(it.h){
+      handles.style.display="";
+      var c1x=xAt(it.h[0]),c1y=yAt(it.h[1]),c2x=xAt(it.h[2]),c2y=yAt(it.h[3]);
+      h1line.setAttribute("x2",c1x);h1line.setAttribute("y2",c1y);
+      h2line.setAttribute("x2",c2x);h2line.setAttribute("y2",c2y);
+      h1dot.setAttribute("cx",c1x);h1dot.setAttribute("cy",c1y);
+      h2dot.setAttribute("cx",c2x);h2dot.setAttribute("cy",c2y);
+    }else{ handles.style.display="none"; }
+  }
+
+  function placeOrb(t){
+    var v=INTENTS[idx].ease(t), px=xAt(t), py=yAt(v);
+    orb.setAttribute("cx",px); orb.setAttribute("cy",py);
+    orbGlow.setAttribute("cx",px); orbGlow.setAttribute("cy",py);
+    crossV.setAttribute("x1",px);crossV.setAttribute("x2",px);
+    crossV.setAttribute("y1",Y0);crossV.setAttribute("y2",py);
+    crossH.setAttribute("x1",X0);crossH.setAttribute("x2",px);
+    crossH.setAttribute("y1",py);crossH.setAttribute("y2",py);
+    return {px:px,py:py,v:v};
+  }
+
+  // ---- reduced motion: one calm static frame --------------------------
+  var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion:reduce)").matches;
+  var idx=0;
+
+  if(reduce){
+    applyIntent(INTENTS[0]);
+    curve.style.strokeDashoffset="0";
+    readout.classList.add("in");
+    var p=placeOrb(1); orb.style.opacity=1; orbGlow.style.opacity=1;
+    cross.style.opacity=".6"; handles.style.opacity=".8";
+    chip.setAttribute("x",CHIP_X0+INTENTS[0].ease(1)*CHIP_W-6);
+    return;
+  }
+
+  // ---- animation loop --------------------------------------------------
+  // Each cycle: DRAW the curve on (0–DRAW), settle, then the orb RIDES it
+  // (RIDE window), then a brief HOLD before the next intent takes over.
+  var SLOT=3400, DRAW=560, RIDE_IN=920;
+  var t0=null, lastChipX=CHIP_X0;
+
+  function frame(now){
+    if(t0===null){ t0=now; applyIntent(INTENTS[idx]); }
+    var e=now-t0;
+    if(e>=SLOT){ t0=now; idx=(idx+1)%INTENTS.length; applyIntent(INTENTS[idx]); e=0; lastChipX=CHIP_X0; }
+    var it=INTENTS[idx];
+
+    // curve draw-on (ease-out) over DRAW ms
+    var dp=Math.min(1,e/DRAW), dEase=1-Math.pow(1-dp,3);
+    curve.style.strokeDashoffset=(it.len*(1-dEase)).toFixed(2);
+    handles.style.opacity=(it.h?dEase*.9:0).toString();
+
+    // orb ride
+    var rideEnd=RIDE_IN+it.dur;
+    var visible=e>=RIDE_IN-40;
+    orb.style.opacity=orbGlow.style.opacity=visible?1:0;
+    cross.style.opacity=visible?".65":0;
+
+    var p;
+    if(e<RIDE_IN){ p=placeOrb(0); }
+    else if(e<rideEnd){ p=placeOrb((e-RIDE_IN)/it.dur); }
+    else { p=placeOrb(1); }
+
+    // comet trail (only while moving)
+    hist.unshift({x:p.px,y:p.py});
+    if(hist.length>TRAILN) hist.pop();
+    var moving=e>=RIDE_IN&&e<rideEnd;
+    for(var i=0;i<TRAILN;i++){
+      var h=hist[i], c=trailC[i];
+      if(h&&moving){
+        c.setAttribute("cx",h.x);c.setAttribute("cy",h.y);
+        c.setAttribute("r",(3.4*(1-i/TRAILN)).toFixed(2));
+        c.setAttribute("fill",it.color);
+        c.style.opacity=(0.5*(1-i/TRAILN)).toFixed(3);
+      }else{ c.style.opacity=0; }
+    }
+
+    // demo chip: translate with the SAME easing; blur by velocity
+    var cp = e<RIDE_IN?0 : e<rideEnd?(e-RIDE_IN)/it.dur : 1;
+    var chipX=CHIP_X0+it.ease(cp)*CHIP_W-6;
+    var vel=Math.abs(chipX-lastChipX); lastChipX=chipX;
+    chip.setAttribute("x",chipX);
+    chip.setAttribute("fill",it.color);
+    mblurG.setAttribute("stdDeviation",Math.min(9,vel*1.6).toFixed(2)+" 0");
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
