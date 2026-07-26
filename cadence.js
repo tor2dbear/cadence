@@ -1233,6 +1233,7 @@ function updateResolvedLines(){
 // frame; explicit, so it works even with the idle loop paused behind the dock).
 let orbReplayTimer=null;
 function replayOrbProbes(match){
+  if(reduce) return;   // honour reduced-motion — like startBenchIdle()/playAll(), no automatic playback
   clearTimeout(orbReplayTimer);
   orbReplayTimer=setTimeout(()=>{
     probes.forEach((p,idx)=>{ if(p.kind!=="orb") return; const it=findIntent(p.intent); if(it && match(it)) play(idx); });

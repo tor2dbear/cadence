@@ -99,6 +99,26 @@ const fits = await narrow.evaluate(() => {
 assert('the intent row fits a 320px card with the remove button on-screen', fits);
 await narrow.close();
 
+// under reduced-motion, an edit-triggered orb replay must not fire (like the rest
+// of the bench, which skips playAll/idle for this preference)
+const rm = await browser.newContext({ reducedMotion: 'reduce' });
+const rp = await rm.newPage({ viewport: { width: 1300, height: 1000 } });
+await rp.goto(BASE + '#tool', { waitUntil: 'networkidle' });
+await rp.reload({ waitUntil: 'networkidle' });
+await rp.waitForTimeout(250);
+const reducedLeft = await rp.evaluate(async () => {
+  probes[0].kind = 'orb'; probes[0].intent = intents[0].id;
+  intents[0].binds[0].distance = 'nudge'; renderBench();
+  const di = distances.findIndex(d => d.name === 'nudge'); distances[di].px = 600;
+  const el = document.createElement('input');
+  el.type = 'range'; el.dataset.scope = 'xpx'; el.dataset.i = String(di); el.value = '600';
+  document.body.appendChild(el); el.dispatchEvent(new Event('input', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 400));
+  return document.querySelector('.probe[data-i="0"] .orb')?.style.left;
+});
+assert('reduced-motion suppresses the edit-triggered orb replay', !reducedLeft);
+await rm.close();
+
 assert('no console/page errors', errors.length === 0);
 if (errors.length) errors.forEach(e => console.log('   ! ' + e));
 
