@@ -36,6 +36,11 @@ assert('purpose rides along in the Style Dictionary export (on a child token)', 
 // the Rationale is a Markdown deliverable — purpose is HTML-escaped so "<x>" survives rendering
 assert('purpose rides along in the Rationale export, escaped for Markdown', (await tab('rationale')).includes('open &amp; close &lt;x&gt;'));
 assert('no script injection from purpose text', await page.evaluate(() => !document.querySelector('.intent__purpose ~ script, script[data-x]')));
+// Markdown control chars in prose stay literal in the Rationale — no emphasis, no live link
+await purpose.click(); await purpose.fill(''); await purpose.type('*bold* [a](b)'); await page.waitForTimeout(150);
+const md = await tab('rationale');
+assert('Rationale escapes inline Markdown so prose stays literal',
+  md.includes('\\*bold\\*') && md.includes('\\[a\\]') && !md.includes('*bold*') && !md.includes('[a](b)'));
 
 // --- distance drives the orb travel ---
 const end = dist => page.evaluate(async d => {
