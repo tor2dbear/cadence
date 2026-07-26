@@ -136,7 +136,7 @@
 
     <!-- demo chip -->
     <g filter="url(#mblur)">
-      <rect id="chip" x="30" y="155.5" width="9" height="9" rx="2.4" fill="var(--role)"/>
+      <rect id="chip" x="37.5" y="155.5" width="9" height="9" rx="2.4" fill="var(--role)"/>
     </g>
 
     <!-- orb + comet trail (trail circles created by JS) -->
@@ -165,6 +165,12 @@
   var hash=location.hash||"";
   if(/light/.test(hash)) document.body.classList.add("light");
   var showcap=/label/.test(hash);
+  var LIGHT=document.body.classList.contains("light");
+  // faint-fan opacity — the pale role hues need a touch more presence on light
+  var INACT=LIGHT?0.26:0.12;
+  // legible-on-parchment role colours for light (deepened, same hue family;
+  // move/emphasized/exit align to the tool's own light accent-2 / violet / warn)
+  var ROLE_LIGHT={enter:"#177f70",move:"#9a5e23",emphasized:"#6a4a86",exit:"#b0402a"};
 
   // ---- plot geometry (SVG user units, 320×180 = 16:9) -----------------
   var X0=42, X1=278, W=X1-X0, Y0=150, H=95;
@@ -191,6 +197,7 @@
     {key:"emphasized", color:"#b79cf0", comp:["duration.slow","anticipate · overshoot"], val:"cubic-bezier(.34,1.56,.64,1)", dur:360, ease:cubic(.34,1.56,.64,1), h:[.34,1.56,.64,1]},
     {key:"exit", color:"#e08b7f", comp:["duration.slow","spring → linear()"], val:"spring(stiffness 200 · damping 14)", dur:640, ease:spring(200,14), h:null}
   ];
+  if(LIGHT) INTENTS.forEach(function(it){it.color=ROLE_LIGHT[it.key];});
 
   // pre-sample each intent → path string + total length (for the draw-on)
   var N=72;
@@ -209,7 +216,7 @@
   var fan=$("fan"), fanPaths=[];
   INTENTS.forEach(function(it){
     var p=document.createElementNS(NS,"path");
-    p.setAttribute("d",it.d); p.setAttribute("stroke",it.color); p.setAttribute("opacity",".14");
+    p.setAttribute("d",it.d); p.setAttribute("stroke",it.color); p.setAttribute("opacity",String(INACT));
     fan.appendChild(p); fanPaths.push(p);
   });
 
@@ -226,14 +233,14 @@
   var TRAILN=18, trailC=[], hist=[];
   for(var i=0;i<TRAILN;i++){var c=document.createElementNS(NS,"circle");c.setAttribute("r","2.6");trail.appendChild(c);trailC.push(c);}
 
-  var CHIP_X0=30, CHIP_W=W;
+  var CHIP_X0=X0, CHIP_W=W;   // chip travel locked to the plot's time axis (was offset left)
 
   function applyIntent(it,i){
     root.style.setProperty("--role",it.color);
     curve.setAttribute("d",it.d); curveGlow.setAttribute("d",it.d);
     curve.style.strokeDasharray=it.len+" "+it.len;
     curveGlow.style.strokeDasharray=it.len+" "+it.len;
-    fanPaths.forEach(function(p,j){p.setAttribute("opacity", j===i? "0":"0.12");});
+    fanPaths.forEach(function(p,j){p.setAttribute("opacity", j===i? "0":String(INACT));});
     if(it.h){
       handles.style.display="";
       var c1x=xAt(it.h[0]),c1y=yAt(it.h[1]),c2x=xAt(it.h[2]),c2y=yAt(it.h[3]);
