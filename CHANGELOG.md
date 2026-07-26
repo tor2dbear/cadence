@@ -11,7 +11,20 @@ stamped at deploy time.
 
 ## [Unreleased]
 
+### Added
+- **A no-JS notice on the landing.** With JavaScript disabled, a note explains
+  that the interactive designer needs it, while the (static) landing content
+  stays readable.
+
 ### Fixed
+- **The landing degrades gracefully without JavaScript.** The boot gate never
+  ran, so both views stacked and the hero's staggered reveals stayed at
+  `opacity:0`; the landing is now the default view (the no-JS fallback) with its
+  content revealed statically.
+- **The Copy and Copy-share-link buttons no longer claim false success.** They
+  flashed "Copied ✓" even when the clipboard API was absent or the write was
+  rejected; they now confirm only on a real success and, on failure, prompt a
+  manual copy (selecting the source text so the shortcut just works).
 - The `/changelog` page's version-number links rendered in the browser-default
   blue — unreadable on the dark theme. They now inherit the heading colour with a
   quiet accent underline, matching the page's other links.
