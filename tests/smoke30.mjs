@@ -39,7 +39,23 @@ assert('index carries FAQPage structured data', /"@type":"FAQPage"/.test(index))
 assert('title leads with the descriptive category', /motion design tokens/i.test(index.match(/<title>([^<]*)<\/title>/)[1]));
 assert('exactly one <h1> in the document (tool wordmark demoted)', (index.match(/<h1[ >]/g) || []).length === 1);
 assert('has a crawlable prose/FAQ section', /class="lprose\b/.test(index) && /<dl class="lfaq"/.test(index));
-assert('FAQ answers are visible (match the JSON-LD)', /What are motion design tokens\?/.test(index) && /<dd>Named, reusable values/.test(index));
+// the JSON-LD FAQPage must MIRROR the visible <dl> exactly — same questions, same
+// answers, same order (Google requires structured data to match on-page content).
+// A per-entry check, not just "Q1 exists", so a drifted answer can't slip through.
+{
+  const norm = s => s.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  const faqLd = JSON.parse(index.match(/\{"@context":"https:\/\/schema\.org","@type":"FAQPage"[\s\S]*?\]\}/)[0]);
+  const ld = faqLd.mainEntity.map(e => ({ q: norm(e.name), a: norm(e.acceptedAnswer.text) }));
+  const dlBody = index.match(/<dl class="lfaq">([\s\S]*?)<\/dl>/)[1];
+  const vis = [...dlBody.matchAll(/<dt>([\s\S]*?)<\/dt>\s*<dd>([\s\S]*?)<\/dd>/g)].map(m => ({ q: norm(m[1]), a: norm(m[2]) }));
+  assert('JSON-LD FAQ and the visible FAQ have the same number of entries', ld.length === vis.length && ld.length >= 4);
+  assert('JSON-LD FAQ mirrors the visible FAQ entry-for-entry (question + answer, in order)',
+    ld.every((e, i) => vis[i] && vis[i].q === e.q && vis[i].a === e.a));
+  // the differentiator — the opinion layer — must be surfaced on the FAQ, not only the guide
+  const opinion = vis.find(e => /review|critique|opinion/i.test(e.q));
+  assert('the FAQ surfaces the opinion layer (the differentiator)',
+    !!opinion && /system read|scorecard|rationale|score/i.test(opinion.a));
+}
 
 // --- crawl files ---
 assert('robots.txt points at the sitemap', robots.includes(`Sitemap: ${HOST}/sitemap.xml`));
