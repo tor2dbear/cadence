@@ -63,6 +63,28 @@ assert('sitemap lists the landing + guide', sitemap.includes(`${HOST}/</loc>`) &
 assert('sitemap omits the noindexed demo', !sitemap.includes('demo.html'));
 assert('sitemap lists the changelog', sitemap.includes(`${HOST}/changelog</loc>`));
 
+// the sitemap's <lastmod> is stamped at build time from each page's last commit
+// date (a frozen date gives crawlers no reason to re-crawl) — gen-sitemap.mjs does
+// it, and the committed template must not be shipped as-is
+{
+  const gitDate = f => { try { return execFileSync('git', ['log', '-1', '--format=%cs', '--', f], { cwd: fileURLToPath(root), encoding: 'utf8' }).trim(); } catch { return ''; } };
+  const out = execFileSync('node', [fileURLToPath(new URL('scripts/gen-sitemap.mjs', root))], { encoding: 'utf8' });
+  const lastmods = [...out.matchAll(/<lastmod>([^<]*)<\/lastmod>/g)].map(m => m[1]);
+  assert('stamped sitemap gives every url a valid lastmod date',
+    lastmods.length >= 3 && lastmods.every(d => /^\d{4}-\d{2}-\d{2}$/.test(d)));
+  assert('stamped sitemap keeps the three indexable pages and still omits the demo',
+    out.includes(`${HOST}/</loc>`) && out.includes(`${HOST}/guide</loc>`) && out.includes(`${HOST}/changelog</loc>`) && !out.includes('demo'));
+  const homeDate = (out.match(new RegExp(`${HOST}/</loc>\\s*<lastmod>([^<]*)</lastmod>`)) || [])[1];
+  // the home page tracks the MAX commit date across all its inputs (not just its
+  // HTML), so an app-only change (cadence.js / styles.css / …) still bumps it
+  const homeSources = ['index.html', 'cadence.js', 'system-read.js', 'styles.css', 'package.json'];
+  const expectMax = homeSources.map(gitDate).filter(Boolean).sort().at(-1);
+  assert('the home lastmod is the newest commit across the page\'s inputs, not just index.html',
+    !!homeDate && (expectMax ? homeDate === expectMax : /^\d{4}-\d{2}-\d{2}$/.test(homeDate)));
+  assert('the home lastmod is at least as recent as any single input',
+    !!homeDate && homeSources.every(f => { const d = gitDate(f); return !d || d <= homeDate; }));
+}
+
 // --- the changelog is self-hosted (on-domain), generated from CHANGELOG.md ---
 assert('the version badge links to the on-site changelog, not GitHub',
   /id="proto"[^>]*href="changelog\.html"|href="changelog\.html"[^>]*id="proto"/.test(index));
