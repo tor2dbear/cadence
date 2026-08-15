@@ -75,9 +75,14 @@ assert('sitemap lists the changelog', sitemap.includes(`${HOST}/changelog</loc>`
   assert('stamped sitemap keeps the three indexable pages and still omits the demo',
     out.includes(`${HOST}/</loc>`) && out.includes(`${HOST}/guide</loc>`) && out.includes(`${HOST}/changelog</loc>`) && !out.includes('demo'));
   const homeDate = (out.match(new RegExp(`${HOST}/</loc>\\s*<lastmod>([^<]*)</lastmod>`)) || [])[1];
-  const gi = gitDate('index.html');
-  assert('the home lastmod is stamped from index.html\'s last commit, not the frozen template',
-    !!homeDate && (gi ? homeDate === gi : /^\d{4}-\d{2}-\d{2}$/.test(homeDate)));
+  // the home page tracks the MAX commit date across all its inputs (not just its
+  // HTML), so an app-only change (cadence.js / styles.css / …) still bumps it
+  const homeSources = ['index.html', 'cadence.js', 'system-read.js', 'styles.css', 'package.json'];
+  const expectMax = homeSources.map(gitDate).filter(Boolean).sort().at(-1);
+  assert('the home lastmod is the newest commit across the page\'s inputs, not just index.html',
+    !!homeDate && (expectMax ? homeDate === expectMax : /^\d{4}-\d{2}-\d{2}$/.test(homeDate)));
+  assert('the home lastmod is at least as recent as any single input',
+    !!homeDate && homeSources.every(f => { const d = gitDate(f); return !d || d <= homeDate; }));
 }
 
 // --- the changelog is self-hosted (on-domain), generated from CHANGELOG.md ---
