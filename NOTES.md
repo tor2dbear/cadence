@@ -51,41 +51,9 @@ checks is the differentiator — tools generate, they don't judge.
 
 ## Roadmap
 
-- ✅ Draggable bézier editor (author curves directly, not just presets).
-- ✅ Editable ladder — add/remove/rename duration steps and easings.
-- Custom probes — "bring your own component" into the bench. *(Partly there: a
-  swappable set of abstract instruments in the bench + a full `demo.html`
-  surface of real components; "bring your **own** markup" is still open.)*
-- ✅ Shareable system via URL state (encode the whole token set in the link).
-- ✅ More export targets: Tailwind config, Style Dictionary, JS/TS objects.
-- Optional: import an existing palette of motion (a framework's tokens) and
-  visualize/critique it — the "reverse-engineer the art direction" angle.
-- *(Also shipped, not originally listed: springs → CSS `linear()`, motion-mode
-  axis, stagger + cascade lens, property axis, distance/travel primitive +
-  velocity check, tempo, reduced-motion, a live demo surface, "Load a system".)*
-
-### Candidates that add a backend — a conscious fork from static-only
-
-These break the "plain static site, no build" rule, so they're a deliberate
-branch, not default scope. Weigh them against the portfolio-code readability the
-static footprint buys.
-
-- **Opinion layer as a service.** Extract the *pure* logic (resolve + the
-  system-read checks) from `cadence.js` into a headless module (`tokens.js`, no
-  DOM), then expose it as a serverless endpoint so a CI step or an agent can POST
-  a motion system and get its warnings back — "block the build if exit is slower
-  than enter." Given the current stack (Cloudflare in front of Pages), a
-  **Cloudflare Worker** is the natural host (free tier ~100k req/day, separate
-  bucket) rather than Netlify Functions (which now draw from the same 300-credit
-  pot). An **MCP wrapper** over the same function makes the critique callable
-  from an editor/agent — the one genuinely agent-shaped part of Cadence.
-- **Security-header hardening.** CSP + `frame-ancestors 'self'` on `demo.html`
-  (so nobody else can iframe the demo), stricter `Cache-Control`. Cheap, doesn't
-  touch the app — set at the Cloudflare layer, since Pages can't send custom
-  headers. Really a config task, parked here so it isn't forgotten.
-- **Hosting note:** per-branch deploy previews are the one concrete reason to
-  consider Netlify; everything else Pages + Cloudflare already covers. See the
-  static-vs-backend tradeoff before moving the whole site.
+Planerat arbete bor nu i [`roadmap/`](roadmap/) — en fil per punkt ("puck") med
+frontmatter och status `inbox → now/next/later → done`, skördat av det gemensamma
+brädet i `tor2dbear/roadmap`. Levererat och öppna spår finns där. Se `roadmap/README.md`.
 
 ## Directions explored and ruled out (so we don't re-loop)
 
