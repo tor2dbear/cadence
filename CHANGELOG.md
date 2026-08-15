@@ -17,6 +17,12 @@ stamped at deploy time.
   and that you can save / import your own systems, so the differentiator isn't
   described only in the guide.
 
+### Changed
+- **The sitemap's `lastmod` is stamped at build time** from each page's last
+  commit date (via `scripts/gen-sitemap.mjs`), instead of shipping a frozen date.
+  A deploy now advertises an honest "changed on" signal, so search engines have a
+  reason to re-crawl after a content update.
+
 ### Fixed
 - **The landing FAQ's structured data matches the page again.** The JSON-LD
   `FAQPage` had drifted from the visible FAQ (one answer differed); the two are

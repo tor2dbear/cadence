@@ -18,6 +18,13 @@ if [ -f scripts/gen-changelog.mjs ]; then
   node scripts/gen-changelog.mjs > dist/changelog.html && echo "generated dist/changelog.html"
 fi
 
+# freshen the sitemap's <lastmod> from each page's last commit date, so a deploy
+# gives crawlers an honest "changed on" signal instead of a frozen date. Written
+# via a temp file so a failure under `set -e` can't leave an empty sitemap.
+if [ -f scripts/gen-sitemap.mjs ] && [ -f dist/sitemap.xml ]; then
+  node scripts/gen-sitemap.mjs > dist/sitemap.xml.tmp && mv dist/sitemap.xml.tmp dist/sitemap.xml && echo "stamped dist/sitemap.xml lastmod"
+fi
+
 # stamp an automatic build version into the badge: v<semver> · <short commit>.
 # semver comes from package.json (bump it at milestones); the commit is filled
 # in by Cloudflare Pages' env (CF_PAGES_COMMIT_SHA), or git locally.
